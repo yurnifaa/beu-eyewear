@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Search, User, Heart, ShoppingBag } from "lucide-react";
+import ThemeToggle from "@/component/ThemeToggle";
 
 export default function Header() {
   return (
@@ -27,9 +28,13 @@ export default function Header() {
         <button aria-label="Wishlist" type="button">
           <Heart size={20} />
         </button>
-        <Link href="/cart" aria-label="Cart">
-          <ShoppingBag size={20} />
-        </Link>
+        <div className="flex items-center gap-3">
+          <Link href="/cart" aria-label="Cart">
+            <ShoppingBag size={20} />
+          </Link>
+          <span aria-hidden="true" className="h-5 w-px bg-gray-300" />
+          <ThemeToggle />
+        </div>
       </div>
     </header>
   );

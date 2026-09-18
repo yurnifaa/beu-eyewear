@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
 
 :root {
   --background: #ffffff;
@@ -8,6 +9,9 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-brand-700: #404040;
+  --color-brand-800: #262626;
+  --color-brand-900: #171717;
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
@@ -19,8 +23,40 @@
   }
 }
 
+/* Higher specificity than the media-query rule above, so the manual
+   toggle always wins over the OS preference in either direction. */
+:root.dark {
+  --background: #0a0a0a;
+  --foreground: #ededed;
+}
+
+:root.light {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Rectangle wipe reveal for the theme toggle's view transition. */
+@keyframes theme-rect-reveal {
+  from {
+    clip-path: var(--theme-vt-from, inset(100% 0 0 0));
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+html[data-theme-vt="rect"]::view-transition-old(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+html[data-theme-vt="rect"]::view-transition-new(root) {
+  mix-blend-mode: normal;
+  animation: theme-rect-reveal 400ms ease-out;
 }
