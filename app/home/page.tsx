@@ -1,8 +1,8 @@
-import type { ReactNode } from 'react';
 import { Wallet, Home, Clock } from 'lucide-react';
 import Button from '@/component/Button';
 import PlaceholderImage from '@/component/PlaceholderImage';
 import Reveal from '@/component/Reveal';
+import SectionLabel from '@/component/SectionLabel';
 
 const CATEGORIES = ['Classic', 'Premium', 'Collections', 'Smart', 'Accessories'];
 
@@ -16,14 +16,6 @@ const BUNDLES = [
   { title: 'BeU Classic + Care', price: 'Starting at ₱1,199' },
   { title: 'BeU Premium + Care', price: 'Starting at ₱4,999' },
 ];
-
-function SectionLabel({ children }: { children: ReactNode }) {
-  return (
-    <p className="text-center text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-      {children}
-    </p>
-  );
-}
 
 export default function Page() {
   return (
