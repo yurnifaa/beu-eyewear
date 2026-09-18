@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 function InstagramIcon() {
@@ -55,7 +56,7 @@ export default function Footer() {
     <footer className="bg-black text-white px-6 py-12">
       <div className="grid grid-cols-1 gap-10 md:grid-cols-3">
         <div>
-          <p className="font-serif text-2xl">BeU</p>
+          <Image src="/Logo-Light-Mark.png" alt="BeU" width={380} height={380} className="h-12 w-12" />
           <p className="mt-3 max-w-xs text-sm text-gray-300">
             Be Your Best Self. Merging trendy aesthetics with smart wearable
             features to protect your vision.

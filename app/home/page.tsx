@@ -19,7 +19,7 @@ const BUNDLES = [
 
 function SectionLabel({ children }: { children: ReactNode }) {
   return (
-    <p className="text-center text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">
+    <p className="text-center text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
       {children}
     </p>
   );
@@ -51,18 +51,18 @@ export default function Page() {
           {CATEGORIES.map((category) => (
             <div key={category} className="flex basis-1/3 flex-col items-center gap-2 md:basis-auto">
               <PlaceholderImage variant="plain" className="h-20 w-20 rounded-full" />
-              <span className="text-xs uppercase tracking-wide text-gray-600">{category}</span>
+              <span className="text-xs uppercase tracking-wide text-muted-foreground">{category}</span>
             </div>
           ))}
         </div>
       </Reveal>
 
-      <Reveal className="bg-gray-100 px-6 py-8">
+      <Reveal className="bg-muted px-6 py-8">
         <div className="mx-auto flex max-w-5xl flex-col items-center gap-8 md:flex-row md:justify-between">
           {TRUST_BADGES.map(({ icon: Icon, label }) => (
             <div key={label} className="flex items-center gap-3">
-              <Icon size={20} className="text-gray-700" />
-              <span className="text-xs font-semibold uppercase tracking-wide text-gray-700">{label}</span>
+              <Icon size={20} className="text-foreground" />
+              <span className="text-xs font-semibold uppercase tracking-wide text-foreground">{label}</span>
             </div>
           ))}
         </div>
@@ -71,11 +71,11 @@ export default function Page() {
       <Reveal className="px-6 py-14">
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           {BUNDLES.map(({ title, price }) => (
-            <div key={title} className="rounded-2xl bg-gray-200 p-8">
-              <p className="text-xs font-semibold uppercase tracking-wide text-gray-600">Bundle Offer</p>
-              <p className="mt-2 font-serif text-2xl font-bold">{title}</p>
-              <p className="mt-1 text-sm text-gray-600">{price}</p>
-              <Button variant="secondary" className="mt-6 bg-white">
+            <div key={title} className="rounded-2xl bg-card p-8">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Bundle Offer</p>
+              <p className="mt-2 text-2xl font-bold">{title}</p>
+              <p className="mt-1 text-sm text-muted-foreground">{price}</p>
+              <Button variant="secondary" className="mt-6 bg-background">
                 Shop Bundle
               </Button>
             </div>
@@ -85,7 +85,7 @@ export default function Page() {
 
       <Reveal className="px-6 py-14">
         <div className="rounded-2xl bg-neutral-800 px-6 py-14 text-center text-white">
-          <h2 className="font-serif text-3xl md:text-4xl">Student Discount</h2>
+          <h2 className="text-3xl font-bold md:text-4xl">Student Discount</h2>
           <p className="mx-auto mt-4 max-w-md text-sm text-gray-300">
             Enjoy 5% off selected Classic and Enhanced eyewear. Verify your status with a valid student ID at
             checkout.
@@ -96,7 +96,7 @@ export default function Page() {
         </div>
       </Reveal>
 
-      <Reveal className="bg-gray-100 px-6 py-14">
+      <Reveal className="bg-muted px-6 py-14">
         <SectionLabel>What Our Customer Says</SectionLabel>
         <div className="mt-8 flex gap-4 overflow-x-auto snap-x snap-mandatory pb-2 md:grid md:grid-cols-3 md:gap-6 md:overflow-visible">
           {Array.from({ length: 3 }).map((_, i) => (
