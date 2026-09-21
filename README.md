@@ -1,7 +1,66 @@
-Group 1 - BeU Eyewear
-ABUNDO, Jonalene Ryza B.
-ALISWAG, Karylle Vinces J.
-CAYACAP, Faith Aleczes S.
-DEL ROSARIO, Juana Mari A.
-MAGAAN, Frieda Marie V.
-MULLENO, Jeshaiah Mae A.
+# BeU (by BeUs)
+
+BeU is an eyewear ecommerce brand under BeUs, where “Be” + “Us” represents the business and its community. “BeU” means “Be You,” with a tagline direction built around “Be You” and “Be Your...”
+
+BeU is a gender-inclusive brand primarily designed for women aged 16-30. It serves fashion-driven buyers, heavy screen users, outdoor-active individuals, and tech-forward early adopters interested in smart or meta glasses, with an accessible luxury position for upper-middle-income customers.
+
+Its core offerings include sunglasses, anti-radiation glasses, smart or meta glasses, and photochromic lenses. Every purchase includes a complimentary case and microfiber cloth, with a 7-day free return policy, a 1-year warranty on standard eyewear, and a 5-year warranty on smart or meta glasses. This repository contains the BeU ecommerce web app, built with Next.js.
+
+## Project structure
+
+This project uses Next.js App Router with route groups to separate buyer-facing and admin pages. Route groups (folders wrapped in parentheses) don't affect the URL path — they're for organization only.
+
+```text
+app/
+├── page.tsx                                → redirects to /home
+├── layout.tsx                              → root layout
+├── globals.css
+│
+├── (buyer)/
+│   ├── home/                               → homepage
+│   ├── listing/                            → category/listing page
+│   │   └── [id]/                           → product detail page (PDP)
+│   ├── search/                             → search results page
+│   ├── cart/                               → cart page
+│   ├── check-out/                          → checkout page
+│   ├── order-confirm/                      → order confirmation page
+│   ├── login/                              → buyer login
+│   ├── register/                           → buyer register
+│   ├── account/                            → account dashboard (shared layout)
+│   │   ├── page.tsx                        → dashboard overview
+│   │   ├── orders/                         → order history
+│   │   │   └── [id]/                       → order tracking detail
+│   │   ├── addresses/                      → address book
+│   │   └── wishlist/                       → wishlist
+│   └── (support)/
+│       ├── about/
+│       ├── contact/
+│       ├── faq/
+│       └── policies/
+│           ├── shipping-returns/
+│           └── terms-privacy/
+│
+└── (admin)/
+	└── admin/
+		├── page.tsx                        → admin dashboard overview
+		├── login/                          → admin login (separate from buyer)
+		├── products/                       → product list
+		│   ├── new/                        → add product
+		│   └── [id]/                       → edit product
+		├── categories/                     → category management
+		├── orders/                         → order list
+		│   └── [id]/                       → order detail
+		├── inventory/                      → stock levels, low stock alerts
+		├── customers/                      → customer list
+		│   └── [id]/                       → customer detail
+		└── reports/                        → sales reports, best sellers
+```
+
+**Notes**
+- Buyer-facing routes have no URL prefix (e.g. `/cart`, `/listing/123`)
+- Admin routes are prefixed with `/admin` (e.g. `/admin/products`)
+- `(buyer)` and `(admin)` are organizational only and never appear in the URL
+
+## Team Members
+
+![Jeshaiah Mae A. Abundo](https://img.shields.io/badge/Jeshaiah_Mae_A._Abundo-red?style=for-the-badge) ![Jonalene Ryza B. Aliswag](https://img.shields.io/badge/Jonalene_Ryza_B._Aliswag-pink?style=for-the-badge) ![Karylle Vinces J. Cayacap](https://img.shields.io/badge/Karylle_Vinces_J._Cayacap-yellow?style=for-the-badge) ![Faith Aleczes S. Del Rosario](https://img.shields.io/badge/Faith_Aleczes_S._Del_Rosario-B22222?style=for-the-badge) ![Juana Mari A. Magaan](https://img.shields.io/badge/Juana_Mari_A._Magaan-00008B?style=for-the-badge) ![Frieda Marie V. Mulleno](https://img.shields.io/badge/Frieda_Marie_V._Mulleno-blue?style=for-the-badge)
