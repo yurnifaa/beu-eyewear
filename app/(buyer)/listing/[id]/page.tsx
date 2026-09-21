@@ -32,7 +32,7 @@ export default async function Page(props: PageProps<'/listing/[id]'>) {
               <PlaceholderImage key={i} variant="plain" className="h-16 w-16 shrink-0 rounded-md" />
             ))}
           </div>
-          <PlaceholderImage variant="plain" className="aspect-[3/4] flex-1 rounded-xl" />
+          <PlaceholderImage variant="plain" className="aspect-3/4 flex-1 rounded-xl" />
         </div>
 
         <div className="flex flex-col gap-6">
