@@ -8,7 +8,7 @@ Its core offerings include sunglasses, anti-radiation glasses, smart or meta gla
 
 ## Team Members
 
-![ABUNDO, Jonalene Ryza B.](https://img.shields.io/badge/ABUNDO%2C_Jonalene_Ryza_B.-pink?style=for-the-badge) ![ALISWAG, Karylle Vinces J.](https://img.shields.io/badge/ALISWAG%2C_Karylle_Vinces_J.-yellow?style=for-the-badge) ![CAYACAP, Faith Aleczes S.](https://img.shields.io/badge/CAYACAP%2C_Faith_Aleczes_S.-B22222?style=for-the-badge) ![DEL ROSARIO, Juana Mari A.](https://img.shields.io/badge/DEL_ROSARIO%2C_Juana_Mari_A.-00008B?style=for-the-badge) ![MAGAAN, Frieda Marie V.](https://img.shields.io/badge/MAGAAN%2C_Frieda_Marie_V.-blue?style=for-the-badge) ![MULLENO, Jeshaiah Mae A.](https://img.shields.io/badge/MULLENO%2C_Jeshaiah_Mae_A.-red?style=for-the-badge)
+![ABUNDO, Jonalene Ryza B.](https://img.shields.io/badge/ABUNDO%2C_Jonalene_Ryza_B.-red?style=for-the-badge) ![ALISWAG, Karylle Vinces J.](https://img.shields.io/badge/ALISWAG%2C_Karylle_Vinces_J.-pink?style=for-the-badge) ![CAYACAP, Faith Aleczes S.](https://img.shields.io/badge/CAYACAP%2C_Faith_Aleczes_S.-yellow?style=for-the-badge) ![DEL ROSARIO, Juana Mari A.](https://img.shields.io/badge/DEL_ROSARIO%2C_Juana_Mari_A.-B22222?style=for-the-badge) ![MAGAAN, Frieda Marie V.](https://img.shields.io/badge/MAGAAN%2C_Frieda_Marie_V.-00008B?style=for-the-badge) ![MULLENO, Jeshaiah Mae A.](https://img.shields.io/badge/MULLENO%2C_Jeshaiah_Mae_A.-blue?style=for-the-badge)
 
 ## Project structure
 
