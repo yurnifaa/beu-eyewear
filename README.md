@@ -6,6 +6,10 @@ BeU is a gender-inclusive brand primarily designed for women aged 16-30. It serv
 
 Its core offerings include sunglasses, anti-radiation glasses, smart or meta glasses, and photochromic lenses. Every purchase includes a complimentary case and microfiber cloth, with a 7-day free return policy, a 1-year warranty on standard eyewear, and a 5-year warranty on smart or meta glasses. This repository contains the BeU ecommerce web app, built with Next.js.
 
+## Team Members
+
+![ABUNDO, Jonalene Ryza B.](https://img.shields.io/badge/ABUNDO%2C_Jonalene_Ryza_B.-pink?style=for-the-badge) ![ALISWAG, Karylle Vinces J.](https://img.shields.io/badge/ALISWAG%2C_Karylle_Vinces_J.-yellow?style=for-the-badge) ![CAYACAP, Faith Aleczes S.](https://img.shields.io/badge/CAYACAP%2C_Faith_Aleczes_S.-B22222?style=for-the-badge) ![DEL ROSARIO, Juana Mari A.](https://img.shields.io/badge/DEL_ROSARIO%2C_Juana_Mari_A.-00008B?style=for-the-badge) ![MAGAAN, Frieda Marie V.](https://img.shields.io/badge/MAGAAN%2C_Frieda_Marie_V.-blue?style=for-the-badge) ![MULLENO, Jeshaiah Mae A.](https://img.shields.io/badge/MULLENO%2C_Jeshaiah_Mae_A.-red?style=for-the-badge)
+
 ## Project structure
 
 This project uses Next.js App Router with route groups to separate buyer-facing and admin pages. Route groups (folders wrapped in parentheses) don't affect the URL path — they're for organization only.
@@ -60,7 +64,3 @@ app/
 - Buyer-facing routes have no URL prefix (e.g. `/cart`, `/listing/123`)
 - Admin routes are prefixed with `/admin` (e.g. `/admin/products`)
 - `(buyer)` and `(admin)` are organizational only and never appear in the URL
-
-## Team Members
-
-![Jeshaiah Mae A. Abundo](https://img.shields.io/badge/Jeshaiah_Mae_A._Abundo-red?style=for-the-badge) ![Jonalene Ryza B. Aliswag](https://img.shields.io/badge/Jonalene_Ryza_B._Aliswag-pink?style=for-the-badge) ![Karylle Vinces J. Cayacap](https://img.shields.io/badge/Karylle_Vinces_J._Cayacap-yellow?style=for-the-badge) ![Faith Aleczes S. Del Rosario](https://img.shields.io/badge/Faith_Aleczes_S._Del_Rosario-B22222?style=for-the-badge) ![Juana Mari A. Magaan](https://img.shields.io/badge/Juana_Mari_A._Magaan-00008B?style=for-the-badge) ![Frieda Marie V. Mulleno](https://img.shields.io/badge/Frieda_Marie_V._Mulleno-blue?style=for-the-badge)
