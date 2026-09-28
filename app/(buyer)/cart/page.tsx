@@ -3,8 +3,11 @@ import CartSection from '@/component/CartSection';
 import ProductCard from '@/component/ProductCard';
 import ProductRow from '@/component/ProductRow';
 import Reveal from '@/component/Reveal';
+import { formatPrice, getFeaturedProducts } from '@/lib/catalog/queries';
 
 export default function Page() {
+  const featuredProducts = getFeaturedProducts(4);
+
   return (
     <>
       <Reveal mode="mount" className="px-6 pt-6">
@@ -19,13 +22,14 @@ export default function Page() {
       <Reveal className="px-6 pb-14">
         <p className="text-sm font-bold uppercase tracking-wide">You May Also Like</p>
         <ProductRow className="mt-8">
-          {Array.from({ length: 4 }).map((_, i) => (
+          {featuredProducts.map((product) => (
             <ProductCard
-              key={i}
-              name="Product Name"
-              price="₱3,000"
-              description="Brief product description"
-              href={`/listing/${i + 1}`}
+              key={product.slug}
+              slug={product.slug}
+              name={product.name}
+              price={formatPrice(product.price)}
+              description={product.description}
+              href={`/listing/${product.slug}`}
             />
           ))}
         </ProductRow>

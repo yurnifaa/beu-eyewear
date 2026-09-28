@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Menu, Search, User, Heart, ShoppingBag } from "lucide-react";
+import { Menu, User, Heart, ShoppingBag } from "lucide-react";
+import HeaderSearch from "@/component/HeaderSearch";
 import ThemeToggle from "@/component/ThemeToggle";
 
 export default function Header() {
@@ -11,11 +12,11 @@ export default function Header() {
         <Menu size={22} />
       </button>
       <nav className="hidden items-center gap-6 md:flex">
-        <Link href="/listing" className="text-sm">
-          Shop
+        <Link href="/home" className="text-sm">
+          Home
         </Link>
         <Link href="/listing" className="text-sm">
-          Explore
+          Shop
         </Link>
       </nav>
 
@@ -39,15 +40,13 @@ export default function Header() {
       </Link>
 
       <div className="flex items-center gap-4">
-        <button aria-label="Search" type="button">
-          <Search size={20} />
-        </button>
-        <button aria-label="Account" type="button">
+        <HeaderSearch />
+        <Link href="/account" aria-label="Account">
           <User size={20} />
-        </button>
-        <button aria-label="Wishlist" type="button" className="hidden md:block">
+        </Link>
+        <Link href="/account/wishlist" aria-label="Wishlist" className="hidden md:block">
           <Heart size={20} />
-        </button>
+        </Link>
         <div className="flex items-center gap-3">
           <Link href="/cart" aria-label="Cart">
             <ShoppingBag size={20} />

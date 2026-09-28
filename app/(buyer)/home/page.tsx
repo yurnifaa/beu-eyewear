@@ -1,10 +1,12 @@
+import Link from 'next/link';
 import { Wallet, Home, Clock } from 'lucide-react';
-import Button from '@/component/Button';
+import { buttonClassName } from '@/component/Button';
 import PlaceholderImage from '@/component/PlaceholderImage';
+import ProductCard from '@/component/ProductCard';
+import ProductRow from '@/component/ProductRow';
 import Reveal from '@/component/Reveal';
 import SectionLabel from '@/component/SectionLabel';
-
-const CATEGORIES = ['Classic', 'Premium', 'Collections', 'Smart', 'Accessories'];
+import { formatPrice, getCategories, getFeaturedProducts, getProducts } from '@/lib/catalog/queries';
 
 const TRUST_BADGES = [
   { icon: Wallet, label: 'Free Eyewear Kit Included' },
@@ -12,12 +14,12 @@ const TRUST_BADGES = [
   { icon: Clock, label: 'Up To 5-Year Warranty' },
 ];
 
-const BUNDLES = [
-  { title: 'BeU Classic + Care', price: 'Starting at ₱1,199' },
-  { title: 'BeU Premium + Care', price: 'Starting at ₱4,999' },
-];
-
 export default function Page() {
+  const categories = getCategories().filter((category) => category.slug !== 'collections');
+  const featuredProducts = getFeaturedProducts(4);
+  const bundles = getProducts({ category: 'collections', sub: 'bundles' }).items;
+  const studentPick = getProducts({ category: 'collections', sub: 'student-picks' }).items[0];
+
   return (
     <>
       <Reveal mode="mount" className="px-6 py-10 md:py-14">
@@ -26,25 +28,32 @@ export default function Page() {
 
       <Reveal className="px-6 py-14">
         <SectionLabel>Featured Products</SectionLabel>
-        <div className="mt-8 flex gap-4 overflow-x-auto snap-x snap-mandatory pb-2 md:grid md:grid-cols-4 md:gap-6 md:overflow-visible">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <PlaceholderImage
-              key={i}
-              variant="plain"
-              className="aspect-[3/4] w-40 shrink-0 snap-start rounded-xl md:w-full"
+        <ProductRow className="mt-8">
+          {featuredProducts.map((product) => (
+            <ProductCard
+              key={product.slug}
+              slug={product.slug}
+              name={product.name}
+              price={formatPrice(product.price)}
+              description={product.description}
+              href={`/listing/${product.slug}`}
             />
           ))}
-        </div>
+        </ProductRow>
       </Reveal>
 
       <Reveal className="px-6 py-14">
         <SectionLabel>Shop By Category</SectionLabel>
         <div className="mt-8 flex flex-wrap justify-center gap-x-10 gap-y-8 md:flex-nowrap md:justify-between">
-          {CATEGORIES.map((category) => (
-            <div key={category} className="flex basis-1/3 flex-col items-center gap-2 md:basis-auto">
+          {categories.map((category) => (
+            <Link
+              key={category.slug}
+              href={`/listing?category=${category.slug}`}
+              className="flex basis-1/3 flex-col items-center gap-2 md:basis-auto"
+            >
               <PlaceholderImage variant="plain" className="h-20 w-20 rounded-full" />
-              <span className="text-xs uppercase tracking-wide text-muted-foreground">{category}</span>
-            </div>
+              <span className="text-xs uppercase tracking-wide text-muted-foreground">{category.name}</span>
+            </Link>
           ))}
         </div>
       </Reveal>
@@ -62,14 +71,14 @@ export default function Page() {
 
       <Reveal className="px-6 py-14">
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-          {BUNDLES.map(({ title, price }) => (
-            <div key={title} className="rounded-2xl bg-card p-8">
+          {bundles.map((bundle) => (
+            <div key={bundle.slug} className="rounded-2xl bg-card p-8">
               <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Bundle Offer</p>
-              <p className="mt-2 text-2xl font-bold">{title}</p>
-              <p className="mt-1 text-sm text-muted-foreground">{price}</p>
-              <Button variant="secondary" className="mt-6 bg-background">
+              <p className="mt-2 text-2xl font-bold">{bundle.name}</p>
+              <p className="mt-1 text-sm text-muted-foreground">Starting at {formatPrice(bundle.price)}</p>
+              <Link href={`/listing/${bundle.slug}`} className={buttonClassName({ variant: 'secondary', className: 'mt-6 bg-background' })}>
                 Shop Bundle
-              </Button>
+              </Link>
             </div>
           ))}
         </div>
@@ -82,9 +91,17 @@ export default function Page() {
             Enjoy 5% off selected Classic and Enhanced eyewear. Verify your status with a valid student ID at
             checkout.
           </p>
-          <Button variant="secondary" className="mt-6 border-white bg-white text-gray-900 hover:bg-gray-100">
-            Verify &amp; Shop
-          </Button>
+          {studentPick && (
+            <Link
+              href={`/listing/${studentPick.slug}`}
+              className={buttonClassName({
+                variant: 'secondary',
+                className: 'mt-6 border-white bg-white text-gray-900 hover:bg-gray-100',
+              })}
+            >
+              Verify &amp; Shop
+            </Link>
+          )}
         </div>
       </Reveal>
 
@@ -95,7 +112,7 @@ export default function Page() {
             <PlaceholderImage
               key={i}
               variant="plain"
-              className="aspect-[3/4] w-56 shrink-0 snap-start rounded-xl md:w-full"
+              className="aspect-3/4 w-56 shrink-0 snap-start rounded-xl md:w-full"
             />
           ))}
         </div>

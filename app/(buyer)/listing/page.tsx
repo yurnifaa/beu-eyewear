@@ -1,13 +1,52 @@
-import { ChevronDown, ChevronRight, ListFilter } from 'lucide-react';
+import { redirect } from 'next/navigation';
+import Link from 'next/link';
+import { ChevronRight } from 'lucide-react';
 import Breadcrumb from '@/component/Breadcrumb';
-import Button from '@/component/Button';
+import { buttonClassName } from '@/component/Button';
+import FilterDropdown, { type FilterDropdownOption } from '@/component/FilterDropdown';
+import PlaceholderImage from '@/component/PlaceholderImage';
 import ProductCard from '@/component/ProductCard';
 import ProductRow from '@/component/ProductRow';
 import Reveal from '@/component/Reveal';
+import type { FrameMaterial, FrameShape, LensOption } from '@/lib/catalog/types';
+import { formatPrice, getCategories, getCategoryBySlug, getProducts, getSubcategories } from '@/lib/catalog/queries';
 
-const FILTERS = ['Frames', 'Lenses', 'Material', 'Style'];
+const LENS_OPTIONS: LensOption[] = ['Photochromic', 'Polarized', 'Anti-Radiation', 'Anti-Fog', 'UV Protection'];
+const FRAME_MATERIALS: FrameMaterial[] = ['Plastic', 'Metal', 'Acetate', 'Mixed', 'Titanium'];
+const FRAME_SHAPES: FrameShape[] = ['Round', 'Square', 'Cat-Eye', 'Aviator', 'Rectangle'];
 
-const SUBCATEGORIES = ['Subcategory', 'Subcategory', 'Subcategory'];
+type Params = Record<string, string | undefined>;
+
+function first(value: string | string[] | undefined): string | undefined {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+function withParams(current: Params, patch: Params): string {
+  const merged: Params = { ...current, ...patch };
+  const next = new URLSearchParams();
+  for (const [key, value] of Object.entries(merged)) {
+    if (value) next.set(key, value);
+  }
+  const qs = next.toString();
+  return qs ? `/listing?${qs}` : '/listing';
+}
+
+function facetOptions<T extends string>(
+  label: string,
+  values: readonly T[],
+  activeValue: string | undefined,
+  paramKey: string,
+  current: Params,
+): FilterDropdownOption[] {
+  return [
+    { label: `All ${label}`, href: withParams(current, { [paramKey]: undefined, page: undefined }), active: !activeValue },
+    ...values.map((value) => ({
+      label: value,
+      href: withParams(current, { [paramKey]: value, page: undefined }),
+      active: activeValue === value,
+    })),
+  ];
+}
 
 function SubcategoryHeading({ children }: { children: string }) {
   return (
@@ -18,67 +57,199 @@ function SubcategoryHeading({ children }: { children: string }) {
   );
 }
 
-export default function Page() {
+export default async function Page(props: PageProps<'/listing'>) {
+  const sp = await props.searchParams;
+  const categorySlug = first(sp.category);
+  const sub = first(sp.sub);
+  const lens = first(sp.lens);
+  const material = first(sp.material);
+  const shape = first(sp.shape);
+  const sort = first(sp.sort) as 'price-asc' | 'price-desc' | undefined;
+  const page = Number(first(sp.page)) || 1;
+
+  const current: Params = {
+    category: categorySlug,
+    sub,
+    lens,
+    material,
+    shape,
+    sort,
+    page: page > 1 ? String(page) : undefined,
+  };
+
+  const categories = getCategories();
+
+  // Hub mode — no category picked yet, so show the tiers themselves
+  // instead of dumping straight into one of them.
+  if (!categorySlug) {
+    return (
+      <>
+        <Reveal mode="mount" className="px-6 pt-6 text-center">
+          <Breadcrumb items={[{ label: 'Home', href: '/home' }, { label: 'Shop' }]} />
+          <h1 className="mt-8 text-3xl font-bold uppercase tracking-tight md:text-4xl">Shop</h1>
+          <p className="mt-2 text-sm text-muted-foreground">Browse the full BeU lineup by collection.</p>
+        </Reveal>
+
+        <Reveal className="px-6 py-14">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3">
+            {categories.map((category) => (
+              <Link
+                key={category.slug}
+                href={`/listing?category=${category.slug}`}
+                className="group rounded-2xl border border-border p-6 transition duration-150 ease-out hover:-translate-y-0.5 hover:shadow-md"
+              >
+                <PlaceholderImage variant="plain" className="aspect-video w-full rounded-xl" />
+                <p className="mt-4 text-lg font-bold uppercase tracking-wide">{category.name}</p>
+                <p className="mt-1 text-sm text-muted-foreground">{category.description}</p>
+                <span className="mt-3 inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-wide">
+                  Shop Now
+                  <ChevronRight size={14} />
+                </span>
+              </Link>
+            ))}
+          </div>
+        </Reveal>
+      </>
+    );
+  }
+
+  const activeCategory = getCategoryBySlug(categorySlug);
+  if (!activeCategory) {
+    redirect('/listing');
+  }
+
+  const subcategories = getSubcategories(activeCategory.slug);
+  const hasFilters = Boolean(sub || lens || material || shape || sort);
+
+  const lensOptions = facetOptions('Lens Options', LENS_OPTIONS, lens, 'lens', current);
+  const materialOptions = facetOptions('Frame Materials', FRAME_MATERIALS, material, 'material', current);
+  const shapeOptions = facetOptions('Frame Shapes', FRAME_SHAPES, shape, 'shape', current);
+  const sortOptions: FilterDropdownOption[] = [
+    { label: 'Featured', href: withParams(current, { sort: undefined, page: undefined }), active: !sort },
+    { label: 'Price: Low to High', href: withParams(current, { sort: 'price-asc', page: undefined }), active: sort === 'price-asc' },
+    { label: 'Price: High to Low', href: withParams(current, { sort: 'price-desc', page: undefined }), active: sort === 'price-desc' },
+  ];
+
+  const results = getProducts({
+    category: activeCategory.slug,
+    sub,
+    lens,
+    material,
+    shape,
+    sort,
+    page,
+  });
+
+  const subcategoryRows = subcategories
+    .map((subcat) => ({
+      subcat,
+      products: getProducts({ category: activeCategory.slug, sub: subcat.slug }).items.slice(0, 4),
+    }))
+    .filter((row) => row.products.length > 0);
+
   return (
     <>
       <Reveal mode="mount" className="px-6 pt-6 text-center">
-        <Breadcrumb items={[{ label: 'Home', href: '/home' }, { label: 'Category' }]} />
-        <h1 className="mt-8 text-3xl font-bold uppercase tracking-tight md:text-4xl">Category</h1>
-        <p className="mt-2 text-sm text-muted-foreground">Brief description of the category.</p>
+        <Breadcrumb items={[{ label: 'Home', href: '/home' }, { label: activeCategory.name }]} />
+        <h1 className="mt-8 text-3xl font-bold uppercase tracking-tight md:text-4xl">{activeCategory.name}</h1>
+        <p className="mt-2 text-sm text-muted-foreground">{activeCategory.description}</p>
       </Reveal>
 
-      <Reveal className="flex flex-col gap-4 px-6 py-8 md:flex-row md:items-center md:justify-between">
-        <div className="hidden items-center gap-6 md:flex">
-          {FILTERS.map((label) => (
-            <Button key={label} variant="ghost" size="sm">
-              {label}
-              <ChevronDown size={14} />
-            </Button>
-          ))}
-        </div>
-        <div className="flex items-center gap-4 md:hidden">
-          <Button variant="ghost" size="sm">
-            Filter
-            <ListFilter size={14} />
-          </Button>
-        </div>
-        <Button variant="ghost" size="sm" className="self-end md:self-auto">
-          Sort
-          <ListFilter size={14} />
-        </Button>
+      <Reveal className="flex gap-3 overflow-x-auto px-6 py-6 md:justify-center">
+        {categories.map((category) => (
+          <Link
+            key={category.slug}
+            href={`/listing?category=${category.slug}`}
+            className={buttonClassName({
+              variant: category.slug === activeCategory.slug ? 'primary' : 'secondary',
+              size: 'sm',
+              className: 'shrink-0',
+            })}
+          >
+            {category.name}
+          </Link>
+        ))}
       </Reveal>
 
-      {SUBCATEGORIES.map((label, rowIndex) => (
-        <Reveal key={rowIndex} className="px-6 pb-14">
-          <SubcategoryHeading>{label}</SubcategoryHeading>
-          <ProductRow className="mt-4">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <ProductCard
-                key={i}
-                name="Product Name"
-                price="₱3,000"
-                description="Brief product description"
-                href={`/listing/${rowIndex * 4 + i + 1}`}
-              />
-            ))}
-          </ProductRow>
+      <Reveal className="flex flex-col gap-4 px-6 py-2 md:flex-row md:items-center md:justify-between">
+        <div className="flex flex-wrap items-center gap-2">
+          <FilterDropdown label="Lens Option" activeLabel={lens ? `Lens Option: ${lens}` : undefined} options={lensOptions} />
+          <FilterDropdown
+            label="Frame Material"
+            activeLabel={material ? `Frame Material: ${material}` : undefined}
+            options={materialOptions}
+          />
+          <FilterDropdown label="Frame Shape" activeLabel={shape ? `Frame Shape: ${shape}` : undefined} options={shapeOptions} />
+        </div>
+        <FilterDropdown
+          label="Sort"
+          activeLabel={sort ? sortOptions.find((option) => option.active)?.label : undefined}
+          options={sortOptions}
+        />
+      </Reveal>
+
+      {hasFilters ? (
+        <Reveal className="px-6 py-8">
+          {results.items.length === 0 ? (
+            <p className="py-14 text-center text-sm text-muted-foreground">No products match these filters.</p>
+          ) : (
+            <ProductRow>
+              {results.items.map((product) => (
+                <ProductCard
+                  key={product.slug}
+                  slug={product.slug}
+                  name={product.name}
+                  price={formatPrice(product.price)}
+                  description={product.description}
+                  href={`/listing/${product.slug}`}
+                />
+              ))}
+            </ProductRow>
+          )}
         </Reveal>
-      ))}
+      ) : (
+        subcategoryRows.map(({ subcat, products }) => (
+          <Reveal key={subcat.slug} className="px-6 py-8">
+            <SubcategoryHeading>{subcat.name}</SubcategoryHeading>
+            <ProductRow className="mt-4">
+              {products.map((product) => (
+                <ProductCard
+                  key={product.slug}
+                  slug={product.slug}
+                  name={product.name}
+                  price={formatPrice(product.price)}
+                  description={product.description}
+                  href={`/listing/${product.slug}`}
+                />
+              ))}
+            </ProductRow>
+          </Reveal>
+        ))
+      )}
 
-      <Reveal className="flex items-center justify-center gap-3 px-6 py-14">
-        <span className="flex h-8 w-8 items-center justify-center rounded-md bg-foreground text-sm font-semibold text-background">
-          1
-        </span>
-        <Button variant="ghost" size="sm" className="h-8 w-8 px-0">
-          2
-        </Button>
-        <Button variant="ghost" size="sm" className="h-8 w-8 px-0">
-          3
-        </Button>
-        <Button variant="ghost" size="sm" className="h-8 w-8 px-0" aria-label="Next page">
-          <ChevronRight size={16} />
-        </Button>
-      </Reveal>
+      {hasFilters && results.totalPages > 1 && (
+        <Reveal className="flex items-center justify-center gap-3 px-6 py-14">
+          {Array.from({ length: results.totalPages }).map((_, i) => {
+            const n = i + 1;
+            return n === results.page ? (
+              <span
+                key={n}
+                className="flex h-8 w-8 items-center justify-center rounded-md bg-foreground text-sm font-semibold text-background"
+              >
+                {n}
+              </span>
+            ) : (
+              <Link
+                key={n}
+                href={withParams(current, { page: n > 1 ? String(n) : undefined })}
+                className={buttonClassName({ variant: 'ghost', size: 'sm', className: 'h-8 w-8 px-0' })}
+              >
+                {n}
+              </Link>
+            );
+          })}
+        </Reveal>
+      )}
     </>
   );
 }

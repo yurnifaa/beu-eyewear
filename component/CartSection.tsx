@@ -17,8 +17,8 @@ interface CartItem {
 }
 
 const INITIAL_ITEMS: CartItem[] = [
-  { id: 1, name: 'Eyewear Name', variants: ['Color — Color', 'Style — Style'], price: 1000, quantity: 1, selected: true },
-  { id: 2, name: 'Eyewear Name', variants: ['Color — Color', 'Style — Style'], price: 1000, quantity: 1, selected: true },
+  { id: 1, name: 'Eyewear Name', variants: ['Color — Matte Black'], price: 1000, quantity: 1, selected: true },
+  { id: 2, name: 'Eyewear Name', variants: ['Color — Tortoiseshell'], price: 1000, quantity: 1, selected: true },
 ];
 
 function formatPrice(amount: number) {

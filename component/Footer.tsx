@@ -41,12 +41,12 @@ function FacebookIcon() {
 }
 
 const shopLinks = [
-  "Classic",
-  "Premium",
-  "Collections",
-  "Smart Eyewear",
-  "Accessories",
-  "Bundle Offers",
+  { label: "Classic", href: "/listing?category=classic" },
+  { label: "Premium", href: "/listing?category=premium" },
+  { label: "Collections", href: "/listing?category=collections" },
+  { label: "Smart Eyewear", href: "/listing?category=smart" },
+  { label: "Accessories", href: "/listing?category=accessories" },
+  { label: "Bundle Offers", href: "/listing?category=collections&sub=bundles" },
 ];
 
 const aboutLinks = ["Our Story", "Warrants & Returns", "Store Locator", "Contact Us"];
@@ -85,9 +85,9 @@ export default function Footer() {
         <div>
           <p className="font-semibold">SHOP</p>
           <ul className="mt-3 space-y-2 text-sm text-gray-300">
-            {shopLinks.map((label) => (
+            {shopLinks.map(({ label, href }) => (
               <li key={label}>
-                <Link href="/listing">{label}</Link>
+                <Link href={href}>{label}</Link>
               </li>
             ))}
           </ul>

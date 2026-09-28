@@ -23,19 +23,8 @@
   --font-sans: var(--font-inter);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-    --card: #262626;
-    --muted: #171717;
-    --muted-foreground: #a3a3a3;
-    --border: #404040;
-  }
-}
-
-/* Higher specificity than the media-query rule above, so the manual
-   toggle always wins over the OS preference in either direction. */
+/* Light is the default appearance regardless of OS preference — dark mode
+   only applies once the toggle explicitly adds this class. */
 :root.dark {
   --background: #0a0a0a;
   --foreground: #ededed;

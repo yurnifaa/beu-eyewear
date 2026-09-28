@@ -5,7 +5,6 @@ import { Classic } from "@/component/DLToggle";
 
 // bottom-up reveal, matching the toggle's position in the header
 const RECT_FROM = "inset(100% 0 0 0)";
-const MEDIA_QUERY = "(prefers-color-scheme: dark)";
 
 type ViewTransitionDocument = Document & {
   startViewTransition(callback: () => void): { finished: Promise<void> };
@@ -19,21 +18,15 @@ function notifyThemeChange() {
 
 function subscribe(callback: () => void) {
   listeners.add(callback);
-  const mql = window.matchMedia(MEDIA_QUERY);
-  mql.addEventListener("change", notifyThemeChange);
   return () => {
     listeners.delete(callback);
-    mql.removeEventListener("change", notifyThemeChange);
   };
 }
 
-// Reads an already-applied .dark/.light class (from a previous manual
-// toggle) or falls back to the OS preference.
+// Light is the default appearance regardless of OS preference, so the only
+// thing that flips this is an explicit .dark class from a previous toggle.
 function getSnapshot() {
-  const root = document.documentElement;
-  if (root.classList.contains("dark")) return true;
-  if (root.classList.contains("light")) return false;
-  return window.matchMedia(MEDIA_QUERY).matches;
+  return document.documentElement.classList.contains("dark");
 }
 
 // SSR has no window/classList/media query to read, so the server always
