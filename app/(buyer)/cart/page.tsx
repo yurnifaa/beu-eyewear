@@ -3,10 +3,15 @@ import CartSection from '@/component/CartSection';
 import ProductCard from '@/component/ProductCard';
 import ProductRow from '@/component/ProductRow';
 import Reveal from '@/component/Reveal';
-import { formatPrice, getFeaturedProducts } from '@/lib/catalog/queries';
+import { getFeaturedProducts } from '@/lib/catalog/queries';
+import { formatPrice } from '@/lib/format';
 
-export default function Page() {
-  const featuredProducts = getFeaturedProducts(4);
+// Reads live, admin-editable catalog data — don't bake it into a static
+// build-time snapshot.
+export const dynamic = 'force-dynamic';
+
+export default async function Page() {
+  const featuredProducts = await getFeaturedProducts(4);
 
   return (
     <>

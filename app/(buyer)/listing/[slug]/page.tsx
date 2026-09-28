@@ -10,28 +10,34 @@ import QuantityStepper from '@/component/QuantityStepper';
 import Reveal from '@/component/Reveal';
 import SectionLabel from '@/component/SectionLabel';
 import WishlistButton from '@/component/WishlistButton';
-import { FRAME_MATERIAL_SPECS, LENS_OPTION_INFO } from '@/lib/catalog/data';
+import { FRAME_MATERIAL_SPECS, LENS_OPTION_INFO } from '@/lib/catalog/specs';
 import {
-  formatPrice,
   getCategoryBySlug,
   getProductBySlug,
   getRelatedProducts,
   getSubcategoryBySlug,
 } from '@/lib/catalog/queries';
+import { formatPrice } from '@/lib/format';
+
+// Reads live, admin-editable catalog data — don't bake it into a static
+// build-time snapshot.
+export const dynamic = 'force-dynamic';
 
 export default async function Page(props: PageProps<'/listing/[slug]'>) {
   const { slug } = await props.params;
-  const product = getProductBySlug(slug);
+  const product = await getProductBySlug(slug);
 
   if (!product) {
     notFound();
   }
 
-  const category = getCategoryBySlug(product.categorySlug);
-  const subcategory = getSubcategoryBySlug(product.subcategorySlug);
+  const [category, subcategory, relatedProducts] = await Promise.all([
+    getCategoryBySlug(product.categorySlug),
+    getSubcategoryBySlug(product.subcategorySlug),
+    getRelatedProducts(product, 4),
+  ]);
   const materialSpec = product.frameMaterial ? FRAME_MATERIAL_SPECS[product.frameMaterial] : undefined;
   const lensInfo = product.lensOption ? LENS_OPTION_INFO[product.lensOption] : undefined;
-  const relatedProducts = getRelatedProducts(product, 4);
 
   const specLine = product.frameMaterial
     ? `${product.frameMaterial} Frame · ${lensInfo ? `${product.lensOption} Coated` : 'UV400 Clear'}`

@@ -6,7 +6,12 @@ import ProductCard from '@/component/ProductCard';
 import ProductRow from '@/component/ProductRow';
 import Reveal from '@/component/Reveal';
 import SectionLabel from '@/component/SectionLabel';
-import { formatPrice, getCategories, getFeaturedProducts, getProducts } from '@/lib/catalog/queries';
+import { getCategories, getFeaturedProducts, getProducts } from '@/lib/catalog/queries';
+import { formatPrice } from '@/lib/format';
+
+// Reads live, admin-editable catalog data — don't bake it into a static
+// build-time snapshot.
+export const dynamic = 'force-dynamic';
 
 const TRUST_BADGES = [
   { icon: Wallet, label: 'Free Eyewear Kit Included' },
@@ -14,11 +19,16 @@ const TRUST_BADGES = [
   { icon: Clock, label: 'Up To 5-Year Warranty' },
 ];
 
-export default function Page() {
-  const categories = getCategories().filter((category) => category.slug !== 'collections');
-  const featuredProducts = getFeaturedProducts(4);
-  const bundles = getProducts({ category: 'collections', sub: 'bundles' }).items;
-  const studentPick = getProducts({ category: 'collections', sub: 'student-picks' }).items[0];
+export default async function Page() {
+  const [allCategories, featuredProducts, bundleResults, studentPickResults] = await Promise.all([
+    getCategories(),
+    getFeaturedProducts(4),
+    getProducts({ category: 'collections', sub: 'bundles' }),
+    getProducts({ category: 'collections', sub: 'student-picks' }),
+  ]);
+  const categories = allCategories.filter((category) => category.slug !== 'collections');
+  const bundles = bundleResults.items;
+  const studentPick = studentPickResults.items[0];
 
   return (
     <>

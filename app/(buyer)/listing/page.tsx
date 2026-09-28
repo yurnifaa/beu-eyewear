@@ -8,12 +8,13 @@ import PlaceholderImage from '@/component/PlaceholderImage';
 import ProductCard from '@/component/ProductCard';
 import ProductRow from '@/component/ProductRow';
 import Reveal from '@/component/Reveal';
-import type { FrameMaterial, FrameShape, LensOption } from '@/lib/catalog/types';
-import { formatPrice, getCategories, getCategoryBySlug, getProducts, getSubcategories } from '@/lib/catalog/queries';
+import { FRAME_MATERIALS, FRAME_SHAPES, LENS_OPTIONS } from '@/lib/catalog/enums';
+import { getCategories, getCategoryBySlug, getProducts, getSubcategories } from '@/lib/catalog/queries';
+import { formatPrice } from '@/lib/format';
 
-const LENS_OPTIONS: LensOption[] = ['Photochromic', 'Polarized', 'Anti-Radiation', 'Anti-Fog', 'UV Protection'];
-const FRAME_MATERIALS: FrameMaterial[] = ['Plastic', 'Metal', 'Acetate', 'Mixed', 'Titanium'];
-const FRAME_SHAPES: FrameShape[] = ['Round', 'Square', 'Cat-Eye', 'Aviator', 'Rectangle'];
+// Reads live, admin-editable catalog data — don't bake it into a static
+// build-time snapshot.
+export const dynamic = 'force-dynamic';
 
 type Params = Record<string, string | undefined>;
 
@@ -77,7 +78,7 @@ export default async function Page(props: PageProps<'/listing'>) {
     page: page > 1 ? String(page) : undefined,
   };
 
-  const categories = getCategories();
+  const categories = await getCategories();
 
   // Hub mode — no category picked yet, so show the tiers themselves
   // instead of dumping straight into one of them.
@@ -113,12 +114,12 @@ export default async function Page(props: PageProps<'/listing'>) {
     );
   }
 
-  const activeCategory = getCategoryBySlug(categorySlug);
+  const activeCategory = await getCategoryBySlug(categorySlug);
   if (!activeCategory) {
     redirect('/listing');
   }
 
-  const subcategories = getSubcategories(activeCategory.slug);
+  const subcategories = await getSubcategories(activeCategory.slug);
   const hasFilters = Boolean(sub || lens || material || shape || sort);
 
   const lensOptions = facetOptions('Lens Options', LENS_OPTIONS, lens, 'lens', current);
@@ -130,7 +131,7 @@ export default async function Page(props: PageProps<'/listing'>) {
     { label: 'Price: High to Low', href: withParams(current, { sort: 'price-desc', page: undefined }), active: sort === 'price-desc' },
   ];
 
-  const results = getProducts({
+  const results = await getProducts({
     category: activeCategory.slug,
     sub,
     lens,
@@ -140,12 +141,13 @@ export default async function Page(props: PageProps<'/listing'>) {
     page,
   });
 
-  const subcategoryRows = subcategories
-    .map((subcat) => ({
+  const subcategoryRowResults = await Promise.all(
+    subcategories.map(async (subcat) => ({
       subcat,
-      products: getProducts({ category: activeCategory.slug, sub: subcat.slug }).items.slice(0, 4),
-    }))
-    .filter((row) => row.products.length > 0);
+      products: (await getProducts({ category: activeCategory.slug, sub: subcat.slug })).items.slice(0, 4),
+    })),
+  );
+  const subcategoryRows = subcategoryRowResults.filter((row) => row.products.length > 0);
 
   return (
     <>

@@ -6,14 +6,21 @@ import ProductCard from '@/component/ProductCard';
 import ProductRow from '@/component/ProductRow';
 import Reveal from '@/component/Reveal';
 import SectionLabel from '@/component/SectionLabel';
-import { formatPrice, getCategories, searchProducts } from '@/lib/catalog/queries';
+import { getCategories, searchProducts } from '@/lib/catalog/queries';
+import { formatPrice } from '@/lib/format';
+
+// Reads live, admin-editable catalog data — don't bake it into a static
+// build-time snapshot.
+export const dynamic = 'force-dynamic';
 
 export default async function SearchPage(props: PageProps<'/search'>) {
   const sp = await props.searchParams;
   const raw = sp.q;
   const query = (Array.isArray(raw) ? raw[0] : raw ?? '').trim();
-  const results = query ? searchProducts(query) : [];
-  const categories = getCategories();
+  const [results, categories] = await Promise.all([
+    query ? searchProducts(query) : Promise.resolve([]),
+    getCategories(),
+  ]);
 
   return (
     <>

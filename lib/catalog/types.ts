@@ -1,4 +1,6 @@
-export type CategorySlug = 'classic' | 'premium' | 'smart' | 'accessories' | 'collections';
+// Categories are admin-editable DB rows now, not a fixed compile-time set —
+// this alias just documents intent at call sites.
+export type CategorySlug = string;
 
 export interface Category {
   slug: CategorySlug;

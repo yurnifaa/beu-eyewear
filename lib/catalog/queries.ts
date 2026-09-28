@@ -1,22 +1,47 @@
-import { CATEGORIES, PRODUCTS, SUBCATEGORIES } from './data';
-import type { Category, CategorySlug, Product, Subcategory } from './types';
+import type { Prisma, Product as PrismaProduct } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
+import type { Category, FrameMaterial, FrameShape, LensOption, Product, Subcategory } from './types';
 
 const PAGE_SIZE = 8;
 
-export function getCategories(): Category[] {
-  return CATEGORIES;
+function mapProduct(row: PrismaProduct): Product {
+  return {
+    slug: row.slug,
+    name: row.name,
+    description: row.description,
+    price: row.price,
+    categorySlug: row.categorySlug,
+    subcategorySlug: row.subcategorySlug,
+    frameMaterial: (row.frameMaterial ?? undefined) as FrameMaterial | undefined,
+    lensOption: (row.lensOption ?? undefined) as LensOption | undefined,
+    frameShape: (row.frameShape ?? undefined) as FrameShape | undefined,
+    colors: row.colors,
+    warrantyYears: row.warrantyYears,
+  };
 }
 
-export function getCategoryBySlug(slug: string | undefined): Category | undefined {
-  return CATEGORIES.find((category) => category.slug === slug);
+export async function getCategories(): Promise<Category[]> {
+  return prisma.category.findMany({ orderBy: { slug: 'asc' } });
 }
 
-export function getSubcategories(categorySlug: CategorySlug): Subcategory[] {
-  return SUBCATEGORIES.filter((sub) => sub.categorySlug === categorySlug);
+export async function getCategoryBySlug(slug: string | undefined): Promise<Category | undefined> {
+  if (!slug) return undefined;
+  const category = await prisma.category.findUnique({ where: { slug } });
+  return category ?? undefined;
 }
 
-export function getSubcategoryBySlug(slug: string | undefined): Subcategory | undefined {
-  return SUBCATEGORIES.find((sub) => sub.slug === slug);
+export async function getSubcategories(categorySlug: string): Promise<Subcategory[]> {
+  return prisma.subcategory.findMany({ where: { categorySlug }, orderBy: { slug: 'asc' } });
+}
+
+export async function getAllSubcategories(): Promise<Subcategory[]> {
+  return prisma.subcategory.findMany({ orderBy: [{ categorySlug: 'asc' }, { slug: 'asc' }] });
+}
+
+export async function getSubcategoryBySlug(slug: string | undefined): Promise<Subcategory | undefined> {
+  if (!slug) return undefined;
+  const subcategory = await prisma.subcategory.findUnique({ where: { slug } });
+  return subcategory ?? undefined;
 }
 
 export interface ProductFilters {
@@ -37,29 +62,35 @@ export interface ProductResults {
   totalPages: number;
 }
 
-export function getProducts(filters: ProductFilters = {}): ProductResults {
-  let items = PRODUCTS.filter((product) => {
-    if (filters.category && product.categorySlug !== filters.category) return false;
-    if (filters.sub && product.subcategorySlug !== filters.sub) return false;
-    if (filters.lens && product.lensOption !== filters.lens) return false;
-    if (filters.material && product.frameMaterial !== filters.material) return false;
-    if (filters.shape && product.frameShape !== filters.shape) return false;
-    return true;
-  });
+export async function getProducts(filters: ProductFilters = {}): Promise<ProductResults> {
+  const where: Prisma.ProductWhereInput = {
+    ...(filters.category && { categorySlug: filters.category }),
+    ...(filters.sub && { subcategorySlug: filters.sub }),
+    ...(filters.lens && { lensOption: filters.lens }),
+    ...(filters.material && { frameMaterial: filters.material }),
+    ...(filters.shape && { frameShape: filters.shape }),
+  };
 
-  if (filters.sort === 'price-asc') {
-    items = [...items].sort((a, b) => a.price - b.price);
-  } else if (filters.sort === 'price-desc') {
-    items = [...items].sort((a, b) => b.price - a.price);
-  }
+  const orderBy: Prisma.ProductOrderByWithRelationInput =
+    filters.sort === 'price-asc'
+      ? { price: 'asc' }
+      : filters.sort === 'price-desc'
+        ? { price: 'desc' }
+        : { slug: 'asc' };
 
-  const total = items.length;
+  const total = await prisma.product.count({ where });
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const page = Math.min(Math.max(1, filters.page ?? 1), totalPages);
-  const start = (page - 1) * PAGE_SIZE;
+
+  const rows = await prisma.product.findMany({
+    where,
+    orderBy,
+    skip: (page - 1) * PAGE_SIZE,
+    take: PAGE_SIZE,
+  });
 
   return {
-    items: items.slice(start, start + PAGE_SIZE),
+    items: rows.map(mapProduct),
     total,
     page,
     pageSize: PAGE_SIZE,
@@ -67,64 +98,77 @@ export function getProducts(filters: ProductFilters = {}): ProductResults {
   };
 }
 
-export function getProductBySlug(slug: string): Product | undefined {
-  return PRODUCTS.find((product) => product.slug === slug);
+export async function getProductBySlug(slug: string): Promise<Product | undefined> {
+  const row = await prisma.product.findUnique({ where: { slug } });
+  return row ? mapProduct(row) : undefined;
 }
 
-export function getRelatedProducts(product: Product, limit = 4): Product[] {
-  const sameSubcategory = PRODUCTS.filter(
-    (candidate) => candidate.subcategorySlug === product.subcategorySlug && candidate.slug !== product.slug,
-  );
-  if (sameSubcategory.length >= limit) return sameSubcategory.slice(0, limit);
+export async function getRelatedProducts(product: Product, limit = 4): Promise<Product[]> {
+  const sameSubcategory = await prisma.product.findMany({
+    where: { subcategorySlug: product.subcategorySlug, slug: { not: product.slug } },
+    take: limit,
+  });
+  if (sameSubcategory.length >= limit) return sameSubcategory.map(mapProduct);
 
-  const sameCategory = PRODUCTS.filter(
-    (candidate) =>
-      candidate.categorySlug === product.categorySlug &&
-      candidate.slug !== product.slug &&
-      !sameSubcategory.includes(candidate),
-  );
+  const sameCategory = await prisma.product.findMany({
+    where: {
+      categorySlug: product.categorySlug,
+      slug: { notIn: [product.slug, ...sameSubcategory.map((p) => p.slug)] },
+    },
+    take: limit - sameSubcategory.length,
+  });
 
-  return [...sameSubcategory, ...sameCategory].slice(0, limit);
+  return [...sameSubcategory, ...sameCategory].map(mapProduct);
 }
 
-export function getFeaturedProducts(limit = 4): Product[] {
-  const seen = new Set<CategorySlug>();
-  const featured: Product[] = [];
+export async function getFeaturedProducts(limit = 4): Promise<Product[]> {
+  const categories = await prisma.category.findMany({
+    where: { slug: { not: 'collections' } },
+    orderBy: { slug: 'asc' },
+  });
 
-  for (const product of PRODUCTS) {
-    if (product.categorySlug === 'collections' || seen.has(product.categorySlug)) continue;
-    seen.add(product.categorySlug);
-    featured.push(product);
+  const featured: PrismaProduct[] = [];
+  for (const category of categories) {
     if (featured.length >= limit) break;
+    const product = await prisma.product.findFirst({ where: { categorySlug: category.slug } });
+    if (product) featured.push(product);
   }
 
-  return featured.length >= limit ? featured : PRODUCTS.slice(0, limit);
+  if (featured.length >= limit) return featured.map(mapProduct);
+
+  const fallback = await prisma.product.findMany({ take: limit, orderBy: { slug: 'asc' } });
+  return fallback.map(mapProduct);
 }
 
-export function searchProducts(query: string): Product[] {
+export async function searchProducts(query: string): Promise<Product[]> {
   const normalized = query.trim().toLowerCase();
   if (!normalized) return [];
 
-  return PRODUCTS.filter((product) => {
-    const category = getCategoryBySlug(product.categorySlug);
-    const subcategory = getSubcategoryBySlug(product.subcategorySlug);
-    const haystack = [
-      product.name,
-      product.description,
-      product.frameMaterial,
-      product.lensOption,
-      product.frameShape,
-      category?.name,
-      subcategory?.name,
-    ]
-      .filter(Boolean)
-      .join(' ')
-      .toLowerCase();
+  const [products, categories, subcategories] = await Promise.all([
+    prisma.product.findMany(),
+    prisma.category.findMany(),
+    prisma.subcategory.findMany(),
+  ]);
 
-    return haystack.includes(normalized);
-  });
-}
+  const categoryNames = new Map(categories.map((c) => [c.slug, c.name]));
+  const subcategoryNames = new Map(subcategories.map((s) => [s.slug, s.name]));
 
-export function formatPrice(amount: number): string {
-  return `₱${amount.toLocaleString('en-PH')}`;
+  return products
+    .filter((product) => {
+      const haystack = [
+        product.name,
+        product.description,
+        product.frameMaterial,
+        product.lensOption,
+        product.frameShape,
+        categoryNames.get(product.categorySlug),
+        subcategoryNames.get(product.subcategorySlug),
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+
+      return haystack.includes(normalized);
+    })
+    .map(mapProduct);
 }

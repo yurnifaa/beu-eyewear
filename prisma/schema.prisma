@@ -1,0 +1,45 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Category {
+  slug          String        @id
+  name          String
+  description   String
+  subcategories Subcategory[]
+  products      Product[]
+}
+
+model Subcategory {
+  slug         String   @id
+  categorySlug String
+  name         String
+  category     Category  @relation(fields: [categorySlug], references: [slug])
+  products     Product[]
+
+  @@index([categorySlug])
+}
+
+model Product {
+  slug            String   @id
+  name            String
+  description     String
+  price           Int
+  categorySlug    String
+  subcategorySlug String
+  frameMaterial   String?
+  lensOption      String?
+  frameShape      String?
+  colors          String[]
+  warrantyYears   Int
+
+  category    Category    @relation(fields: [categorySlug], references: [slug])
+  subcategory Subcategory @relation(fields: [subcategorySlug], references: [slug])
+
+  @@index([categorySlug])
+  @@index([subcategorySlug])
+}
