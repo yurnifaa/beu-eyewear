@@ -2,8 +2,8 @@ import Link from 'next/link';
 import { Heart, MapPin, Package } from 'lucide-react';
 
 const MOCK_USER = {
-  name: 'Jana Del Rosario',
-  email: 'jana.delrosario@example.com',
+  name: 'Rubilyn Gonzales',
+  email: 'rubilyn.gonzales@gmail.com',
   memberSince: '2025',
 };
 

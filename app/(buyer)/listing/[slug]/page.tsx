@@ -1,15 +1,13 @@
 import { notFound } from 'next/navigation';
-import { ShoppingBag, Star } from 'lucide-react';
+import { Star } from 'lucide-react';
 import AccordionSection from '@/component/AccordionSection';
+import AddToCartSection from '@/component/AddToCartSection';
 import Breadcrumb from '@/component/Breadcrumb';
-import Button from '@/component/Button';
 import PlaceholderImage from '@/component/PlaceholderImage';
 import ProductCard from '@/component/ProductCard';
 import ProductRow from '@/component/ProductRow';
-import QuantityStepper from '@/component/QuantityStepper';
 import Reveal from '@/component/Reveal';
 import SectionLabel from '@/component/SectionLabel';
-import WishlistButton from '@/component/WishlistButton';
 import { FRAME_MATERIAL_SPECS, LENS_OPTION_INFO } from '@/lib/catalog/specs';
 import {
   getCategoryBySlug,
@@ -75,36 +73,7 @@ export default async function Page(props: PageProps<'/listing/[slug]'>) {
             <p className="mt-3 text-lg font-semibold">{formatPrice(product.price)}</p>
           </div>
 
-          {product.colors.length > 0 && (
-            <fieldset>
-              <legend className="text-sm font-semibold">Color</legend>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {product.colors.map((color, i) => (
-                  <label key={color} className="cursor-pointer">
-                    <input type="radio" name="color" value={color} defaultChecked={i === 0} className="peer sr-only" />
-                    <span className="block rounded-full border border-border px-4 py-2 text-xs font-semibold text-muted-foreground peer-checked:border-foreground peer-checked:bg-foreground peer-checked:text-background">
-                      {color}
-                    </span>
-                  </label>
-                ))}
-              </div>
-            </fieldset>
-          )}
-
-          <div>
-            <p className="text-sm font-semibold">Quantity</p>
-            <div className="mt-2">
-              <QuantityStepper />
-            </div>
-          </div>
-
-          <div className="flex gap-4">
-            <Button variant="primary" className="uppercase">
-              <ShoppingBag size={16} />
-              Add to Bag
-            </Button>
-            <WishlistButton slug={product.slug} name={product.name} variant="labeled" />
-          </div>
+          <AddToCartSection slug={product.slug} name={product.name} colors={product.colors} />
 
           <div>
             <AccordionSection title="Product Details" defaultOpen>
