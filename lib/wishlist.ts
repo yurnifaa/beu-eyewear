@@ -88,3 +88,7 @@ export function useWishlist(slug: string) {
   const toggle = useCallback(() => toggleWishlist(slug), [slug]);
   return { isWishlisted: slugs.includes(slug), toggle };
 }
+
+export function useWishlistCount(): number {
+  return useWishlistSlugs().length;
+}

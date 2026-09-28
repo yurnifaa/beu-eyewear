@@ -18,7 +18,7 @@ export default function WishlistSection() {
 
     let cancelled = false;
 
-    fetch('/api/wishlist', {
+    fetch('/api/products/by-slugs', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ slugs }),
