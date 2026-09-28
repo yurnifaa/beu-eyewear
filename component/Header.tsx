@@ -1,8 +1,10 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Menu, User, Heart, ShoppingBag } from "lucide-react";
+import CartBadge from "@/component/CartBadge";
 import HeaderSearch from "@/component/HeaderSearch";
 import ThemeToggle from "@/component/ThemeToggle";
+import WishlistBadge from "@/component/WishlistBadge";
 
 export default function Header() {
   return (
@@ -44,12 +46,14 @@ export default function Header() {
         <Link href="/account" aria-label="Account">
           <User size={20} />
         </Link>
-        <Link href="/account/wishlist" aria-label="Wishlist" className="hidden md:block">
+        <Link href="/account/wishlist" aria-label="Wishlist" className="relative hidden md:block">
           <Heart size={20} />
+          <WishlistBadge />
         </Link>
         <div className="flex items-center gap-3">
-          <Link href="/cart" aria-label="Cart">
+          <Link href="/cart" aria-label="Cart" className="relative">
             <ShoppingBag size={20} />
+            <CartBadge />
           </Link>
           <span aria-hidden="true" className="hidden h-5 w-px bg-border md:block" />
           <ThemeToggle />

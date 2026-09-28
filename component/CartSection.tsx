@@ -1,45 +1,39 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { ChevronRight } from 'lucide-react';
-import Button, { buttonClassName } from '@/component/Button';
+import { buttonClassName } from '@/component/Button';
 import PlaceholderImage from '@/component/PlaceholderImage';
 import QuantityStepper from '@/component/QuantityStepper';
+import { removeFromCart, updateCartQuantity, useCartLines, type CartLine } from '@/lib/cart';
+import type { Product } from '@/lib/catalog/types';
+import { formatPrice } from '@/lib/format';
 
-interface CartItem {
-  id: number;
+interface ResolvedCartItem extends CartLine {
   name: string;
-  variants: string[];
   price: number;
-  quantity: number;
-  selected: boolean;
 }
 
-const INITIAL_ITEMS: CartItem[] = [
-  { id: 1, name: 'Eyewear Name', variants: ['Color — Matte Black'], price: 1000, quantity: 1, selected: true },
-  { id: 2, name: 'Eyewear Name', variants: ['Color — Tortoiseshell'], price: 1000, quantity: 1, selected: true },
-];
-
-function formatPrice(amount: number) {
-  return `₱${amount.toLocaleString('en-PH')}`;
+function lineKey(line: CartLine) {
+  return `${line.slug}::${line.color ?? ''}`;
 }
 
 interface CartItemRowProps {
-  item: CartItem;
-  onToggle: (id: number) => void;
-  onRemove: (id: number) => void;
-  onQuantityChange: (id: number, quantity: number) => void;
+  item: ResolvedCartItem;
+  selected: boolean;
+  onToggle: () => void;
+  onRemove: () => void;
+  onQuantityChange: (quantity: number) => void;
 }
 
-function CartItemRow({ item, onToggle, onRemove, onQuantityChange }: CartItemRowProps) {
+function CartItemRow({ item, selected, onToggle, onRemove, onQuantityChange }: CartItemRowProps) {
   return (
     <div className="flex gap-4 border-b border-border py-6 first:pt-0">
       <input
         type="checkbox"
         aria-label={`Select ${item.name}`}
-        checked={item.selected}
-        onChange={() => onToggle(item.id)}
+        checked={selected}
+        onChange={onToggle}
         className="mt-1 h-4 w-4 shrink-0 accent-foreground"
       />
       <PlaceholderImage variant="plain" className="h-28 w-36 shrink-0 rounded-lg" />
@@ -47,25 +41,17 @@ function CartItemRow({ item, onToggle, onRemove, onQuantityChange }: CartItemRow
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="font-bold">{item.name}</p>
-            {item.variants.map((variant) => (
-              <p key={variant} className="text-sm text-muted-foreground">
-                Variant: {variant}
-              </p>
-            ))}
+            {item.color && <p className="text-sm text-muted-foreground">Color: {item.color}</p>}
           </div>
           <div className="shrink-0 text-right">
             <p className="font-semibold">{formatPrice(item.price)}</p>
-            <button
-              type="button"
-              onClick={() => onRemove(item.id)}
-              className="mt-1 text-sm text-muted-foreground hover:text-foreground"
-            >
+            <button type="button" onClick={onRemove} className="mt-1 text-sm text-muted-foreground hover:text-foreground">
               Remove
             </button>
           </div>
         </div>
         <div className="mt-4">
-          <QuantityStepper value={item.quantity} onChange={(next) => onQuantityChange(item.id, next)} />
+          <QuantityStepper value={item.quantity} onChange={onQuantityChange} />
         </div>
       </div>
     </div>
@@ -73,32 +59,67 @@ function CartItemRow({ item, onToggle, onRemove, onQuantityChange }: CartItemRow
 }
 
 export default function CartSection() {
-  const [items, setItems] = useState<CartItem[]>(INITIAL_ITEMS);
+  const lines = useCartLines();
+  const [products, setProducts] = useState<Record<string, Product>>({});
+  const [selected, setSelected] = useState<Record<string, boolean>>({});
 
-  const allSelected = items.length > 0 && items.every((item) => item.selected);
-  const selectedItems = items.filter((item) => item.selected);
+  const slugsKey = [...new Set(lines.map((line) => line.slug))].sort().join(',');
+
+  useEffect(() => {
+    const slugs = slugsKey ? slugsKey.split(',') : [];
+    if (slugs.length === 0) return;
+
+    let cancelled = false;
+
+    fetch('/api/products/by-slugs', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ slugs }),
+    })
+      .then((res) => res.json())
+      .then((data: { products: Product[] }) => {
+        if (cancelled) return;
+        setProducts(Object.fromEntries((data.products ?? []).map((product) => [product.slug, product])));
+      })
+      .catch(() => {
+        if (!cancelled) setProducts({});
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [slugsKey]);
+
+  // Lines default to selected until explicitly toggled off — avoids needing
+  // an effect to seed the map as new lines appear.
+  const isSelected = (key: string) => selected[key] ?? true;
+
+  const items: ResolvedCartItem[] = lines
+    .map((line) => {
+      const product = products[line.slug];
+      if (!product) return null;
+      return { ...line, name: product.name, price: product.price };
+    })
+    .filter((item): item is ResolvedCartItem => item !== null);
+
+  const allSelected = items.length > 0 && items.every((item) => isSelected(lineKey(item)));
+  const selectedItems = items.filter((item) => isSelected(lineKey(item)));
   const selectedCount = selectedItems.length;
   const subtotal = selectedItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
   const toggleAll = () => {
     const next = !allSelected;
-    setItems((prev) => prev.map((item) => ({ ...item, selected: next })));
+    setSelected(Object.fromEntries(items.map((item) => [lineKey(item), next])));
   };
 
-  const toggleItem = (id: number) => {
-    setItems((prev) => prev.map((item) => (item.id === id ? { ...item, selected: !item.selected } : item)));
-  };
-
-  const removeItem = (id: number) => {
-    setItems((prev) => prev.filter((item) => item.id !== id));
+  const toggleItem = (key: string) => {
+    setSelected((prev) => ({ ...prev, [key]: !isSelected(key) }));
   };
 
   const removeSelected = () => {
-    setItems((prev) => prev.filter((item) => !item.selected));
-  };
-
-  const setQuantity = (id: number, quantity: number) => {
-    setItems((prev) => prev.map((item) => (item.id === id ? { ...item, quantity } : item)));
+    for (const item of items) {
+      if (isSelected(lineKey(item))) removeFromCart(item.slug, item.color);
+    }
   };
 
   return (
@@ -106,12 +127,7 @@ export default function CartSection() {
       <div className="md:col-span-2">
         <div className="flex items-center gap-3 border-b border-border pb-4 text-sm">
           <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={allSelected}
-              onChange={toggleAll}
-              className="h-4 w-4 accent-foreground"
-            />
+            <input type="checkbox" checked={allSelected} onChange={toggleAll} className="h-4 w-4 accent-foreground" />
             Select All
           </label>
           <span className="text-border" aria-hidden="true">
@@ -125,31 +141,20 @@ export default function CartSection() {
         {items.length === 0 ? (
           <p className="py-14 text-center text-sm text-muted-foreground">Your cart is empty.</p>
         ) : (
-          items.map((item) => (
-            <CartItemRow
-              key={item.id}
-              item={item}
-              onToggle={toggleItem}
-              onRemove={removeItem}
-              onQuantityChange={setQuantity}
-            />
-          ))
+          items.map((item) => {
+            const key = lineKey(item);
+            return (
+              <CartItemRow
+                key={key}
+                item={item}
+                selected={isSelected(key)}
+                onToggle={() => toggleItem(key)}
+                onRemove={() => removeFromCart(item.slug, item.color)}
+                onQuantityChange={(quantity) => updateCartQuantity(item.slug, item.color, quantity)}
+              />
+            );
+          })
         )}
-
-        <div className="flex items-center justify-center gap-3 pt-8">
-          <span className="flex h-8 w-8 items-center justify-center rounded-md bg-foreground text-sm font-semibold text-background">
-            1
-          </span>
-          <Button variant="ghost" size="sm" className="h-8 w-8 px-0">
-            2
-          </Button>
-          <Button variant="ghost" size="sm" className="h-8 w-8 px-0">
-            3
-          </Button>
-          <Button variant="ghost" size="sm" className="h-8 w-8 px-0" aria-label="Next page">
-            <ChevronRight size={16} />
-          </Button>
-        </div>
       </div>
 
       <div className="md:sticky md:top-24 md:self-start">
@@ -163,14 +168,11 @@ export default function CartSection() {
             <span className="text-muted-foreground">Subtotal:</span>
             <span>{formatPrice(subtotal)}</span>
           </div>
-          <div className="mt-4 border-t border-border pt-4 flex justify-between font-bold">
+          <div className="mt-4 flex justify-between border-t border-border pt-4 font-bold">
             <span>Total:</span>
             <span>{formatPrice(subtotal)}</span>
           </div>
-          <Link
-            href="/check-out"
-            className={buttonClassName({ variant: 'primary', className: 'mt-6 w-full uppercase' })}
-          >
+          <Link href="/check-out" className={buttonClassName({ variant: 'primary', className: 'mt-6 w-full uppercase' })}>
             Proceed to Checkout
           </Link>
           <Link href="/listing" className="mt-4 block text-center text-sm text-muted-foreground underline hover:text-foreground">
