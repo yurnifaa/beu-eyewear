@@ -3,8 +3,23 @@ import { ChevronLeft } from 'lucide-react';
 import Breadcrumb from '@/component/Breadcrumb';
 import CheckoutForm from '@/component/CheckoutForm';
 import Reveal from '@/component/Reveal';
+import { requireUser } from '@/lib/auth/session';
+import { getSavedAddress } from '@/lib/checkout/saved-address';
 
-export default function Page() {
+export default async function Page(props: PageProps<'/check-out'>) {
+  const { line } = await props.searchParams;
+
+  // The cart page sends the lines the buyer ticked as repeated ?line=slug::color
+  // params. No params means the whole cart.
+  const selectedKeys = line === undefined ? undefined : Array.isArray(line) ? line : [line];
+
+  // Keep the selection through a sign-in round trip.
+  const here = selectedKeys
+    ? `/check-out?${new URLSearchParams(selectedKeys.map((key) => ['line', key])).toString()}`
+    : '/check-out';
+  const user = await requireUser(here);
+  const savedAddress = await getSavedAddress(user.id);
+
   return (
     <>
       <Reveal mode="mount" className="px-6 pt-6">
@@ -27,7 +42,7 @@ export default function Page() {
       </Reveal>
 
       <Reveal mode="mount" className="px-6 py-8">
-        <CheckoutForm />
+        <CheckoutForm defaultName={user.name} savedAddress={savedAddress} selectedKeys={selectedKeys} />
       </Reveal>
     </>
   );

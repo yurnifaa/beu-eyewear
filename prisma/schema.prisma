@@ -15,7 +15,7 @@ model Category {
 }
 
 model Subcategory {
-  slug         String   @id
+  slug         String    @id
   categorySlug String
   name         String
   category     Category  @relation(fields: [categorySlug], references: [slug])
@@ -42,4 +42,113 @@ model Product {
 
   @@index([categorySlug])
   @@index([subcategorySlug])
+}
+
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  UNPAID
+  PAID
+}
+
+enum PaymentMethod {
+  CARD
+  WALLET
+  BANK
+}
+
+enum ShippingMethod {
+  STANDARD
+  EXPRESS
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  passwordHash String
+  createdAt    DateTime @default(now())
+
+  sessions     Session[]
+  orders       Order[]
+  savedAddress SavedAddress?
+}
+
+// One per user: saving again overwrites it. Field lengths are enforced in the
+// app (lib/checkout/address.ts), same as the Order address snapshot.
+model SavedAddress {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  fullName  String
+  address   String
+  city      String
+  province  String
+  zip       String
+  phone     String
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// Money columns are whole pesos, matching Product.price.
+model Order {
+  id             String         @id @default(cuid())
+  number         Int            @unique @default(autoincrement())
+  userId         String
+  status         OrderStatus    @default(PENDING)
+  paymentMethod  PaymentMethod
+  paymentStatus  PaymentStatus  @default(UNPAID)
+  shippingMethod ShippingMethod
+  subtotal       Int
+  shippingFee    Int
+  total          Int
+
+  // Address snapshot: later edits to a saved address must not rewrite history.
+  shipName     String
+  shipAddress  String
+  shipCity     String
+  shipProvince String
+  shipZip      String
+  shipPhone    String
+
+  createdAt DateTime @default(now())
+
+  user  User        @relation(fields: [userId], references: [id])
+  items OrderItem[]
+
+  @@index([userId, createdAt])
+}
+
+// Snapshots name/color/price and deliberately has no FK to Product: products
+// can be hard-deleted or repriced after the order is placed.
+model OrderItem {
+  id          String  @id @default(cuid())
+  orderId     String
+  productSlug String
+  name        String
+  color       String?
+  unitPrice   Int
+  quantity    Int
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
 }

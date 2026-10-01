@@ -1,49 +1,34 @@
 'use client';
 
-import { useState } from 'react';
+import { useActionState, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { ArrowRight, Clock } from 'lucide-react';
+import { placeOrder } from '@/app/(buyer)/check-out/actions';
 import AccordionSection from '@/component/AccordionSection';
 import { buttonClassName } from '@/component/Button';
+import TextField, { FieldLabel } from '@/component/FormField';
 import PlaceholderImage from '@/component/PlaceholderImage';
+import { lineKey, removeCartLines, useCartLines } from '@/lib/cart';
+import { useResolvedCartItems } from '@/lib/cart-items';
+import { ADDRESS_LIMITS, digitsOnly, normalizePhone, type AddressFields } from '@/lib/checkout/address';
+import { PAYMENT_METHOD_IDS, PAYMENT_METHOD_LABELS, type PaymentMethodId } from '@/lib/checkout/payment';
+import { calcTotals } from '@/lib/checkout/pricing';
+import {
+  SHIPPING_METHOD_IDS,
+  SHIPPING_METHODS,
+  deliveryEstimate,
+  type ShippingMethodId,
+} from '@/lib/checkout/shipping';
+import type { PlaceOrderState } from '@/lib/checkout/types';
+import { formatPrice } from '@/lib/format';
 
-type ShippingMethod = 'standard' | 'express';
-type PaymentMethod = 'card' | 'wallet' | 'bank';
+const initialState: PlaceOrderState = {};
 
-const ITEMS = [
-  { name: 'Frames', variant: 'Color / Anti Radiation', qty: 1, price: 1500 },
-  { name: 'Frames', variant: 'Color / Anti Radiation', qty: 1, price: 1500 },
-];
-
-const SHIPPING_PRICE: Record<ShippingMethod, number> = {
-  standard: 0,
-  express: 150,
-};
-
-const SHIPPING_OPTIONS: { id: ShippingMethod; label: string; eta: string; arrives: string }[] = [
-  { id: 'standard', label: '3–5 Business Days', eta: 'Free', arrives: 'Arrives Aug 25–27' },
-  { id: 'express', label: '1–2 Business Days', eta: '₱150', arrives: 'Arrives Aug 20–21' },
-];
-
-const PAYMENT_OPTIONS: { id: PaymentMethod; label: string }[] = [
-  { id: 'card', label: 'Card' },
-  { id: 'wallet', label: 'Wallet' },
-  { id: 'bank', label: 'Bank' },
-];
-
-function formatPrice(amount: number) {
-  return `₱${amount.toLocaleString('en-PH')}`;
-}
-
-function FieldLabel({ htmlFor, children }: { htmlFor: string; children: string }) {
-  return (
-    <label htmlFor={htmlFor} className="text-sm text-muted-foreground">
-      {children}
-    </label>
-  );
-}
-
-function TextField({ id, label }: { id: string; label: string }) {
+// Card details are collected by the payment provider once PayMongo is wired
+// in. These inputs deliberately have no `name`, so the browser never submits
+// them to placeOrder.
+function CardField({ id, label }: { id: string; label: string }) {
   return (
     <div className="flex flex-col gap-1.5">
       <FieldLabel htmlFor={id}>{label}</FieldLabel>
@@ -52,33 +37,116 @@ function TextField({ id, label }: { id: string; label: string }) {
   );
 }
 
-export default function CheckoutForm() {
-  const [shippingMethod, setShippingMethod] = useState<ShippingMethod>('standard');
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('card');
-  const [promoCode, setPromoCode] = useState('');
+interface CheckoutFormProps {
+  defaultName: string;
+  // The buyer's saved address, if they have one. Prefills the form.
+  savedAddress: AddressFields | null;
+  // Cart line keys (slug::color) chosen on the cart page. Without them,
+  // checkout covers the whole cart.
+  selectedKeys?: string[];
+}
 
-  const subtotal = ITEMS.reduce((sum, item) => sum + item.price * item.qty, 0);
-  const shipping = SHIPPING_PRICE[shippingMethod];
-  const total = subtotal + shipping;
+export default function CheckoutForm({ defaultName, savedAddress, selectedKeys }: CheckoutFormProps) {
+  const router = useRouter();
+  const cartLines = useCartLines();
+  const [shippingMethod, setShippingMethod] = useState<ShippingMethodId>('STANDARD');
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethodId>('CARD');
+  const [promoCode, setPromoCode] = useState('');
+  const [placed, setPlaced] = useState(false);
+
+  const lines = selectedKeys
+    ? cartLines.filter((line) => selectedKeys.includes(lineKey(line.slug, line.color)))
+    : cartLines;
+  const { items, ready } = useResolvedCartItems(lines);
+  const unavailableCount = lines.length - items.length;
+
+  const [state, formAction, pending] = useActionState(
+    async (prevState: PlaceOrderState, formData: FormData) => {
+      const result = await placeOrder(prevState, formData);
+
+      if (result.orderId) {
+        // Swap to the "placed" panel first so clearing the cart doesn't flash
+        // an empty checkout before the navigation lands.
+        setPlaced(true);
+        removeCartLines(items.map((item) => lineKey(item.slug, item.color)));
+        router.push(`/order-confirm/${result.orderId}`);
+      }
+      return result;
+    },
+    initialState,
+  );
+
+  const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const { shippingFee, total } = calcTotals(subtotal, shippingMethod);
+  const orderLines = JSON.stringify(items.map(({ slug, color, quantity }) => ({ slug, color, quantity })));
+
+  const fieldErrors = state.fieldErrors ?? {};
+  // Prefill: what was just submitted (after an error), else the saved address.
+  const values: Partial<Record<keyof AddressFields, string>> = state.values ?? savedAddress ?? {};
+  // Ticked by default only when nothing is saved yet. Once an address is saved
+  // it starts unticked, so editing the form for a one-off order doesn't silently
+  // overwrite it. After an error, keep whatever the buyer chose.
+  const saveAddressChecked = state.values ? state.values.saveAddress === 'on' : !savedAddress;
+  const generalError = state.error ?? fieldErrors.lines?.[0];
+  const canSubmit = ready && items.length > 0 && !pending;
+
+  if (placed) {
+    return <p className="py-14 text-center text-sm text-muted-foreground">Order placed — taking you to your confirmation…</p>;
+  }
+
+  if (ready && items.length === 0) {
+    return (
+      <div className="py-14 text-center">
+        <p className="text-sm text-muted-foreground">
+          {unavailableCount > 0 ? 'The items you selected are no longer available.' : 'You have nothing to check out yet.'}
+        </p>
+        <Link href="/cart" className={buttonClassName({ variant: 'primary', className: 'mt-6 uppercase' })}>
+          Back to Cart
+        </Link>
+      </div>
+    );
+  }
+
+  function renderErrorMessage() {
+    return (
+      <p aria-live="polite" className="mt-4 min-h-5 text-sm text-red-500">
+        {generalError}
+      </p>
+    );
+  }
 
   function renderOrderSummary(showPlaceOrder: boolean) {
     return (
       <>
-        <div className="flex flex-col gap-4">
-          {ITEMS.map((item, i) => (
-            <div key={i} className="flex gap-3 border-b border-border pb-4 last:border-b-0 last:pb-0">
-              <PlaceholderImage variant="plain" className="h-16 w-16 shrink-0 rounded-lg" />
-              <div className="flex flex-1 items-start justify-between gap-2">
-                <div>
-                  <p className="text-sm font-bold">{item.name}</p>
-                  <p className="text-xs text-muted-foreground">{item.variant}</p>
-                  <p className="text-xs text-muted-foreground">Qty: {item.qty}</p>
+        {!ready ? (
+          <p className="text-sm text-muted-foreground">Loading your order…</p>
+        ) : (
+          <div className="flex flex-col gap-4">
+            {items.map((item) => (
+              <div
+                key={lineKey(item.slug, item.color)}
+                className="flex gap-3 border-b border-border pb-4 last:border-b-0 last:pb-0"
+              >
+                <PlaceholderImage variant="plain" className="h-16 w-16 shrink-0 rounded-lg" />
+                <div className="flex flex-1 items-start justify-between gap-2">
+                  <div>
+                    <p className="text-sm font-bold">{item.name}</p>
+                    {item.color && <p className="text-xs text-muted-foreground">Color: {item.color}</p>}
+                    <p className="text-xs text-muted-foreground">Qty: {item.quantity}</p>
+                  </div>
+                  <p className="shrink-0 text-sm">{formatPrice(item.price * item.quantity)}</p>
                 </div>
-                <p className="shrink-0 text-sm">{formatPrice(item.price * item.qty)}</p>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
+
+        {unavailableCount > 0 && ready && (
+          <p className="mt-4 text-xs text-muted-foreground">
+            {unavailableCount === 1 ? '1 item is' : `${unavailableCount} items are`} no longer available and left out
+            of this order.
+          </p>
+        )}
 
         <div className="mt-4 flex justify-between text-sm">
           <span className="text-muted-foreground">Subtotal</span>
@@ -86,7 +154,7 @@ export default function CheckoutForm() {
         </div>
         <div className="mt-2 flex justify-between border-b border-border pb-4 text-sm">
           <span className="text-muted-foreground">Shipping</span>
-          <span>{shipping === 0 ? 'Free' : formatPrice(shipping)}</span>
+          <span>{shippingFee === 0 ? 'Free' : formatPrice(shippingFee)}</span>
         </div>
         <div className="mt-4 flex justify-between font-bold">
           <span>Total</span>
@@ -101,6 +169,10 @@ export default function CheckoutForm() {
               type="text"
               value={promoCode}
               onChange={(e) => setPromoCode(e.target.value)}
+              // This input lives inside the checkout <form>; Enter must not place the order.
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') e.preventDefault();
+              }}
               placeholder="Enter code"
               className="w-full rounded-lg bg-muted px-4 py-3 text-sm outline-none placeholder:text-muted-foreground"
             />
@@ -114,20 +186,28 @@ export default function CheckoutForm() {
         </div>
 
         {showPlaceOrder && (
-          <Link
-            href="/order-confirm"
-            className={buttonClassName({ variant: 'primary', className: 'mt-6 w-full uppercase' })}
-          >
-            Place Order
-            <ArrowRight size={16} />
-          </Link>
+          <>
+            {renderErrorMessage()}
+            <button
+              type="submit"
+              disabled={!canSubmit}
+              className={buttonClassName({ variant: 'primary', className: 'mt-2 w-full uppercase' })}
+            >
+              {pending ? 'Placing order…' : 'Place Order'}
+              {!pending && <ArrowRight size={16} />}
+            </button>
+          </>
         )}
       </>
     );
   }
 
   return (
-    <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+    <form action={formAction} className="grid grid-cols-1 gap-8 md:grid-cols-3">
+      <input type="hidden" name="lines" value={orderLines} />
+      <input type="hidden" name="shippingMethod" value={shippingMethod} />
+      <input type="hidden" name="paymentMethod" value={paymentMethod} />
+
       <div className="md:hidden">
         <AccordionSection title="Order Summary" defaultOpen>
           {renderOrderSummary(false)}
@@ -141,16 +221,87 @@ export default function CheckoutForm() {
             <p className="text-sm font-bold uppercase tracking-wide">Shipping Address</p>
           </div>
           <div className="mt-6 flex flex-col gap-4">
-            <TextField id="full-name" label="Full Name" />
-            <TextField id="address" label="Address" />
+            <TextField
+              id="fullName"
+              label="Full Name"
+              autoComplete="name"
+              maxLength={ADDRESS_LIMITS.fullName}
+              required
+              defaultValue={values.fullName ?? defaultName}
+              errors={fieldErrors.fullName}
+            />
+            <TextField
+              id="address"
+              label="Address"
+              autoComplete="street-address"
+              maxLength={ADDRESS_LIMITS.address}
+              required
+              defaultValue={values.address}
+              errors={fieldErrors.address}
+            />
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <TextField id="city" label="City" />
-              <TextField id="province" label="Province" />
+              <TextField
+                id="city"
+                label="City"
+                autoComplete="address-level2"
+                maxLength={ADDRESS_LIMITS.city}
+                required
+                defaultValue={values.city}
+                errors={fieldErrors.city}
+              />
+              <TextField
+                id="province"
+                label="Province"
+                autoComplete="address-level1"
+                maxLength={ADDRESS_LIMITS.province}
+                required
+                defaultValue={values.province}
+                errors={fieldErrors.province}
+              />
             </div>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <TextField id="zip" label="Zip / Postal Code" />
-              <TextField id="mobile" label="Mobile Number" />
+              <TextField
+                id="zip"
+                label="Zip / Postal Code"
+                autoComplete="postal-code"
+                inputMode="numeric"
+                maxLength={ADDRESS_LIMITS.zip}
+                onInput={(e) => {
+                  e.currentTarget.value = digitsOnly(e.currentTarget.value, ADDRESS_LIMITS.zip);
+                }}
+                required
+                defaultValue={values.zip}
+                errors={fieldErrors.zip}
+              />
+              {/* No maxLength here on purpose: the browser would cut a pasted "0917 123 4567" to
+                  11 characters (9 digits) before the filter below could strip the spaces. */}
+              <TextField
+                id="phone"
+                label="Mobile Number"
+                type="tel"
+                autoComplete="tel"
+                inputMode="numeric"
+                placeholder="09171234567"
+                onInput={(e) => {
+                  e.currentTarget.value = normalizePhone(e.currentTarget.value).slice(0, ADDRESS_LIMITS.phone);
+                }}
+                required
+                defaultValue={values.phone}
+                errors={fieldErrors.phone}
+              />
             </div>
+
+            <label className="flex cursor-pointer items-center gap-2 text-sm">
+              <input
+                // Remount when the default flips (e.g. after the address is removed in another tab).
+                key={String(saveAddressChecked)}
+                type="checkbox"
+                name="saveAddress"
+                defaultChecked={saveAddressChecked}
+                className="h-4 w-4 accent-foreground"
+              />
+              {savedAddress ? 'Update my saved address with these details' : 'Save this address for next time'}
+            </label>
           </div>
         </div>
 
@@ -160,33 +311,38 @@ export default function CheckoutForm() {
             <p className="text-sm font-bold uppercase tracking-wide">Shipping Method</p>
           </div>
           <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
-            {SHIPPING_OPTIONS.map((option) => {
-              const selected = shippingMethod === option.id;
+            {SHIPPING_METHOD_IDS.map((id) => {
+              const option = SHIPPING_METHODS[id];
+              const selected = shippingMethod === id;
               return (
                 <label
-                  key={option.id}
+                  key={id}
                   className={`flex cursor-pointer flex-col gap-1 rounded-xl border p-4 ${
                     selected ? 'border-foreground' : 'border-border'
                   }`}
                 >
                   <div className="flex items-start justify-between gap-2">
                     <span className="flex items-center gap-2 text-sm font-semibold">
+                      {/* Display only: the chosen method is submitted via the hidden shippingMethod input. */}
                       <input
                         type="radio"
-                        name="shipping"
+                        name="shipping-option"
                         checked={selected}
-                        onChange={() => setShippingMethod(option.id)}
+                        onChange={() => setShippingMethod(id)}
                         className="h-4 w-4 accent-foreground"
                       />
-                      {option.id === 'standard' ? 'Standard' : 'Express'}
+                      {option.label}
                     </span>
-                    <span className="text-sm">{option.eta}</span>
+                    <span className="text-sm">{option.fee === 0 ? 'Free' : formatPrice(option.fee)}</span>
                   </div>
-                  <p className="pl-6 text-xs text-muted-foreground">{option.label}</p>
+                  <p className="pl-6 text-xs text-muted-foreground">
+                    {option.minDays}–{option.maxDays} Business Days
+                  </p>
                   {selected && (
                     <p className="flex items-center gap-1 pl-6 text-xs text-muted-foreground">
                       <Clock size={12} />
-                      {option.arrives}
+                      {/* Depends on today's date, which can differ between server render and hydration. */}
+                      <span suppressHydrationWarning>Arrives {deliveryEstimate(id)}</span>
                     </p>
                   )}
                 </label>
@@ -201,61 +357,63 @@ export default function CheckoutForm() {
             <p className="text-sm font-bold uppercase tracking-wide">Payment Method</p>
           </div>
           <div className="mt-6 flex gap-4">
-            {PAYMENT_OPTIONS.map((option) => {
-              const selected = paymentMethod === option.id;
+            {PAYMENT_METHOD_IDS.map((id) => {
+              const selected = paymentMethod === id;
               return (
                 <button
-                  key={option.id}
+                  key={id}
                   type="button"
-                  onClick={() => setPaymentMethod(option.id)}
+                  onClick={() => setPaymentMethod(id)}
                   className={`flex-1 rounded-xl border px-4 py-3 text-sm font-semibold ${
                     selected ? 'border-foreground' : 'border-border text-muted-foreground'
                   }`}
                 >
-                  {option.label}
+                  {PAYMENT_METHOD_LABELS[id]}
                 </button>
               );
             })}
           </div>
 
           <div className="mt-6">
-            {paymentMethod === 'card' ? (
+            {paymentMethod === 'CARD' ? (
               <div className="flex flex-col gap-4">
-                <TextField id="card-number" label="Card Number" />
+                <CardField id="card-number" label="Card Number" />
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <TextField id="expiry" label="Expiry Date" />
-                  <TextField id="cvv" label="CVV" />
+                  <CardField id="expiry" label="Expiry Date" />
+                  <CardField id="cvv" label="CVV" />
                 </div>
-                <TextField id="card-name" label="Name on Card" />
+                <CardField id="card-name" label="Name on Card" />
               </div>
             ) : (
               <p className="text-sm text-muted-foreground">
-                You&apos;ll complete payment via {PAYMENT_OPTIONS.find((o) => o.id === paymentMethod)?.label} at
-                checkout.
+                You&apos;ll complete payment via {PAYMENT_METHOD_LABELS[paymentMethod]} at checkout.
               </p>
             )}
           </div>
+          <p className="mt-4 text-xs text-muted-foreground">
+            Payment isn&apos;t collected yet — your order will be saved as unpaid.
+          </p>
         </div>
 
         <div className="md:hidden">
-          <Link
-            href="/order-confirm"
-            className={buttonClassName({ variant: 'primary', className: 'w-full uppercase' })}
+          {renderErrorMessage()}
+          <button
+            type="submit"
+            disabled={!canSubmit}
+            className={buttonClassName({ variant: 'primary', className: 'mt-2 w-full uppercase' })}
           >
-            Place Order
-            <ArrowRight size={16} />
-          </Link>
+            {pending ? 'Placing order…' : 'Place Order'}
+            {!pending && <ArrowRight size={16} />}
+          </button>
         </div>
       </div>
 
       <div className="hidden md:block md:sticky md:top-24 md:self-start">
         <div className="rounded-xl bg-muted p-6">
           <p className="text-sm font-bold uppercase tracking-wide">Order Summary</p>
-          <div className="mt-4">
-            {renderOrderSummary(true)}
-          </div>
+          <div className="mt-4">{renderOrderSummary(true)}</div>
         </div>
       </div>
-    </div>
+    </form>
   );
 }

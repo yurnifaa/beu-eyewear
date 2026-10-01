@@ -1,11 +1,8 @@
 import Link from 'next/link';
 import { Heart, MapPin, Package } from 'lucide-react';
-
-const MOCK_USER = {
-  name: 'Rubilyn Gonzales',
-  email: 'rubilyn.gonzales@gmail.com',
-  memberSince: '2025',
-};
+import { buttonClassName } from '@/component/Button';
+import { logout } from '@/lib/auth/actions';
+import { requireUser } from '@/lib/auth/session';
 
 const QUICK_LINKS = [
   { href: '/account/orders', label: 'Orders', description: 'Track and review past purchases', icon: Package },
@@ -13,18 +10,27 @@ const QUICK_LINKS = [
   { href: '/account/wishlist', label: 'Wishlist', description: 'Products you have saved', icon: Heart },
 ] as const;
 
-export default function AccountPage() {
+export default async function AccountPage() {
+  // Checked here rather than in account/layout.tsx so /account/wishlist
+  // (localStorage-backed) stays usable without signing in.
+  const user = await requireUser('/account');
+
   return (
     <div className="flex flex-col gap-8">
       <div>
         <h1 className="text-2xl font-bold">Account Overview</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Preview profile — sign-in isn&apos;t wired up yet.</p>
       </div>
 
-      <div className="rounded-2xl border border-border p-6">
-        <p className="text-lg font-bold">{MOCK_USER.name}</p>
-        <p className="mt-1 text-sm text-muted-foreground">{MOCK_USER.email}</p>
-        <p className="mt-1 text-xs text-muted-foreground">Member since {MOCK_USER.memberSince}</p>
+      <div className="flex items-center justify-between gap-4 rounded-2xl border border-border p-6">
+        <div>
+          <p className="text-lg font-bold">{user.name}</p>
+          <p className="mt-1 text-sm text-muted-foreground">{user.email}</p>
+        </div>
+        <form action={logout}>
+          <button type="submit" className={buttonClassName({ variant: 'secondary' })}>
+            Sign Out
+          </button>
+        </form>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">

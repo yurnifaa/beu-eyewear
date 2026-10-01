@@ -1,21 +1,22 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { buttonClassName } from '@/component/Button';
 import PlaceholderImage from '@/component/PlaceholderImage';
 import QuantityStepper from '@/component/QuantityStepper';
-import { removeFromCart, updateCartQuantity, useCartLines, type CartLine } from '@/lib/cart';
-import type { Product } from '@/lib/catalog/types';
+import {
+  lineKey as cartLineKey,
+  removeFromCart,
+  updateCartQuantity,
+  useCartLines,
+  type CartLine,
+} from '@/lib/cart';
+import { useResolvedCartItems, type ResolvedCartItem } from '@/lib/cart-items';
 import { formatPrice } from '@/lib/format';
 
-interface ResolvedCartItem extends CartLine {
-  name: string;
-  price: number;
-}
-
 function lineKey(line: CartLine) {
-  return `${line.slug}::${line.color ?? ''}`;
+  return cartLineKey(line.slug, line.color);
 }
 
 interface CartItemRowProps {
@@ -60,52 +61,18 @@ function CartItemRow({ item, selected, onToggle, onRemove, onQuantityChange }: C
 
 export default function CartSection() {
   const lines = useCartLines();
-  const [products, setProducts] = useState<Record<string, Product>>({});
+  const { items } = useResolvedCartItems(lines);
   const [selected, setSelected] = useState<Record<string, boolean>>({});
-
-  const slugsKey = [...new Set(lines.map((line) => line.slug))].sort().join(',');
-
-  useEffect(() => {
-    const slugs = slugsKey ? slugsKey.split(',') : [];
-    if (slugs.length === 0) return;
-
-    let cancelled = false;
-
-    fetch('/api/products/by-slugs', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ slugs }),
-    })
-      .then((res) => res.json())
-      .then((data: { products: Product[] }) => {
-        if (cancelled) return;
-        setProducts(Object.fromEntries((data.products ?? []).map((product) => [product.slug, product])));
-      })
-      .catch(() => {
-        if (!cancelled) setProducts({});
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [slugsKey]);
 
   // Lines default to selected until explicitly toggled off — avoids needing
   // an effect to seed the map as new lines appear.
   const isSelected = (key: string) => selected[key] ?? true;
 
-  const items: ResolvedCartItem[] = lines
-    .map((line) => {
-      const product = products[line.slug];
-      if (!product) return null;
-      return { ...line, name: product.name, price: product.price };
-    })
-    .filter((item): item is ResolvedCartItem => item !== null);
-
   const allSelected = items.length > 0 && items.every((item) => isSelected(lineKey(item)));
   const selectedItems = items.filter((item) => isSelected(lineKey(item)));
   const selectedCount = selectedItems.length;
   const subtotal = selectedItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const checkoutHref = `/check-out?${new URLSearchParams(selectedItems.map((item) => ['line', lineKey(item)])).toString()}`;
 
   const toggleAll = () => {
     const next = !allSelected;
@@ -172,9 +139,24 @@ export default function CartSection() {
             <span>Total:</span>
             <span>{formatPrice(subtotal)}</span>
           </div>
-          <Link href="/check-out" className={buttonClassName({ variant: 'primary', className: 'mt-6 w-full uppercase' })}>
-            Proceed to Checkout
-          </Link>
+          {selectedCount === 0 ? (
+            // Without any ?line params checkout would fall back to the whole
+            // cart, so don't offer a link when nothing is selected.
+            <button
+              type="button"
+              disabled
+              className={buttonClassName({ variant: 'primary', className: 'mt-6 w-full uppercase' })}
+            >
+              Proceed to Checkout
+            </button>
+          ) : (
+            <Link
+              href={checkoutHref}
+              className={buttonClassName({ variant: 'primary', className: 'mt-6 w-full uppercase' })}
+            >
+              Proceed to Checkout
+            </Link>
+          )}
           <Link href="/listing" className="mt-4 block text-center text-sm text-muted-foreground underline hover:text-foreground">
             Continue Shopping
           </Link>

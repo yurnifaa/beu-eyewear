@@ -19,7 +19,8 @@
     "prisma": "^7.10.0",
     "react": "19.2.8",
     "react-dom": "19.2.8",
-    "ws": "^8.22.0"
+    "ws": "^8.22.0",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

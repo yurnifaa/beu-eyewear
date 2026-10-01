@@ -27,7 +27,7 @@ function subscribe(callback: () => void) {
   };
 }
 
-function lineKey(slug: string, color: string | undefined) {
+export function lineKey(slug: string, color: string | undefined) {
   return `${slug}::${color ?? ''}`;
 }
 
@@ -101,6 +101,13 @@ export function updateCartQuantity(slug: string, color: string | undefined, quan
 export function removeFromCart(slug: string, color?: string) {
   const key = lineKey(slug, color);
   writeLines(readLines().filter((line) => lineKey(line.slug, line.color) !== key));
+}
+
+// Removes several lines in one write (and one notify) — used to clear exactly
+// the lines that were just ordered, leaving unselected ones in the cart.
+export function removeCartLines(keys: string[]) {
+  const remove = new Set(keys);
+  writeLines(readLines().filter((line) => !remove.has(lineKey(line.slug, line.color))));
 }
 
 export function useCartLines(): CartLine[] {
