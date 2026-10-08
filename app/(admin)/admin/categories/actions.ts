@@ -1,6 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { requireAdmin } from '@/lib/auth/session';
 import { prisma } from '@/lib/prisma';
 
 function revalidateCatalog() {
@@ -11,6 +12,7 @@ function revalidateCatalog() {
 }
 
 export async function createCategory(formData: FormData) {
+  await requireAdmin();
   const slug = String(formData.get('slug') ?? '').trim();
   const name = String(formData.get('name') ?? '').trim();
   const description = String(formData.get('description') ?? '').trim();
@@ -21,6 +23,7 @@ export async function createCategory(formData: FormData) {
 }
 
 export async function createSubcategory(formData: FormData) {
+  await requireAdmin();
   const slug = String(formData.get('slug') ?? '').trim();
   const name = String(formData.get('name') ?? '').trim();
   const categorySlug = String(formData.get('categorySlug') ?? '').trim();

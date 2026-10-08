@@ -8,7 +8,7 @@ import { placeOrder } from '@/app/(buyer)/check-out/actions';
 import AccordionSection from '@/component/AccordionSection';
 import { buttonClassName } from '@/component/Button';
 import TextField, { FieldLabel } from '@/component/FormField';
-import PlaceholderImage from '@/component/PlaceholderImage';
+import ProductImage from '@/component/ProductImage';
 import { lineKey, removeCartLines, useCartLines } from '@/lib/cart';
 import { useResolvedCartItems } from '@/lib/cart-items';
 import { ADDRESS_LIMITS, digitsOnly, normalizePhone, type AddressFields } from '@/lib/checkout/address';
@@ -127,7 +127,7 @@ export default function CheckoutForm({ defaultName, savedAddress, selectedKeys }
                 key={lineKey(item.slug, item.color)}
                 className="flex gap-3 border-b border-border pb-4 last:border-b-0 last:pb-0"
               >
-                <PlaceholderImage variant="plain" className="h-16 w-16 shrink-0 rounded-lg" />
+                <ProductImage imageUrl={item.imageUrl} alt={item.name} sizes="64px" className="h-16 w-16 shrink-0 rounded-lg" />
                 <div className="flex flex-1 items-start justify-between gap-2">
                   <div>
                     <p className="text-sm font-bold">{item.name}</p>

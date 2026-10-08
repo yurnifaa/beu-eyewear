@@ -204,6 +204,8 @@ export default async function Page(props: PageProps<'/listing'>) {
                   price={formatPrice(product.price)}
                   description={product.description}
                   href={`/listing/${product.slug}`}
+                  imageUrl={product.imageUrl}
+                  stockQuantity={product.stockQuantity}
                 />
               ))}
             </ProductRow>
@@ -222,6 +224,8 @@ export default async function Page(props: PageProps<'/listing'>) {
                   price={formatPrice(product.price)}
                   description={product.description}
                   href={`/listing/${product.slug}`}
+                  imageUrl={product.imageUrl}
+                  stockQuantity={product.stockQuantity}
                 />
               ))}
             </ProductRow>

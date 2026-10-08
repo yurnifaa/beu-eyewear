@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { buttonClassName } from '@/component/Button';
-import PlaceholderImage from '@/component/PlaceholderImage';
+import ProductImage from '@/component/ProductImage';
 import QuantityStepper from '@/component/QuantityStepper';
 import {
   lineKey as cartLineKey,
@@ -37,7 +37,7 @@ function CartItemRow({ item, selected, onToggle, onRemove, onQuantityChange }: C
         onChange={onToggle}
         className="mt-1 h-4 w-4 shrink-0 accent-foreground"
       />
-      <PlaceholderImage variant="plain" className="h-28 w-36 shrink-0 rounded-lg" />
+      <ProductImage imageUrl={item.imageUrl} alt={item.name} sizes="144px" className="h-28 w-36 shrink-0 rounded-lg" />
       <div className="flex flex-1 flex-col justify-between">
         <div className="flex items-start justify-between gap-4">
           <div>

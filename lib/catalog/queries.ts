@@ -17,6 +17,8 @@ function mapProduct(row: PrismaProduct): Product {
     frameShape: (row.frameShape ?? undefined) as FrameShape | undefined,
     colors: row.colors,
     warrantyYears: row.warrantyYears,
+    imageUrl: row.imageUrl ?? undefined,
+    stockQuantity: row.stockQuantity,
   };
 }
 

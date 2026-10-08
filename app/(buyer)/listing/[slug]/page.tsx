@@ -3,7 +3,7 @@ import { Star } from 'lucide-react';
 import AccordionSection from '@/component/AccordionSection';
 import AddToCartSection from '@/component/AddToCartSection';
 import Breadcrumb from '@/component/Breadcrumb';
-import PlaceholderImage from '@/component/PlaceholderImage';
+import ProductImage from '@/component/ProductImage';
 import ProductCard from '@/component/ProductCard';
 import ProductRow from '@/component/ProductRow';
 import Reveal from '@/component/Reveal';
@@ -59,11 +59,23 @@ export default async function Page(props: PageProps<'/listing/[slug]'>) {
       <Reveal mode="mount" className="grid grid-cols-1 gap-8 px-6 py-8 md:grid-cols-2">
         <div className="flex flex-col gap-4 md:flex-row">
           <div className="flex flex-row gap-3 md:flex-col">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <PlaceholderImage key={i} variant="plain" className="h-16 w-16 shrink-0 rounded-md" />
+            {/* One real photo per product for now; placeholders keep the layout until a gallery exists. */}
+            {Array.from({ length: product.imageUrl ? 1 : 4 }).map((_, i) => (
+              <ProductImage
+                key={i}
+                imageUrl={product.imageUrl}
+                alt={product.name}
+                sizes="64px"
+                className="h-16 w-16 shrink-0 rounded-md"
+              />
             ))}
           </div>
-          <PlaceholderImage variant="plain" className="aspect-3/4 flex-1 rounded-xl" />
+          <ProductImage
+            imageUrl={product.imageUrl}
+            alt={product.name}
+            sizes="(min-width: 768px) 40vw, 100vw"
+            className="aspect-3/4 flex-1 rounded-xl"
+          />
         </div>
 
         <div className="flex flex-col gap-6">
@@ -73,7 +85,12 @@ export default async function Page(props: PageProps<'/listing/[slug]'>) {
             <p className="mt-3 text-lg font-semibold">{formatPrice(product.price)}</p>
           </div>
 
-          <AddToCartSection slug={product.slug} name={product.name} colors={product.colors} />
+          <AddToCartSection
+            slug={product.slug}
+            name={product.name}
+            colors={product.colors}
+            stockQuantity={product.stockQuantity}
+          />
 
           <div>
             <AccordionSection title="Product Details" defaultOpen>
@@ -127,6 +144,8 @@ export default async function Page(props: PageProps<'/listing/[slug]'>) {
                 price={formatPrice(related.price)}
                 description={related.description}
                 href={`/listing/${related.slug}`}
+                imageUrl={related.imageUrl}
+                stockQuantity={related.stockQuantity}
               />
             ))}
           </ProductRow>

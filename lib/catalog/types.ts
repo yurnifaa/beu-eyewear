@@ -32,7 +32,11 @@ export interface Product {
   frameShape?: FrameShape;
   colors: string[];
   warrantyYears: number;
+  imageUrl?: string;
+  stockQuantity: number;
 }
+
+export const LOW_STOCK_THRESHOLD = 5;
 
 export interface FrameMaterialSpec {
   dimensions: string;

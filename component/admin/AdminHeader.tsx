@@ -5,11 +5,9 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ChevronRight, LogOut, Menu } from 'lucide-react';
 import ThemeToggle from '@/component/ThemeToggle';
+import { logout } from '@/lib/auth/actions';
 
-const MOCK_ADMIN = {
-  name: 'Admin User',
-  role: 'Store Administrator',
-};
+const ADMIN_ROLE_LABEL = 'Store Administrator';
 
 function prettifySegment(segment: string): string {
   return segment
@@ -32,10 +30,11 @@ function buildBreadcrumbs(pathname: string) {
 }
 
 export interface AdminHeaderProps {
+  adminName: string;
   onMobileMenuToggle: () => void;
 }
 
-export default function AdminHeader({ onMobileMenuToggle }: AdminHeaderProps) {
+export default function AdminHeader({ adminName, onMobileMenuToggle }: AdminHeaderProps) {
   const pathname = usePathname() ?? '/admin';
   const breadcrumbs = buildBreadcrumbs(pathname);
   const [profileOpen, setProfileOpen] = useState(false);
@@ -102,28 +101,29 @@ export default function AdminHeader({ onMobileMenuToggle }: AdminHeaderProps) {
             className="flex items-center gap-3 rounded-full p-1 hover:bg-muted"
           >
             <div className="hidden text-right sm:block">
-              <span className="block text-sm font-semibold leading-tight text-foreground">{MOCK_ADMIN.name}</span>
-              <span className="block text-xs text-muted-foreground">{MOCK_ADMIN.role}</span>
+              <span className="block text-sm font-semibold leading-tight text-foreground">{adminName}</span>
+              <span className="block text-xs text-muted-foreground">{ADMIN_ROLE_LABEL}</span>
             </div>
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-700 text-sm font-semibold text-white">
-              {MOCK_ADMIN.name.charAt(0)}
+              {adminName.charAt(0).toUpperCase()}
             </div>
           </button>
 
           {profileOpen && (
             <div className="absolute right-0 top-full z-20 mt-2 w-56 rounded-xl border border-border bg-background p-2 shadow-lg">
               <div className="border-b border-border px-3 py-2 sm:hidden">
-                <p className="text-sm font-semibold text-foreground">{MOCK_ADMIN.name}</p>
-                <p className="text-xs text-muted-foreground">{MOCK_ADMIN.role}</p>
+                <p className="text-sm font-semibold text-foreground">{adminName}</p>
+                <p className="text-xs text-muted-foreground">{ADMIN_ROLE_LABEL}</p>
               </div>
-              <Link
-                href="/admin/login"
-                onClick={() => setProfileOpen(false)}
-                className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-red-600 hover:bg-muted"
-              >
-                <LogOut size={16} />
-                Sign out
-              </Link>
+              <form action={logout}>
+                <button
+                  type="submit"
+                  className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-red-600 hover:bg-muted"
+                >
+                  <LogOut size={16} />
+                  Sign out
+                </button>
+              </form>
             </div>
           )}
         </div>

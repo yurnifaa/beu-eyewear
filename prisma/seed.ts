@@ -328,6 +328,9 @@ async function main() {
       },
     ],
   });
+
+  // Seeded products start with stock so the storefront doesn't show them as sold out.
+  await prisma.product.updateMany({ data: { stockQuantity: 20 } });
 }
 
 main()

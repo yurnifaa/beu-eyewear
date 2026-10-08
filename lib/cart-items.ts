@@ -7,6 +7,7 @@ import type { Product } from '@/lib/catalog/types';
 export interface ResolvedCartItem extends CartLine {
   name: string;
   price: number;
+  imageUrl?: string;
 }
 
 const noopSubscribe = () => () => {};
@@ -58,10 +59,10 @@ export function useResolvedCartItems(lines: CartLine[]): { items: ResolvedCartIt
   }, [slugsKey]);
 
   const items = lines
-    .map((line) => {
+    .map((line): ResolvedCartItem | null => {
       const product = products[line.slug];
       if (!product) return null;
-      return { ...line, name: product.name, price: product.price };
+      return { ...line, name: product.name, price: product.price, imageUrl: product.imageUrl };
     })
     .filter((item): item is ResolvedCartItem => item !== null);
 

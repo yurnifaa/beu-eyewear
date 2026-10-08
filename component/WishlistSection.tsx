@@ -59,6 +59,8 @@ export default function WishlistSection() {
           price={formatPrice(product.price)}
           description={product.description}
           href={`/listing/${product.slug}`}
+          imageUrl={product.imageUrl}
+          stockQuantity={product.stockQuantity}
         />
       ))}
     </ProductRow>

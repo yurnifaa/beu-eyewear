@@ -36,8 +36,10 @@ model Product {
   frameShape      String?
   colors          String[]
   warrantyYears   Int
+  imageUrl        String?
+  stockQuantity   Int      @default(0)
 
-  category    Category    @relation(fields: [categorySlug], references: [slug])
+  category    Category   @relation(fields: [categorySlug], references: [slug])
   subcategory Subcategory @relation(fields: [subcategorySlug], references: [slug])
 
   @@index([categorySlug])
@@ -68,11 +70,17 @@ enum ShippingMethod {
   EXPRESS
 }
 
+enum Role {
+  CUSTOMER
+  ADMIN
+}
+
 model User {
   id           String   @id @default(cuid())
   email        String   @unique
   name         String
   passwordHash String
+  role         Role     @default(CUSTOMER)
   createdAt    DateTime @default(now())
 
   sessions     Session[]

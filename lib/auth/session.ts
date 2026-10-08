@@ -3,7 +3,7 @@ import 'server-only';
 import { createHash, randomBytes } from 'node:crypto';
 import { cache } from 'react';
 import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 
 const COOKIE_NAME = 'beu_session';
@@ -13,6 +13,7 @@ export interface CurrentUser {
   id: string;
   name: string;
   email: string;
+  role: 'CUSTOMER' | 'ADMIN';
 }
 
 // Only the hash is stored, so a leaked database can't be replayed as cookies.
@@ -54,7 +55,7 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
 
   const session = await prisma.session.findUnique({
     where: { tokenHash: hashToken(token) },
-    select: { id: true, expiresAt: true, user: { select: { id: true, name: true, email: true } } },
+    select: { id: true, expiresAt: true, user: { select: { id: true, name: true, email: true, role: true } } },
   });
   if (!session) return null;
 
@@ -71,6 +72,17 @@ export async function requireUser(next?: string): Promise<CurrentUser> {
   const user = await getCurrentUser();
   if (!user) {
     redirect(next ? `/login?next=${encodeURIComponent(next)}` : '/login');
+  }
+  return user;
+}
+
+// Admin pages and every admin Server Action must call this: actions are public
+// POST endpoints, so the layout check alone doesn't protect them. Signed-out
+// visitors go to sign-in; signed-in customers get a 404 so /admin isn't advertised.
+export async function requireAdmin(): Promise<CurrentUser> {
+  const user = await requireUser('/admin');
+  if (user.role !== 'ADMIN') {
+    notFound();
   }
   return user;
 }

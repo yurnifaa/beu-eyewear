@@ -8,6 +8,19 @@ import type { PlaceOrderState } from '@/lib/checkout/types';
 import { prisma } from '@/lib/prisma';
 import { checkoutSchema } from '@/lib/validation/checkout';
 
+// Thrown inside the order transaction so the stock decrements roll back with it.
+class OutOfStockError extends Error {
+  constructor(readonly productName: string) {
+    super(`${productName} is out of stock`);
+  }
+}
+
+function stockMessage(name: string, available: number) {
+  return available <= 0
+    ? `${name} just sold out. Please remove it from your cart and try again.`
+    : `${name} only has ${available} left in stock. Please lower the quantity in your cart and try again.`;
+}
+
 const TEXT_FIELDS = ['fullName', 'address', 'city', 'province', 'zip', 'phone'] as const;
 
 function text(formData: FormData, key: string) {
@@ -51,11 +64,11 @@ export async function placeOrder(_prevState: PlaceOrderState, formData: FormData
   // all come from the database.
   const products = await prisma.product.findMany({
     where: { slug: { in: [...new Set(lines.map((line) => line.slug))] } },
-    select: { slug: true, name: true, price: true, colors: true },
+    select: { slug: true, name: true, price: true, colors: true, stockQuantity: true },
   });
   const bySlug = new Map(products.map((product) => [product.slug, product]));
 
-  const items = [];
+  const items: { productSlug: string; name: string; color: string | null; unitPrice: number; quantity: number }[] = [];
   for (const line of lines) {
     const product = bySlug.get(line.slug);
     if (!product) {
@@ -79,30 +92,57 @@ export async function placeOrder(_prevState: PlaceOrderState, formData: FormData
     });
   }
 
+  // The same product can be in the cart in several colors; stock is per product.
+  const demand = new Map<string, number>();
+  for (const item of items) {
+    demand.set(item.productSlug, (demand.get(item.productSlug) ?? 0) + item.quantity);
+  }
+  for (const [slug, quantity] of demand) {
+    const product = bySlug.get(slug)!;
+    if (product.stockQuantity < quantity) {
+      return { values, error: stockMessage(product.name, product.stockQuantity) };
+    }
+  }
+
   const subtotal = items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
   const totals = calcTotals(subtotal, shippingMethod);
 
   let orderId: string;
   try {
-    // One nested create is atomic: the order and its items both exist or neither does.
-    const order = await prisma.order.create({
-      data: {
-        userId: user.id,
-        shippingMethod,
-        paymentMethod,
-        ...totals,
-        shipName: address.fullName,
-        shipAddress: address.address,
-        shipCity: address.city,
-        shipProvince: address.province,
-        shipZip: address.zip,
-        shipPhone: address.phone,
-        items: { create: items },
-      },
-      select: { id: true },
+    // One transaction: the stock decrements and the order (with its items) all
+    // happen or none do. The conditional updateMany is what stops two buyers
+    // checking out the last item at the same time — the loser gets count 0.
+    const order = await prisma.$transaction(async (tx) => {
+      for (const [slug, quantity] of demand) {
+        const { count } = await tx.product.updateMany({
+          where: { slug, stockQuantity: { gte: quantity } },
+          data: { stockQuantity: { decrement: quantity } },
+        });
+        if (count === 0) throw new OutOfStockError(bySlug.get(slug)!.name);
+      }
+
+      return tx.order.create({
+        data: {
+          userId: user.id,
+          shippingMethod,
+          paymentMethod,
+          ...totals,
+          shipName: address.fullName,
+          shipAddress: address.address,
+          shipCity: address.city,
+          shipProvince: address.province,
+          shipZip: address.zip,
+          shipPhone: address.phone,
+          items: { create: items },
+        },
+        select: { id: true },
+      });
     });
     orderId = order.id;
   } catch (error) {
+    if (error instanceof OutOfStockError) {
+      return { values, error: stockMessage(error.productName, 0) };
+    }
     console.error('placeOrder failed', error);
     return { values, error: 'We couldn’t place your order. Please try again.' };
   }

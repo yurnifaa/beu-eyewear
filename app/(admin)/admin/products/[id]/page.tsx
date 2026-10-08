@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import { buttonClassName } from '@/component/Button';
+import DeleteProductButton from '@/component/admin/DeleteProductButton';
 import ProductForm from '@/component/admin/ProductForm';
 import { getAllSubcategories, getCategories, getProductBySlug } from '@/lib/catalog/queries';
 import { deleteProduct, updateProduct } from '../actions';
@@ -26,11 +26,7 @@ export default async function EditProductPage(props: PageProps<'/admin/products/
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Edit Product</h1>
-        <form action={deleteWithSlug}>
-          <button type="submit" className={buttonClassName({ variant: 'secondary', className: 'text-red-600' })}>
-            Delete
-          </button>
-        </form>
+        <DeleteProductButton action={deleteWithSlug} productName={product.name} />
       </div>
       <ProductForm
         action={updateWithSlug}
