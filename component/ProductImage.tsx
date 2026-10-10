@@ -8,6 +8,7 @@ export interface ProductImageProps {
   className?: string;
   // What the browser should assume about the rendered width, e.g. "(min-width: 1024px) 25vw, 50vw".
   sizes: string;
+  objectFit?: 'cover' | 'contain';
   placeholderVariant?: PlaceholderImageVariant;
 }
 
@@ -17,6 +18,7 @@ export default function ProductImage({
   alt,
   className = '',
   sizes,
+  objectFit = 'cover',
   placeholderVariant = 'plain',
 }: ProductImageProps) {
   if (!imageUrl) {
@@ -25,7 +27,7 @@ export default function ProductImage({
 
   return (
     <div className={`relative overflow-hidden border border-border bg-card ${className}`}>
-      <Image src={imageUrl} alt={alt} fill sizes={sizes} className="object-cover" />
+      <Image src={imageUrl} alt={alt} fill sizes={sizes} className={`object-${objectFit}`} />
     </div>
   );
 }

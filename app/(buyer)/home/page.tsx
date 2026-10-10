@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { Package, Home, Clock, Star, ArrowRight } from 'lucide-react';
 import { buttonClassName } from '@/component/Button';
 import PlaceholderImage from '@/component/PlaceholderImage';
@@ -6,7 +7,7 @@ import ProductCard from '@/component/ProductCard';
 import ProductRow from '@/component/ProductRow';
 import Reveal from '@/component/Reveal';
 import SectionLabel from '@/component/SectionLabel';
-import { getCategories, getFeaturedProducts, getProducts } from '@/lib/catalog/queries';
+import { getCategories, getProducts } from '@/lib/catalog/queries';
 import { formatPrice } from '@/lib/format';
 
 // Reads live, admin-editable catalog data, so don't bake it into a static
@@ -17,6 +18,57 @@ const TRUST_BADGES = [
   { icon: Package, label: 'Free Eyewear Kit Included' },
   { icon: Home, label: '7-Day Free Returns' },
   { icon: Clock, label: 'Up To 5-Year Warranty' },
+];
+
+const FEATURED_HOME_PRODUCTS = [
+  {
+    name: 'Tortoise Pilot Sunglasses',
+    imageUrl: '/Tortoise Pilot.png',
+    price: 1499,
+    rating: 4.9,
+    reviewCount: 84,
+    href: '/listing?category=classic',
+    colorSwatches: [
+      { label: 'Brown', color: '#80563B' },
+      { label: 'Black', color: '#202124' },
+    ],
+  },
+  {
+    name: 'Silver Cat-Eye Glasses',
+    imageUrl: '/Silver Cat-Eye.png',
+    price: 1499,
+    rating: 4.9,
+    reviewCount: 84,
+    href: '/listing?category=classic',
+    colorSwatches: [
+      { label: 'Silver', color: '#C0C0C0' },
+      { label: 'Pink', color: '#E9B7C5' },
+    ],
+  },
+  {
+    name: 'Wire Spine Oval Glasses',
+    imageUrl: '/Cyber Oval Glasses.png',
+    price: 1499,
+    rating: 4.9,
+    reviewCount: 84,
+    href: '/listing?category=classic',
+    colorSwatches: [
+      { label: 'Light blue', color: '#B9D7E8' },
+      { label: 'Tan', color: '#C2A27A' },
+    ],
+  },
+  {
+    name: 'Tech Wayfarer Glasses',
+    imageUrl: '/Tech Wayfarer.png',
+    price: 1499,
+    rating: 4.9,
+    reviewCount: 84,
+    href: '/listing?category=smart',
+    colorSwatches: [
+      { label: 'Gray', color: '#9CA3AF' },
+      { label: 'Black', color: '#202124' },
+    ],
+  },
 ];
 
 // Figma order. Gumagana kahit "beu-classic" o "classic" ang slug.
@@ -108,9 +160,8 @@ function OfferTicket({
 }
 
 export default async function Page() {
-  const [allCategories, featuredProducts, bundleResults, studentPickResults] = await Promise.all([
+  const [allCategories, bundleResults, studentPickResults] = await Promise.all([
     getCategories(),
-    getFeaturedProducts(4),
     getProducts({ category: 'collections', sub: 'bundles' }),
     getProducts({ category: 'collections', sub: 'student-picks' }),
   ]);
@@ -123,23 +174,32 @@ export default async function Page() {
     <>
       {/* Hero */}
       <Reveal mode="mount" className="px-6 py-8 md:py-10">
-        <PlaceholderImage variant="cross" className="aspect-[2.7/1] w-full rounded-sm bg-[#F8F8F8]" />
+        <div className="relative aspect-[2.7/1] w-full overflow-hidden rounded-sm bg-[#F8F8F8]">
+          <Image
+            src="/hero-glasses.png"
+            alt="Silver BeU eyeglasses"
+            fill
+            priority
+            sizes="(max-width: 768px) 100vw, calc(100vw - 3rem)"
+            className="object-contain"
+          />
+        </div>
       </Reveal>
 
       {/* Featured products */}
       <Reveal className="px-6 py-10">
         <SectionLabel>Featured Products</SectionLabel>
         <ProductRow className="mt-6">
-          {featuredProducts.map((product) => (
+          {FEATURED_HOME_PRODUCTS.map((product) => (
             <ProductCard
-              key={product.slug}
-              slug={product.slug}
+              key={product.name}
               name={product.name}
               price={formatPrice(product.price)}
-              description={product.description}
-              href={`/listing/${product.slug}`}
               imageUrl={product.imageUrl}
-              stockQuantity={product.stockQuantity}
+              href={product.href}
+              rating={product.rating}
+              reviewCount={product.reviewCount}
+              colorSwatches={product.colorSwatches}
             />
           ))}
         </ProductRow>
