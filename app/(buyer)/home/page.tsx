@@ -141,7 +141,7 @@ function OfferTicket({
               href={href}
               className={buttonClassName({
                 variant: 'secondary',
-                className: 'border-[#5A6DBE] bg-[#5A6DBE] px-3 py-2 text-white hover:border-[#5A6DBE] hover:bg-white hover:text-[#5A6DBE]',
+                className: 'border-[#5A6DBE] bg-[#5A6DBE] px-3 py-2 text-white hover:border-[#5A6DBE] hover:bg-white hover:text-[#5A6DBE] dark:hover:bg-[#161928] dark:hover:text-white',
               })}
             >
               {actionLabel}
