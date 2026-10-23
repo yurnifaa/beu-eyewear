@@ -10,7 +10,7 @@ interface OrderTabsProps {
 // reload, can be shared, and works with the back button.
 export default function OrderTabs({ active, counts }: OrderTabsProps) {
   return (
-    // overflow-x-auto keeps five tabs usable on a phone: the strip scrolls
+    // overflow-x-auto keeps the tabs usable on a phone: the strip scrolls
     // inside this box instead of stretching the page.
     <nav aria-label="Order status" className="overflow-x-auto border-b border-border">
       <ul className="flex min-w-max gap-6">

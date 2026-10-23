@@ -49,6 +49,33 @@ body {
   font-family: var(--font-sans);
 }
 
+.benefits-track {
+  display: flex;
+  width: max-content;
+  animation: benefits-slide-right 30s linear infinite;
+}
+
+.benefits-group {
+  display: flex;
+  flex-shrink: 0;
+  min-width: 100vw;
+  align-items: center;
+  justify-content: space-around;
+  gap: 4rem;
+  padding-inline: 3rem;
+}
+
+@keyframes benefits-slide-right {
+  from { transform: translateX(-50%); }
+  to { transform: translateX(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .benefits-track { width: 100%; animation: none; }
+  .benefits-group { min-width: 0; width: 100%; flex-wrap: wrap; gap: 1.5rem; padding-inline: 1.5rem; }
+  .benefits-group[aria-hidden="true"] { display: none; }
+}
+
 /* Rectangle wipe reveal for the theme toggle's view transition. */
 @keyframes theme-rect-reveal {
   from {
