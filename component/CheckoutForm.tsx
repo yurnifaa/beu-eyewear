@@ -3,7 +3,7 @@
 import { useActionState, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowRight, Clock } from 'lucide-react';
+import { ArrowRight, Clock, CreditCard, Wallet, Landmark, CheckCircle2 } from 'lucide-react';
 import { placeOrder } from '@/app/(buyer)/check-out/actions';
 import AccordionSection from '@/component/AccordionSection';
 import AddressFieldsInputs from '@/component/AddressFields';
@@ -24,6 +24,7 @@ import {
 import type { SavedAddressRecord } from '@/lib/checkout/saved-address';
 import type { PlaceOrderState } from '@/lib/checkout/types';
 import { formatPrice } from '@/lib/format';
+import styles from './CheckoutForm.module.css';
 
 const initialState: PlaceOrderState = {};
 
@@ -34,7 +35,7 @@ function CardField({ id, label }: { id: string; label: string }) {
   return (
     <div className="flex flex-col gap-1.5">
       <FieldLabel htmlFor={id}>{label}</FieldLabel>
-      <input id={id} type="text" className="w-full rounded-lg bg-muted px-4 py-3 text-sm outline-none" />
+      <input id={id} type="text" className="h-10 w-full border border-border bg-background px-3 text-sm outline-none focus:border-[#4F6BB5] focus:ring-1 focus:ring-[#4F6BB5]" />
     </div>
   );
 }
@@ -138,9 +139,9 @@ export default function CheckoutForm({ defaultName, savedAddresses, selectedKeys
             {items.map((item) => (
               <div
                 key={lineKey(item.slug, item.color)}
-                className="flex gap-3 border-b border-border pb-4 last:border-b-0 last:pb-0"
+                className="flex items-center gap-3 py-3"
               >
-                <ProductImage imageUrl={item.imageUrl} alt={item.name} sizes="64px" className="h-16 w-16 shrink-0 rounded-lg" />
+                <ProductImage imageUrl={item.imageUrl} alt={item.name} sizes="80px" objectFit="contain" className="h-20 w-20 shrink-0 rounded-lg" />
                 <div className="flex flex-1 items-start justify-between gap-2">
                   <div>
                     <p className="text-sm font-bold">{item.name}</p>
@@ -161,7 +162,11 @@ export default function CheckoutForm({ defaultName, savedAddresses, selectedKeys
           </p>
         )}
 
-        <div className="mt-4 flex justify-between text-sm">
+        <div className="mt-6 flex justify-between text-sm text-muted-foreground">
+          <span>Item Qty</span>
+          <span>{items.reduce((sum, item) => sum + item.quantity, 0)}</span>
+        </div>
+        <div className="mt-2 flex justify-between text-sm">
           <span className="text-muted-foreground">Subtotal</span>
           <span>{formatPrice(subtotal)}</span>
         </div>
@@ -187,11 +192,11 @@ export default function CheckoutForm({ defaultName, savedAddresses, selectedKeys
                 if (e.key === 'Enter') e.preventDefault();
               }}
               placeholder="Enter code"
-              className="w-full rounded-lg bg-muted px-4 py-3 text-sm outline-none placeholder:text-muted-foreground"
+              className="min-w-0 w-full rounded-sm border border-[#4F6BB5] bg-[#4F6BB5]/45 px-3 py-2 text-sm outline-none placeholder:text-white focus:ring-1 focus:ring-[#4F6BB5]"
             />
             <button
               type="button"
-              className="shrink-0 rounded-lg border border-border px-4 text-sm text-muted-foreground hover:bg-muted"
+              className="shrink-0 rounded-sm border border-[#4F6BB5] px-4 text-sm text-[#334783] hover:bg-muted dark:text-foreground"
             >
               Apply
             </button>
@@ -204,7 +209,7 @@ export default function CheckoutForm({ defaultName, savedAddresses, selectedKeys
             <button
               type="submit"
               disabled={!canSubmit}
-              className={buttonClassName({ variant: 'primary', className: 'mt-2 w-full uppercase' })}
+              className={buttonClassName({ variant: 'primary', className: `mt-4 w-full ${styles.placeOrder}` })}
             >
               {pending ? 'Placing order…' : 'Place Order'}
               {!pending && <ArrowRight size={16} />}
@@ -216,24 +221,24 @@ export default function CheckoutForm({ defaultName, savedAddresses, selectedKeys
   }
 
   return (
-    <form action={formAction} className="grid grid-cols-1 gap-8 md:grid-cols-3">
+    <form action={formAction} className={styles.layout}>
       <input type="hidden" name="lines" value={orderLines} />
       <input type="hidden" name="shippingMethod" value={shippingMethod} />
       <input type="hidden" name="paymentMethod" value={paymentMethod} />
 
-      <div className="md:hidden">
+      <div className={styles.mobileSummary}>
         <AccordionSection title="Order Summary" defaultOpen>
           {renderOrderSummary(false)}
         </AccordionSection>
       </div>
 
-      <div className="flex flex-col gap-10 md:col-span-2">
+      <div className="flex min-w-0 flex-col gap-14">
         <div>
           <div className="flex items-center gap-3">
-            <span className="h-8 w-8 shrink-0 rounded-full bg-muted" />
-            <p className="text-sm font-bold uppercase tracking-wide">Shipping Address</p>
+            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-foreground/15 text-sm">1</span>
+            <h2 className="text-base font-medium uppercase">Shipping Address</h2>
           </div>
-          <div className="mt-6 flex flex-col gap-4">
+          <div className="mt-6 flex flex-col gap-4 sm:ml-9">
             {savedAddresses.length > 0 && (
               <div className="flex flex-col gap-1.5">
                 <FieldLabel htmlFor="savedAddress">Ship to</FieldLabel>
@@ -263,6 +268,7 @@ export default function CheckoutForm({ defaultName, savedAddresses, selectedKeys
 
             {/* Remounts on a different choice so the inputs pick up its values. */}
             <AddressFieldsInputs
+              floatingLabels
               key={`${selectedAddressId}:${switchedAt === state}`}
               values={values}
               errors={fieldErrors}
@@ -284,18 +290,18 @@ export default function CheckoutForm({ defaultName, savedAddresses, selectedKeys
 
         <div>
           <div className="flex items-center gap-3">
-            <span className="h-8 w-8 shrink-0 rounded-full bg-muted" />
-            <p className="text-sm font-bold uppercase tracking-wide">Shipping Method</p>
+            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-foreground/15 text-sm">2</span>
+            <h2 className="text-base font-medium uppercase">Shipping Method</h2>
           </div>
-          <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="mt-6 grid grid-cols-1 gap-4 sm:ml-9 sm:grid-cols-2">
             {SHIPPING_METHOD_IDS.map((id) => {
               const option = SHIPPING_METHODS[id];
               const selected = shippingMethod === id;
               return (
                 <label
                   key={id}
-                  className={`flex cursor-pointer flex-col gap-1 rounded-xl border p-4 ${
-                    selected ? 'border-foreground' : 'border-border'
+                  className={`flex cursor-pointer flex-col gap-1 rounded-sm border p-4 ${
+                    selected ? 'border-[#7B93D4] ring-1 ring-[#7B93D4]' : 'border-border'
                   }`}
                 >
                   <div className="flex items-start justify-between gap-2">
@@ -306,7 +312,7 @@ export default function CheckoutForm({ defaultName, savedAddresses, selectedKeys
                         name="shipping-option"
                         checked={selected}
                         onChange={() => setShippingMethod(id)}
-                        className="h-4 w-4 accent-foreground"
+                        className="h-4 w-4 accent-[#7B93D4]"
                       />
                       {option.label}
                     </span>
@@ -316,7 +322,7 @@ export default function CheckoutForm({ defaultName, savedAddresses, selectedKeys
                     {option.minDays}–{option.maxDays} Business Days
                   </p>
                   {selected && (
-                    <p className="flex items-center gap-1 pl-6 text-xs text-muted-foreground">
+                    <p className="ml-6 mt-1 flex items-center gap-1 bg-muted px-2 py-1 text-xs text-muted-foreground">
                       <Clock size={12} />
                       {/* Depends on today's date, which can differ between server render and hydration. */}
                       <span suppressHydrationWarning>Arrives {deliveryEstimate(id)}</span>
@@ -330,32 +336,36 @@ export default function CheckoutForm({ defaultName, savedAddresses, selectedKeys
 
         <div>
           <div className="flex items-center gap-3">
-            <span className="h-8 w-8 shrink-0 rounded-full bg-muted" />
-            <p className="text-sm font-bold uppercase tracking-wide">Payment Method</p>
+            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-foreground/15 text-sm">3</span>
+            <h2 className="text-base font-medium uppercase">Payment Method</h2>
           </div>
-          <div className="mt-6 flex gap-4">
+          <div className="mt-6 flex max-w-sm gap-3 sm:ml-9">
             {PAYMENT_METHOD_IDS.map((id) => {
               const selected = paymentMethod === id;
+              const Icon = id === 'CARD' ? CreditCard : id === 'WALLET' ? Wallet : Landmark;
               return (
                 <button
                   key={id}
                   type="button"
                   onClick={() => setPaymentMethod(id)}
-                  className={`flex-1 rounded-xl border px-4 py-3 text-sm font-semibold ${
-                    selected ? 'border-foreground' : 'border-border text-muted-foreground'
+                  aria-pressed={selected}
+                  className={`relative flex min-w-0 flex-1 flex-col items-center gap-2 rounded-sm border px-3 py-3 text-xs font-semibold uppercase ${
+                    selected ? 'border-[#7F96EB] ring-1 ring-[#7F96EB]' : 'border-border text-muted-foreground'
                   }`}
                 >
+                  <Icon size={24} aria-hidden="true" className={id === 'CARD' ? 'text-[#B78B39]' : id === 'WALLET' ? 'text-[#6959BF]' : 'text-[#4F9138]'} />
                   {PAYMENT_METHOD_LABELS[id]}
+                  {selected && <CheckCircle2 size={18} aria-hidden="true" className="absolute -top-2 -right-2 rounded-full bg-background text-green-600" />}
                 </button>
               );
             })}
           </div>
 
-          <div className="mt-6">
+          <div className="mt-6 max-w-lg sm:ml-9">
             {paymentMethod === 'CARD' ? (
               <div className="flex flex-col gap-4">
                 <CardField id="card-number" label="Card Number" />
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,0.3fr)] gap-3">
                   <CardField id="expiry" label="Expiry Date" />
                   <CardField id="cvv" label="CVV" />
                 </div>
@@ -367,17 +377,17 @@ export default function CheckoutForm({ defaultName, savedAddresses, selectedKeys
               </p>
             )}
           </div>
-          <p className="mt-4 text-xs text-muted-foreground">
+          <p className="mt-4 text-xs text-muted-foreground sm:ml-9">
             Payment isn&apos;t collected yet — your order will be saved as unpaid.
           </p>
         </div>
 
-        <div className="md:hidden">
+        <div className={styles.mobileSubmit}>
           {renderErrorMessage()}
           <button
             type="submit"
             disabled={!canSubmit}
-            className={buttonClassName({ variant: 'primary', className: 'mt-2 w-full uppercase' })}
+            className={buttonClassName({ variant: 'primary', className: `mt-2 w-full uppercase ${styles.placeOrder}` })}
           >
             {pending ? 'Placing order…' : 'Place Order'}
             {!pending && <ArrowRight size={16} />}
@@ -385,9 +395,9 @@ export default function CheckoutForm({ defaultName, savedAddresses, selectedKeys
         </div>
       </div>
 
-      <div className="hidden md:block md:sticky md:top-24 md:self-start">
-        <div className="rounded-xl bg-muted p-6">
-          <p className="text-sm font-bold uppercase tracking-wide">Order Summary</p>
+      <div className={styles.desktopSummary}>
+        <div className="rounded-xl border border-border bg-background p-6 shadow-sm">
+          <h2 className="text-sm font-semibold">Order Summary</h2>
           <div className="mt-4">{renderOrderSummary(true)}</div>
         </div>
       </div>
