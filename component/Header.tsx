@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Menu, User, Heart, ShoppingBag, LayoutDashboard } from "lucide-react";
 import CartBadge from "@/component/CartBadge";
 import HeaderSearch from "@/component/HeaderSearch";
+import HeaderNav from "@/component/HeaderNav";
 import LoginModalTrigger from "@/component/LoginModalTrigger";
 import ThemeToggle from "@/component/ThemeToggle";
 import WishlistBadge from "@/component/WishlistBadge";
@@ -19,14 +20,7 @@ export default async function Header() {
         <button aria-label="Menu" type="button" className="md:hidden">
           <Menu size={22} strokeWidth={1.5} />
         </button>
-        <nav className="hidden items-center gap-7 md:flex">
-          <Link href="/listing" className="text-[15px] hover:underline hover:underline-offset-4">
-            Shop
-          </Link>
-          <Link href="/search" className="text-[15px] hover:underline hover:underline-offset-4">
-            Explore
-          </Link>
-        </nav>
+        <HeaderNav />
       </div>
 
       <Link href="/home" aria-label="BeU home">

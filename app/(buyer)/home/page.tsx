@@ -72,7 +72,7 @@ const FEATURED_HOME_PRODUCTS = [
 ];
 
 // Figma order. Gumagana kahit "beu-classic" o "classic" ang slug.
-const CATEGORY_ORDER = ['classic', 'premium', 'collections', 'smart', 'accessories'];
+const CATEGORY_ORDER = ['classic', 'premium', 'smart', 'collections', 'accessories'];
 const categoryRank = (slug: string) => {
   const i = CATEGORY_ORDER.findIndex((key) => slug.includes(key));
   return i === -1 ? CATEGORY_ORDER.length : i;
@@ -216,7 +216,7 @@ export default async function Page() {
               className="flex basis-1/3 flex-col items-center gap-4 md:w-32 md:basis-auto"
             >
               <PlaceholderImage variant="plain" className="h-24 w-24 rounded-full md:h-28 md:w-28" />
-              <span className="text-sm text-foreground md:text-base">{category.name}</span>
+              <span className="text-sm text-foreground md:text-base">{category.name.replace(/^BeU\s+/i, '')}</span>
             </Link>
           ))}
         </div>

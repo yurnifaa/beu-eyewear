@@ -78,7 +78,14 @@ export default async function Page(props: PageProps<'/listing'>) {
     page: page > 1 ? String(page) : undefined,
   };
 
-  const categories = await getCategories();
+  const categoryOrder = ['classic', 'premium', 'smart', 'collections', 'accessories'];
+  const categoryRank = (slug: string) => {
+    const rank = categoryOrder.findIndex((key) => slug.includes(key));
+    return rank === -1 ? categoryOrder.length : rank;
+  };
+  const categories = (await getCategories())
+    .map((category) => ({ ...category, name: category.name.replace(/^BeU\s+/i, '') }))
+    .sort((a, b) => categoryRank(a.slug) - categoryRank(b.slug));
 
   // Hub mode — no category picked yet, so show the tiers themselves
   // instead of dumping straight into one of them.
@@ -114,10 +121,11 @@ export default async function Page(props: PageProps<'/listing'>) {
     );
   }
 
-  const activeCategory = await getCategoryBySlug(categorySlug);
-  if (!activeCategory) {
+  const category = await getCategoryBySlug(categorySlug);
+  if (!category) {
     redirect('/listing');
   }
+  const activeCategory = { ...category, name: category.name.replace(/^BeU\s+/i, '') };
 
   const subcategories = await getSubcategories(activeCategory.slug);
   const hasFilters = Boolean(sub || lens || material || shape || sort);
