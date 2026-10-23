@@ -18,7 +18,7 @@ export default function LoginModalTrigger() {
 
   return (
     <>
-      <button type="button" aria-label="Log in" aria-haspopup="dialog" onClick={handleOpen}>
+      <button type="button" aria-label="Log in" aria-haspopup="dialog" onClick={handleOpen} className="cursor-pointer">
         <User size={20} strokeWidth={1.5} />
       </button>
       <LoginModal open={open} onClose={() => setOpen(false)} next={next} />
