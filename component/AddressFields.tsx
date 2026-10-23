@@ -8,14 +8,39 @@ interface AddressFieldsProps {
   // the parent remounts this component (e.g. via `key`).
   values: Partial<Record<keyof AddressFields, string>>;
   errors?: Record<string, string[] | undefined>;
+  floatingLabels?: boolean;
 }
 
 // The six shipping-address inputs, shared by checkout and the address book.
-export default function AddressFieldsInputs({ values, errors = {} }: AddressFieldsProps) {
+export default function AddressFieldsInputs({ values, errors = {}, floatingLabels = false }: AddressFieldsProps) {
+  if (floatingLabels) {
+    return (
+      <div className="flex flex-col gap-5">
+        <fieldset>
+          <legend className="mb-1 text-xs text-muted-foreground">Personal Details</legend>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <TextField id="fullName" label="Full Name" floatingLabel autoComplete="name" maxLength={ADDRESS_LIMITS.fullName} required defaultValue={values.fullName} errors={errors.fullName} />
+            <TextField id="phone" label="Mobile Number" floatingLabel type="tel" autoComplete="tel" inputMode="numeric" onInput={(e) => { e.currentTarget.value = normalizePhone(e.currentTarget.value).slice(0, ADDRESS_LIMITS.phone); }} required defaultValue={values.phone} errors={errors.phone} />
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend className="mb-1 text-xs text-muted-foreground">Address Details</legend>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <TextField id="address" label="Address" floatingLabel autoComplete="street-address" maxLength={ADDRESS_LIMITS.address} required defaultValue={values.address} errors={errors.address} />
+            <TextField id="province" label="Province" floatingLabel autoComplete="address-level1" maxLength={ADDRESS_LIMITS.province} required defaultValue={values.province} errors={errors.province} />
+            <TextField id="zip" label="Zip / Postal Code" floatingLabel autoComplete="postal-code" inputMode="numeric" maxLength={ADDRESS_LIMITS.zip} onInput={(e) => { e.currentTarget.value = digitsOnly(e.currentTarget.value, ADDRESS_LIMITS.zip); }} required defaultValue={values.zip} errors={errors.zip} />
+            <TextField id="city" label="City" floatingLabel autoComplete="address-level2" maxLength={ADDRESS_LIMITS.city} required defaultValue={values.city} errors={errors.city} />
+          </div>
+        </fieldset>
+      </div>
+    );
+  }
+
   return (
     <>
       <TextField
         id="fullName"
+        floatingLabel={floatingLabels}
         label="Full Name"
         autoComplete="name"
         maxLength={ADDRESS_LIMITS.fullName}
@@ -25,6 +50,7 @@ export default function AddressFieldsInputs({ values, errors = {} }: AddressFiel
       />
       <TextField
         id="address"
+        floatingLabel={floatingLabels}
         label="Address"
         autoComplete="street-address"
         maxLength={ADDRESS_LIMITS.address}
@@ -35,6 +61,7 @@ export default function AddressFieldsInputs({ values, errors = {} }: AddressFiel
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <TextField
           id="city"
+          floatingLabel={floatingLabels}
           label="City"
           autoComplete="address-level2"
           maxLength={ADDRESS_LIMITS.city}
@@ -44,6 +71,7 @@ export default function AddressFieldsInputs({ values, errors = {} }: AddressFiel
         />
         <TextField
           id="province"
+          floatingLabel={floatingLabels}
           label="Province"
           autoComplete="address-level1"
           maxLength={ADDRESS_LIMITS.province}
@@ -55,6 +83,7 @@ export default function AddressFieldsInputs({ values, errors = {} }: AddressFiel
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <TextField
           id="zip"
+          floatingLabel={floatingLabels}
           label="Zip / Postal Code"
           autoComplete="postal-code"
           inputMode="numeric"
@@ -70,6 +99,7 @@ export default function AddressFieldsInputs({ values, errors = {} }: AddressFiel
             11 characters (9 digits) before the filter below could strip the spaces. */}
         <TextField
           id="phone"
+          floatingLabel={floatingLabels}
           label="Mobile Number"
           type="tel"
           autoComplete="tel"

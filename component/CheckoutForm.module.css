@@ -1,0 +1,40 @@
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 2rem;
+}
+
+.desktopSummary {
+  display: none;
+}
+
+.placeOrder,
+.placeOrder:disabled {
+  background-color: #2f4582;
+  color: #fff;
+}
+
+.placeOrder:hover:not(:disabled) {
+  background-color: #293a70;
+}
+
+@media (min-width: 768px) {
+  .layout {
+    grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr);
+    column-gap: clamp(2rem, 4vw, 3.5rem);
+    align-items: start;
+  }
+
+  .mobileSummary,
+  .mobileSubmit {
+    display: none;
+  }
+
+  .desktopSummary {
+    display: block;
+    position: sticky;
+    top: 6rem;
+    min-width: 0;
+    align-self: start;
+  }
+}
