@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { Package, Home, Clock, Star, ArrowRight } from 'lucide-react';
+import { Star, ArrowRight } from 'lucide-react';
+import BenefitsBar from '@/component/BenefitsBar';
 import { buttonClassName } from '@/component/Button';
 import PlaceholderImage from '@/component/PlaceholderImage';
 import ProductCard from '@/component/ProductCard';
@@ -13,12 +14,6 @@ import { formatPrice } from '@/lib/format';
 // Reads live, admin-editable catalog data, so don't bake it into a static
 // build-time snapshot.
 export const dynamic = 'force-dynamic';
-
-const TRUST_BADGES = [
-  { icon: Package, label: 'Free Eyewear Kit Included' },
-  { icon: Home, label: '7-Day Free Returns' },
-  { icon: Clock, label: 'Up To 5-Year Warranty' },
-];
 
 const FEATURED_HOME_PRODUCTS = [
   {
@@ -72,7 +67,7 @@ const FEATURED_HOME_PRODUCTS = [
 ];
 
 // Figma order. Gumagana kahit "beu-classic" o "classic" ang slug.
-const CATEGORY_ORDER = ['classic', 'premium', 'collections', 'smart', 'accessories'];
+const CATEGORY_ORDER = ['classic', 'premium', 'smart', 'collections', 'accessories'];
 const categoryRank = (slug: string) => {
   const i = CATEGORY_ORDER.findIndex((key) => slug.includes(key));
   return i === -1 ? CATEGORY_ORDER.length : i;
@@ -216,23 +211,14 @@ export default async function Page() {
               className="flex basis-1/3 flex-col items-center gap-4 md:w-32 md:basis-auto"
             >
               <PlaceholderImage variant="plain" className="h-24 w-24 rounded-full md:h-28 md:w-28" />
-              <span className="text-sm text-foreground md:text-base">{category.name}</span>
+              <span className="text-sm text-foreground md:text-base">{category.name.replace(/^BeU\s+/i, '')}</span>
             </Link>
           ))}
         </div>
       </Reveal>
 
       {/* Trust badges */}
-      <Reveal className="bg-[#4F6BB5] px-6 py-6 text-white">
-        <div className="mx-auto flex max-w-5xl flex-col items-center gap-5 md:flex-row md:justify-between">
-          {TRUST_BADGES.map(({ icon: Icon, label }) => (
-            <div key={label} className="flex items-center gap-3">
-              <Icon size={24} strokeWidth={1.5} />
-              <span className="text-sm uppercase">{label}</span>
-            </div>
-          ))}
-        </div>
-      </Reveal>
+      <BenefitsBar />
 
       {/* Offers */}
       <Reveal className="px-6 py-10">

@@ -1,8 +1,10 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Menu, User, Heart, ShoppingBag, LayoutDashboard } from "lucide-react";
+import { User, Heart, ShoppingBag, LayoutDashboard } from "lucide-react";
+import MobileMenu from "@/component/MobileMenu";
 import CartBadge from "@/component/CartBadge";
 import HeaderSearch from "@/component/HeaderSearch";
+import HeaderNav from "@/component/HeaderNav";
 import LoginModalTrigger from "@/component/LoginModalTrigger";
 import ThemeToggle from "@/component/ThemeToggle";
 import WishlistBadge from "@/component/WishlistBadge";
@@ -27,6 +29,12 @@ export default async function Header() {
             Explore
           </Link>
         </nav>
+        <MobileMenu links={[
+          { href: "/home", label: "Home" },
+          { href: "/listing", label: "Shop" },
+          { href: "/search", label: "Explore" },
+        ]} />
+        <HeaderNav />
       </div>
 
       <Link href="/home" aria-label="BeU home" className="cursor-pointer">

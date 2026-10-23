@@ -3,7 +3,7 @@ import type { OrderStatus, PaymentStatus } from '@prisma/client';
 // Which Order History tab(s) an order belongs to. Derived from the existing
 // status + paymentStatus, so nothing extra is stored.
 export type OrderBucket = 'to-pay' | 'to-ship' | 'to-receive' | 'completed' | 'cancelled';
-export type OrderTabId = 'all' | Exclude<OrderBucket, 'cancelled'>;
+export type OrderTabId = 'all' | OrderBucket;
 
 export const BUCKET_LABELS: Record<OrderBucket, string> = {
   'to-pay': 'To Pay',
@@ -19,10 +19,11 @@ export const ORDER_TABS: { id: OrderTabId; label: string; empty: string }[] = [
   { id: 'to-ship', label: 'To Ship', empty: 'You have no paid orders waiting to be shipped.' },
   { id: 'to-receive', label: 'To Receive', empty: 'You have no orders on the way.' },
   { id: 'completed', label: 'Completed', empty: 'You have no completed orders yet.' },
+  { id: 'cancelled', label: 'Cancelled', empty: 'You have no cancelled orders.' },
 ];
 
 // Order matters: a shipped or delivered order is past the payment question, and
-// cancelled beats everything. A cancelled order only appears under "All".
+// cancelled beats everything. Cancelled orders appear under "All" and "Cancelled".
 export function orderBucket(order: { status: OrderStatus; paymentStatus: PaymentStatus }): OrderBucket {
   if (order.status === 'CANCELLED') return 'cancelled';
   if (order.status === 'DELIVERED') return 'completed';
