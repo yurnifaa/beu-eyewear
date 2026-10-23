@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Menu, User, Heart, ShoppingBag, LayoutDashboard } from "lucide-react";
+import { User, Heart, ShoppingBag, LayoutDashboard } from "lucide-react";
+import MobileMenu from "@/component/MobileMenu";
 import CartBadge from "@/component/CartBadge";
 import HeaderSearch from "@/component/HeaderSearch";
 import HeaderNav from "@/component/HeaderNav";
@@ -16,10 +17,11 @@ export default async function Header() {
   return (
     <header className="sticky top-0 z-50 grid grid-cols-[1fr_auto_1fr] items-center border-b border-border bg-background px-6 py-3 shadow-sm">
       <div className="flex items-center">
-        {/* Mobile nav drawer not wired up yet (lowfi pass) */}
-        <button aria-label="Menu" type="button" className="md:hidden">
-          <Menu size={22} strokeWidth={1.5} />
-        </button>
+        <MobileMenu links={[
+          { href: "/home", label: "Home" },
+          { href: "/listing", label: "Shop" },
+          { href: "/search", label: "Explore" },
+        ]} />
         <HeaderNav />
       </div>
 
