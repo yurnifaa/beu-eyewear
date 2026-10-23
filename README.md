@@ -60,6 +60,8 @@ app/
 		└── reports/                        → sales reports, best sellers
 ```
 
+**Catalog data source:** products, prices, stock, discounts, reviews and shipping come from a Google Sheet, not the database. Setup, security notes and the list of legacy admin pages are in [docs/google-sheets-catalog.md](docs/google-sheets-catalog.md).
+
 **Notes**
 - Buyer-facing routes have no URL prefix (e.g. `/cart`, `/listing/123`)
 - Admin routes are prefixed with `/admin` (e.g. `/admin/products`)

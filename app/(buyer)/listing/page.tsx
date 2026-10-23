@@ -4,12 +4,12 @@ import { ChevronRight } from 'lucide-react';
 import Breadcrumb from '@/component/Breadcrumb';
 import { buttonClassName } from '@/component/Button';
 import FilterDropdown, { type FilterDropdownOption } from '@/component/FilterDropdown';
-import PlaceholderImage from '@/component/PlaceholderImage';
+import ProductImage from '@/component/ProductImage';
 import ProductCard from '@/component/ProductCard';
 import ProductRow from '@/component/ProductRow';
 import Reveal from '@/component/Reveal';
-import { FRAME_MATERIALS, FRAME_SHAPES, LENS_OPTIONS } from '@/lib/catalog/enums';
-import { getCategories, getCategoryBySlug, getProducts, getSubcategories } from '@/lib/catalog/queries';
+import { getCategories, getCategoryBySlug, getFilterOptions, getProducts, getSubcategories } from '@/lib/catalog/queries';
+import type { FilterOption } from '@/lib/catalog/types';
 import { formatPrice } from '@/lib/format';
 
 // Reads live, admin-editable catalog data — don't bake it into a static
@@ -32,19 +32,19 @@ function withParams(current: Params, patch: Params): string {
   return qs ? `/listing?${qs}` : '/listing';
 }
 
-function facetOptions<T extends string>(
+function facetOptions(
   label: string,
-  values: readonly T[],
+  values: readonly FilterOption[],
   activeValue: string | undefined,
   paramKey: string,
   current: Params,
 ): FilterDropdownOption[] {
   return [
     { label: `All ${label}`, href: withParams(current, { [paramKey]: undefined, page: undefined }), active: !activeValue },
-    ...values.map((value) => ({
-      label: value,
-      href: withParams(current, { [paramKey]: value, page: undefined }),
-      active: activeValue === value,
+    ...values.map((option) => ({
+      label: option.label,
+      href: withParams(current, { [paramKey]: option.value, page: undefined }),
+      active: activeValue === option.value,
     })),
   ];
 }
@@ -65,6 +65,7 @@ export default async function Page(props: PageProps<'/listing'>) {
   const lens = first(sp.lens);
   const material = first(sp.material);
   const shape = first(sp.shape);
+  const color = first(sp.color);
   const sort = first(sp.sort) as 'price-asc' | 'price-desc' | undefined;
   const page = Number(first(sp.page)) || 1;
 
@@ -74,6 +75,7 @@ export default async function Page(props: PageProps<'/listing'>) {
     lens,
     material,
     shape,
+    color,
     sort,
     page: page > 1 ? String(page) : undefined,
   };
@@ -106,7 +108,12 @@ export default async function Page(props: PageProps<'/listing'>) {
                 href={`/listing?category=${category.slug}`}
                 className="group rounded-2xl border border-border p-6 transition duration-150 ease-out hover:-translate-y-0.5 hover:shadow-md"
               >
-                <PlaceholderImage variant="plain" className="aspect-video w-full rounded-xl" />
+                <ProductImage
+                imageUrl={category.imageUrl}
+                alt={category.name}
+                sizes="(min-width: 768px) 33vw, 100vw"
+                className="aspect-video w-full rounded-xl"
+              />
                 <p className="mt-4 text-lg font-bold uppercase tracking-wide">{category.name}</p>
                 <p className="mt-1 text-sm text-muted-foreground">{category.description}</p>
                 <span className="mt-3 inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-wide">
@@ -128,11 +135,14 @@ export default async function Page(props: PageProps<'/listing'>) {
   const activeCategory = { ...category, name: category.name.replace(/^BeU\s+/i, '') };
 
   const subcategories = await getSubcategories(activeCategory.slug);
-  const hasFilters = Boolean(sub || lens || material || shape || sort);
+  const hasFilters = Boolean(sub || lens || material || shape || color || sort);
 
-  const lensOptions = facetOptions('Lens Options', LENS_OPTIONS, lens, 'lens', current);
-  const materialOptions = facetOptions('Frame Materials', FRAME_MATERIALS, material, 'material', current);
-  const shapeOptions = facetOptions('Frame Shapes', FRAME_SHAPES, shape, 'shape', current);
+  // Filter choices come from the lookups tab of the sheet.
+  const filterOptions = await getFilterOptions();
+  const lensOptions = facetOptions('Lens Options', filterOptions.lens, lens, 'lens', current);
+  const materialOptions = facetOptions('Frame Materials', filterOptions.material, material, 'material', current);
+  const shapeOptions = facetOptions('Frame Shapes', filterOptions.shape, shape, 'shape', current);
+  const colorOptions = facetOptions('Colors', filterOptions.color, color, 'color', current);
   const sortOptions: FilterDropdownOption[] = [
     { label: 'Featured', href: withParams(current, { sort: undefined, page: undefined }), active: !sort },
     { label: 'Price: Low to High', href: withParams(current, { sort: 'price-asc', page: undefined }), active: sort === 'price-asc' },
@@ -145,6 +155,7 @@ export default async function Page(props: PageProps<'/listing'>) {
     lens,
     material,
     shape,
+    color,
     sort,
     page,
   });
@@ -190,6 +201,13 @@ export default async function Page(props: PageProps<'/listing'>) {
             options={materialOptions}
           />
           <FilterDropdown label="Frame Shape" activeLabel={shape ? `Frame Shape: ${shape}` : undefined} options={shapeOptions} />
+          {filterOptions.color.length > 0 && (
+            <FilterDropdown
+              label="Color"
+              activeLabel={color ? `Color: ${filterOptions.color.find((option) => option.value === color)?.label ?? color}` : undefined}
+              options={colorOptions}
+            />
+          )}
         </div>
         <FilterDropdown
           label="Sort"
@@ -210,7 +228,8 @@ export default async function Page(props: PageProps<'/listing'>) {
                   slug={product.slug}
                   name={product.name}
                   price={formatPrice(product.price)}
-                  description={product.description}
+                  compareAtPrice={product.compareAtPrice ? formatPrice(product.compareAtPrice) : undefined}
+                  description={product.shortDescription || product.description}
                   href={`/listing/${product.slug}`}
                   imageUrl={product.imageUrl}
                   stockQuantity={product.stockQuantity}
@@ -230,7 +249,8 @@ export default async function Page(props: PageProps<'/listing'>) {
                   slug={product.slug}
                   name={product.name}
                   price={formatPrice(product.price)}
-                  description={product.description}
+                  compareAtPrice={product.compareAtPrice ? formatPrice(product.compareAtPrice) : undefined}
+                  description={product.shortDescription || product.description}
                   href={`/listing/${product.slug}`}
                   imageUrl={product.imageUrl}
                   stockQuantity={product.stockQuantity}

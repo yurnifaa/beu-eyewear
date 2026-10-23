@@ -1,8 +1,10 @@
+// LEGACY-CATALOG-ADMIN: edits the Prisma catalog, which the storefront no longer reads (see docs/google-sheets-catalog.md).
 import { notFound } from 'next/navigation';
 import DeleteProductButton from '@/component/admin/DeleteProductButton';
 import ProductForm from '@/component/admin/ProductForm';
-import { getAllSubcategories, getCategories, getProductBySlug } from '@/lib/catalog/queries';
+import { getAllSubcategories, getCategories, getProductBySlug } from '@/lib/catalog/legacy-prisma-queries';
 import { deleteProduct, updateProduct } from '../actions';
+import LegacyCatalogNotice from '@/component/admin/LegacyCatalogNotice';
 
 // Admin data must always be fresh — never a static build-time snapshot.
 export const dynamic = 'force-dynamic';
@@ -24,6 +26,7 @@ export default async function EditProductPage(props: PageProps<'/admin/products/
 
   return (
     <div className="flex flex-col gap-6">
+      <LegacyCatalogNotice />
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Edit Product</h1>
         <DeleteProductButton action={deleteWithSlug} productName={product.name} />

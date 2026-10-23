@@ -1,4 +1,5 @@
 'use client';
+// LEGACY-CATALOG-ADMIN: edits the Prisma catalog, which the storefront no longer reads (see docs/google-sheets-catalog.md).
 
 import { useActionState, useId } from 'react';
 import { buttonClassName } from '@/component/Button';

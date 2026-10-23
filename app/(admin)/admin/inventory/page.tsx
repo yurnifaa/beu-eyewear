@@ -1,3 +1,4 @@
+// LEGACY-CATALOG-ADMIN: edits the Prisma catalog, which the storefront no longer reads (see docs/google-sheets-catalog.md).
 import InventoryFilters from './InventoryFilters';
 import InventoryStockBadge from '@/component/admin/InventoryStockBadge';
 import StockAdjustForm from '@/component/admin/StockAdjustForm';
@@ -5,6 +6,7 @@ import { requireAdmin } from '@/lib/auth/session';
 import { LOW_STOCK_THRESHOLD } from '@/lib/admin/config';
 import { getInventory, parseInventoryFilters } from '@/lib/admin/inventory';
 import { adjustStock } from './actions';
+import LegacyCatalogNotice from '@/component/admin/LegacyCatalogNotice';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,6 +17,7 @@ export default async function InventoryPage(props: PageProps<'/admin/inventory'>
   const filtered = Boolean(q || filter !== 'all');
   return (
     <div className="flex flex-col gap-6">
+      <LegacyCatalogNotice />
       <div>
         <h1 className="text-2xl font-bold">Inventory</h1>
         <p className="mt-1 text-sm text-muted-foreground">Manage product stock. Low stock means 1–{LOW_STOCK_THRESHOLD} units.</p>

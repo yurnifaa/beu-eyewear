@@ -1,8 +1,10 @@
+// LEGACY-CATALOG-ADMIN: edits the Prisma catalog, which the storefront no longer reads (see docs/google-sheets-catalog.md).
 import CategoryForm from '@/component/admin/CategoryForm';
 import DeleteCategoryButton from '@/component/admin/DeleteCategoryButton';
 import { requireAdmin } from '@/lib/auth/session';
-import { getAllSubcategories, getCategories } from '@/lib/catalog/queries';
+import { getAllSubcategories, getCategories } from '@/lib/catalog/legacy-prisma-queries';
 import { createCategory, createSubcategory, updateCategory, updateSubcategory, deleteCategory, deleteSubcategory } from './actions';
+import LegacyCatalogNotice from '@/component/admin/LegacyCatalogNotice';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,6 +13,7 @@ export default async function CategoriesPage() {
   const [categories, subcategories] = await Promise.all([getCategories(), getAllSubcategories()]);
   return (
     <div className="flex flex-col gap-10">
+      <LegacyCatalogNotice />
       <h1 className="text-2xl font-bold">Categories</h1>
       <div className="flex flex-col gap-4">
         {categories.length === 0 && <p className="text-sm text-muted-foreground">No categories yet. Add your first one below.</p>}

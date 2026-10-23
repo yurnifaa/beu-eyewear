@@ -10,6 +10,8 @@ interface NavItem {
   href: string;
   label: string;
   icon: ElementType;
+  // LEGACY-CATALOG-ADMIN: pages that edit the old Prisma catalog (see docs/google-sheets-catalog.md).
+  legacy?: boolean;
 }
 
 interface NavGroup {
@@ -25,9 +27,9 @@ const NAV_GROUPS: NavGroup[] = [
   {
     label: 'Catalog',
     items: [
-      { href: '/admin/products', label: 'Products', icon: Package },
-      { href: '/admin/categories', label: 'Categories', icon: Tags },
-      { href: '/admin/inventory', label: 'Inventory', icon: Boxes },
+      { href: '/admin/products', label: 'Products', icon: Package, legacy: true },
+      { href: '/admin/categories', label: 'Categories', icon: Tags, legacy: true },
+      { href: '/admin/inventory', label: 'Inventory', icon: Boxes, legacy: true },
     ],
   },
   {
@@ -82,7 +84,7 @@ export default function AdminSidebar({ open, onClose }: AdminSidebarProps) {
             <div key={group.label}>
               <p className="px-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{group.label}</p>
               <div className="mt-2 flex flex-col gap-1">
-                {group.items.map(({ href, label, icon: Icon }) => {
+                {group.items.map(({ href, label, icon: Icon, legacy }) => {
                   const active = isActive(href);
                   return (
                     <Link
@@ -96,6 +98,11 @@ export default function AdminSidebar({ open, onClose }: AdminSidebarProps) {
                     >
                       <Icon size={18} />
                       {label}
+                      {legacy && (
+                        <span className="ml-auto rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase text-amber-600">
+                          Legacy
+                        </span>
+                      )}
                     </Link>
                   );
                 })}

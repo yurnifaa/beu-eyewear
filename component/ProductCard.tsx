@@ -7,6 +7,8 @@ export interface ProductCardProps {
   slug?: string;
   name: string;
   price: string;
+  // Struck-through list price, shown while a discount applies.
+  compareAtPrice?: string;
   description?: string;
   href: string;
   imageUrl?: string;
@@ -22,6 +24,7 @@ export default function ProductCard({
   slug,
   name,
   price,
+  compareAtPrice,
   description,
   href,
   imageUrl,
@@ -49,6 +52,11 @@ export default function ProductCard({
             Out of stock
           </span>
         )}
+        {!soldOut && compareAtPrice && (
+          <span className="absolute bottom-2 left-2 rounded-full bg-[#5A6DBE] px-2.5 py-1 text-xs font-semibold text-white">
+            Sale
+          </span>
+        )}
         {slug && <WishlistButton slug={slug} name={name} variant="icon" className="absolute right-2 top-2" />}
       </div>
       {isFeatured ? (
@@ -59,7 +67,10 @@ export default function ProductCard({
             {reviewCount !== undefined && <span className="text-muted-foreground">({reviewCount})</span>}
           </div>
           <p className="mt-1 truncate text-xs font-medium text-foreground">{name}</p>
-          <p className="mt-1 text-[10px] text-muted-foreground">{price}</p>
+          <p className="mt-1 text-[10px] text-muted-foreground">
+            {compareAtPrice && <span className="mr-1 line-through opacity-70">{compareAtPrice}</span>}
+            {price}
+          </p>
           {colorSwatches && colorSwatches.length > 0 && (
             <span className="absolute bottom-0 right-0 flex items-center gap-1" aria-label="Available colors">
               {colorSwatches.map((color) => (
@@ -78,7 +89,10 @@ export default function ProductCard({
         <>
       <div className="mt-3 flex items-center justify-between">
         <p className="text-sm font-bold">{name}</p>
-        <p className="text-sm">{price}</p>
+        <p className="text-sm">
+          {compareAtPrice && <span className="mr-1.5 text-xs text-muted-foreground line-through">{compareAtPrice}</span>}
+          {price}
+        </p>
       </div>
       {description && <p className="mt-1 text-xs text-muted-foreground">{description}</p>}
         </>

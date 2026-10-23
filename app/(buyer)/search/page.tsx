@@ -82,6 +82,7 @@ export default async function SearchPage(props: PageProps<'/search'>) {
                 slug={product.slug}
                 name={product.name}
                 price={formatPrice(product.price)}
+                compareAtPrice={product.compareAtPrice ? formatPrice(product.compareAtPrice) : undefined}
                 description={product.description}
                 href={`/listing/${product.slug}`}
                 imageUrl={product.imageUrl}

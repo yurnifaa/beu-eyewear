@@ -17,10 +17,6 @@ export default async function Header() {
   return (
     <header className="sticky top-0 z-50 grid grid-cols-[1fr_auto_1fr] items-center border-b border-border bg-background px-6 py-3 shadow-sm">
       <div className="flex items-center">
-        {/* Mobile nav drawer not wired up yet (lowfi pass) */}
-        <button aria-label="Menu" type="button" className="md:hidden">
-          <Menu size={22} strokeWidth={1.5} />
-        </button>
         <nav className="hidden items-center gap-7 md:flex">
           <Link href="/listing" className="cursor-pointer text-[15px] hover:underline hover:underline-offset-4">
             Shop

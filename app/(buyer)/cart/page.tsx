@@ -33,6 +33,7 @@ export default async function Page() {
               slug={product.slug}
               name={product.name}
               price={formatPrice(product.price)}
+              compareAtPrice={product.compareAtPrice ? formatPrice(product.compareAtPrice) : undefined}
               description={product.description}
               href={`/listing/${product.slug}`}
               imageUrl={product.imageUrl}

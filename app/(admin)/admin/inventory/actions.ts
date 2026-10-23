@@ -1,4 +1,5 @@
 'use server';
+// LEGACY-CATALOG-ADMIN: edits the Prisma catalog, which the storefront no longer reads (see docs/google-sheets-catalog.md).
 
 import { revalidatePath } from 'next/cache';
 import { requireAdmin } from '@/lib/auth/session';

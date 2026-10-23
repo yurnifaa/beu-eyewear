@@ -1,6 +1,7 @@
 import 'server-only';
 
 import { Prisma } from '@prisma/client';
+import { getCategories, getProductsBySlugs } from '@/lib/catalog/queries';
 import { prisma } from '@/lib/prisma';
 import { displaySalesDate, periodDates, type ReportPeriod, type SalesRange } from './dates';
 
@@ -47,19 +48,40 @@ export async function getTopProducts(range: SalesRange, ranking: 'units' | 'reve
 }
 
 export async function getCategorySales(range: SalesRange): Promise<CategorySales[]> {
-  const rows = await prisma.$queryRaw<{ slug: string | null; name: string; units: bigint; revenue: bigint }[]>`
-    SELECT c.slug, COALESCE(c.name, 'Unknown/deleted product') AS name,
+  const rows = await prisma.$queryRaw<{ slug: string; units: bigint; revenue: bigint }[]>`
+    SELECT i."productSlug" AS slug,
       SUM(i.quantity)::bigint AS units, SUM(i."unitPrice"::bigint * i.quantity)::bigint AS revenue
     FROM "OrderItem" i JOIN "Order" o ON o.id = i."orderId"
-    LEFT JOIN "Product" p ON p.slug = i."productSlug"
-    LEFT JOIN "Category" c ON c.slug = p."categorySlug"
     WHERE o.status <> 'CANCELLED'
       AND o."createdAt" >= (${range.start.toISOString()}::timestamptz AT TIME ZONE 'UTC')
       AND o."createdAt" < (${range.endExclusive.toISOString()}::timestamptz AT TIME ZONE 'UTC')
-    GROUP BY c.slug, c.name ORDER BY revenue DESC, name ASC
+    GROUP BY i."productSlug"
   `;
-  const total = rows.reduce((sum, row) => sum + Number(row.revenue), 0);
-  return rows.map((row) => ({ ...row, units: Number(row.units), revenue: Number(row.revenue), share: total ? Number(row.revenue) / total * 100 : 0 }));
+
+  // Categories come from the catalog sheet. Items whose product is no longer in it
+  // are reported as unknown, as deleted products always were.
+  let productCategory = new Map<string, string>();
+  let categoryNames = new Map<string, string>();
+  try {
+    const [products, categories] = await Promise.all([getProductsBySlugs(rows.map((row) => row.slug)), getCategories()]);
+    productCategory = new Map(products.map((product) => [product.slug, product.categorySlug]));
+    categoryNames = new Map(categories.map((category) => [category.slug, category.name]));
+  } catch (error) {
+    console.error('category report: catalog unavailable', error instanceof Error ? error.message : 'unknown error');
+  }
+
+  const grouped = new Map<string | null, { name: string; units: number; revenue: number }>();
+  for (const row of rows) {
+    const slug = productCategory.get(row.slug) ?? null;
+    const entry = grouped.get(slug) ?? { name: slug ? (categoryNames.get(slug) ?? slug) : 'Unknown/deleted product', units: 0, revenue: 0 };
+    entry.units += Number(row.units);
+    entry.revenue += Number(row.revenue);
+    grouped.set(slug, entry);
+  }
+  const list = [...grouped].map(([slug, entry]) => ({ slug, ...entry }));
+  list.sort((a, b) => b.revenue - a.revenue || a.name.localeCompare(b.name));
+  const total = list.reduce((sum, row) => sum + row.revenue, 0);
+  return list.map((row) => ({ ...row, share: total ? (row.revenue / total) * 100 : 0 }));
 }
 
 export async function getReports(range: SalesRange) {

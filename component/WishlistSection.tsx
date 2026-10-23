@@ -5,13 +5,13 @@ import Link from 'next/link';
 import { buttonClassName } from '@/component/Button';
 import ProductCard from '@/component/ProductCard';
 import ProductRow from '@/component/ProductRow';
-import type { Product } from '@/lib/catalog/types';
+import type { ProductDTO } from '@/lib/catalog/dto';
 import { formatPrice } from '@/lib/format';
 import { useWishlistSlugs } from '@/lib/wishlist';
 
 export default function WishlistSection() {
   const slugs = useWishlistSlugs();
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<ProductDTO[]>([]);
 
   useEffect(() => {
     if (slugs.length === 0) return;
@@ -24,7 +24,7 @@ export default function WishlistSection() {
       body: JSON.stringify({ slugs }),
     })
       .then((res) => res.json())
-      .then((data: { products: Product[] }) => {
+      .then((data: { products: ProductDTO[] }) => {
         if (!cancelled) setProducts(data.products ?? []);
       })
       .catch(() => {
@@ -57,6 +57,7 @@ export default function WishlistSection() {
           slug={product.slug}
           name={product.name}
           price={formatPrice(product.price)}
+          compareAtPrice={product.compareAtPrice ? formatPrice(product.compareAtPrice) : undefined}
           description={product.description}
           href={`/listing/${product.slug}`}
           imageUrl={product.imageUrl}

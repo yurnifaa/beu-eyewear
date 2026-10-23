@@ -1,3 +1,4 @@
+// LEGACY-CATALOG-ADMIN: edits the Prisma catalog, which the storefront no longer reads (see docs/google-sheets-catalog.md).
 import { LOW_STOCK_THRESHOLD } from '@/lib/admin/config';
 
 export default function InventoryStockBadge({ quantity }: { quantity: number }) {

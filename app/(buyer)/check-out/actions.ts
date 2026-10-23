@@ -3,15 +3,22 @@
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { requireUser } from '@/lib/auth/session';
+import { findVariant, getProductsBySlugs, getShippingMethods } from '@/lib/catalog/queries';
+import { readFreshStock, recordInventoryMovements, type InventoryMovement } from '@/lib/catalog/stock';
 import { MAX_SAVED_ADDRESSES } from '@/lib/checkout/address';
 import { calcTotals } from '@/lib/checkout/pricing';
 import type { PlaceOrderState } from '@/lib/checkout/types';
+import { formatOrderNumber } from '@/lib/format';
 import { prisma } from '@/lib/prisma';
+import { isStockWriteEnabled } from '@/lib/sheets/config';
 import { checkoutSchema } from '@/lib/validation/checkout';
 
-// Thrown inside the order transaction so the stock decrements roll back with it.
+// Thrown inside the order transaction so the order and its stock rows roll back together.
 class OutOfStockError extends Error {
-  constructor(readonly productName: string) {
+  constructor(
+    readonly productName: string,
+    readonly available: number,
+  ) {
     super(`${productName} is out of stock`);
   }
 }
@@ -61,15 +68,14 @@ export async function placeOrder(_prevState: PlaceOrderState, formData: FormData
 
   const { lines, shippingMethod, paymentMethod, ...address } = parsed.data;
 
-  // The client only says *what* to buy. Names, prices and which colors exist
-  // all come from the database.
-  const products = await prisma.product.findMany({
-    where: { slug: { in: [...new Set(lines.map((line) => line.slug))] } },
-    select: { slug: true, name: true, price: true, colors: true, stockQuantity: true },
-  });
+  // The client only says *what* to buy. Names, prices and which colors exist all come
+  // from the catalog sheet, read here on the server.
+  const products = await getProductsBySlugs([...new Set(lines.map((line) => line.slug))]);
   const bySlug = new Map(products.map((product) => [product.slug, product]));
 
   const items: { productSlug: string; name: string; color: string | null; unitPrice: number; quantity: number }[] = [];
+  // Stock is tracked per SKU (one per color); the same color can appear on several lines.
+  const demand = new Map<string, { name: string; quantity: number; available: number }>();
   for (const line of lines) {
     const product = bySlug.get(line.slug);
     if (!product) {
@@ -80,71 +86,91 @@ export async function placeOrder(_prevState: PlaceOrderState, formData: FormData
     if (!color && product.colors.length > 0) {
       return { values, error: `Please choose a color for ${product.name} in your cart.` };
     }
-    if (color && !product.colors.includes(color)) {
+    const variant = findVariant(product, color);
+    if (!variant) {
       return { values, error: `${product.name} is no longer available in that color. Please update your cart.` };
     }
 
     items.push({
       productSlug: product.slug,
       name: product.name,
-      color: color ?? null,
+      color: variant.color === 'Standard' ? null : variant.color,
       unitPrice: product.price,
       quantity: line.quantity,
     });
+    const entry = demand.get(variant.sku) ?? { name: product.name, quantity: 0, available: variant.available };
+    entry.quantity += line.quantity;
+    demand.set(variant.sku, entry);
   }
 
-  // The same product can be in the cart in several colors; stock is per product.
-  const demand = new Map<string, number>();
-  for (const item of items) {
-    demand.set(item.productSlug, (demand.get(item.productSlug) ?? 0) + item.quantity);
-  }
-  for (const [slug, quantity] of demand) {
-    const product = bySlug.get(slug)!;
-    if (product.stockQuantity < quantity) {
-      return { values, error: stockMessage(product.name, product.stockQuantity) };
-    }
+  // Early, friendly check against the stock the storefront just showed. When the sheet can
+  // be written, the authoritative check runs again inside the transaction.
+  for (const { name, quantity, available } of demand.values()) {
+    if (available < quantity) return { values, error: stockMessage(name, available) };
   }
 
   const subtotal = items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
-  const totals = calcTotals(subtotal, shippingMethod);
+  const shippingFee = (await getShippingMethods()).find((method) => method.id === shippingMethod)?.fee;
+  const totals = calcTotals(subtotal, shippingMethod, shippingFee);
+
+  // With the service account configured, every sale is written back to the sheet's
+  // inventory_log, so the sheet and the storefront never disagree. If that write fails the
+  // whole transaction rolls back and no order exists.
+  const writeBack = isStockWriteEnabled();
 
   let orderId: string;
   try {
-    // One transaction: the stock decrements and the order (with its items) all
-    // happen or none do. The conditional updateMany is what stops two buyers
-    // checking out the last item at the same time — the loser gets count 0.
-    const order = await prisma.$transaction(async (tx) => {
-      for (const [slug, quantity] of demand) {
-        const { count } = await tx.product.updateMany({
-          where: { slug, stockQuantity: { gte: quantity } },
-          data: { stockQuantity: { decrement: quantity } },
-        });
-        if (count === 0) throw new OutOfStockError(bySlug.get(slug)!.name);
-      }
+    const order = await prisma.$transaction(
+      async (tx) => {
+        if (writeBack) {
+          // Two buyers going for the last unit queue up here, per SKU and in a fixed order
+          // so they can't deadlock; the second one then reads the already reduced stock.
+          for (const sku of [...demand.keys()].sort()) {
+            await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${sku}, 0))`;
+          }
+          const fresh = await readFreshStock();
+          for (const [sku, { name, quantity }] of demand) {
+            const available = fresh.get(sku) ?? 0;
+            if (available < quantity) throw new OutOfStockError(name, available);
+          }
+        }
 
-      return tx.order.create({
-        data: {
-          userId: user.id,
-          shippingMethod,
-          paymentMethod,
-          ...totals,
-          shipName: address.fullName,
-          shipAddress: address.address,
-          shipCity: address.city,
-          shipProvince: address.province,
-          shipZip: address.zip,
-          shipPhone: address.phone,
-          items: { create: items },
-        },
-        select: { id: true },
-      });
-    });
+        const created = await tx.order.create({
+          data: {
+            userId: user.id,
+            shippingMethod,
+            paymentMethod,
+            ...totals,
+            shipName: address.fullName,
+            shipAddress: address.address,
+            shipCity: address.city,
+            shipProvince: address.province,
+            shipZip: address.zip,
+            shipPhone: address.phone,
+            items: { create: items },
+          },
+          select: { id: true, number: true },
+        });
+
+        if (writeBack) {
+          const movements: InventoryMovement[] = [...demand].map(([sku, { quantity }]) => ({ sku, type: 'SALE', quantity }));
+          await recordInventoryMovements(
+            movements,
+            formatOrderNumber(created.number).replace('#', ''),
+            `App order ${formatOrderNumber(created.number)}`,
+          );
+        }
+        return created;
+      },
+      // The sheet is called from inside the transaction, so allow for its latency.
+      { maxWait: 10_000, timeout: 30_000 },
+    );
     orderId = order.id;
   } catch (error) {
     if (error instanceof OutOfStockError) {
-      return { values, error: stockMessage(error.productName, 0) };
+      return { values, error: stockMessage(error.productName, error.available) };
     }
-    console.error('placeOrder failed', error);
+    console.error('placeOrder failed', error instanceof Error ? error.message : 'unknown error');
     return { values, error: 'We couldn’t place your order. Please try again.' };
   }
 

@@ -1,12 +1,11 @@
 import { Package, Home, Clock } from 'lucide-react';
 
-const BENEFITS = [
-  { icon: Package, label: 'Free Eyewear Kit Included' },
-  { icon: Home, label: '7-Day Free Returns' },
-  { icon: Clock, label: 'Up To 5-Year Warranty' },
-];
+const ICONS = [Package, Home, Clock];
+const DEFAULT_LABELS = ['Free Eyewear Kit Included', '7-Day Free Returns', 'Up To 5-Year Warranty'];
 
-export default function BenefitsBar() {
+// Labels come from the store_settings sheet tab (benefit_1..3); the defaults apply if it is empty.
+export default function BenefitsBar({ labels = DEFAULT_LABELS }: { labels?: string[] }) {
+  const BENEFITS = labels.slice(0, ICONS.length).map((label, index) => ({ icon: ICONS[index], label }));
   return (
     <section aria-label="Shopping benefits" className="benefits-bar relative overflow-hidden bg-[#4F6BB5] py-6 text-white">
       <div className="benefits-track">

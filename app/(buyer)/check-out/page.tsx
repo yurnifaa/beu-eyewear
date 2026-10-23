@@ -4,6 +4,7 @@ import Breadcrumb from '@/component/Breadcrumb';
 import CheckoutForm from '@/component/CheckoutForm';
 import Reveal from '@/component/Reveal';
 import { requireUser } from '@/lib/auth/session';
+import { getShippingMethods } from '@/lib/catalog/queries';
 import { getSavedAddresses } from '@/lib/checkout/saved-address';
 
 export default async function Page(props: PageProps<'/check-out'>) {
@@ -18,7 +19,7 @@ export default async function Page(props: PageProps<'/check-out'>) {
     ? `/check-out?${new URLSearchParams(selectedKeys.map((key) => ['line', key])).toString()}`
     : '/check-out';
   const user = await requireUser(here);
-  const savedAddresses = await getSavedAddresses(user.id);
+  const [savedAddresses, shippingMethods] = await Promise.all([getSavedAddresses(user.id), getShippingMethods()]);
 
   return (
     <>
@@ -42,7 +43,12 @@ export default async function Page(props: PageProps<'/check-out'>) {
       </Reveal>
 
       <Reveal mode="mount" className="px-6 py-8">
-        <CheckoutForm defaultName={user.name} savedAddresses={savedAddresses} selectedKeys={selectedKeys} />
+        <CheckoutForm
+          defaultName={user.name}
+          savedAddresses={savedAddresses}
+          selectedKeys={selectedKeys}
+          shippingMethods={shippingMethods}
+        />
       </Reveal>
     </>
   );

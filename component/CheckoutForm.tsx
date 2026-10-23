@@ -15,12 +15,8 @@ import { useResolvedCartItems } from '@/lib/cart-items';
 import { MAX_SAVED_ADDRESSES, type AddressFields } from '@/lib/checkout/address';
 import { PAYMENT_METHOD_IDS, PAYMENT_METHOD_LABELS, type PaymentMethodId } from '@/lib/checkout/payment';
 import { calcTotals } from '@/lib/checkout/pricing';
-import {
-  SHIPPING_METHOD_IDS,
-  SHIPPING_METHODS,
-  deliveryEstimate,
-  type ShippingMethodId,
-} from '@/lib/checkout/shipping';
+import { SHIPPING_METHOD_IDS, SHIPPING_METHODS, deliveryEstimate, type ShippingMethodId } from '@/lib/checkout/shipping';
+import type { ShippingMethodDetail } from '@/lib/catalog/types';
 import type { SavedAddressRecord } from '@/lib/checkout/saved-address';
 import type { PlaceOrderState } from '@/lib/checkout/types';
 import { formatPrice } from '@/lib/format';
@@ -47,12 +43,15 @@ interface CheckoutFormProps {
   // Cart line keys (slug::color) chosen on the cart page. Without them,
   // checkout covers the whole cart.
   selectedKeys?: string[];
+  // Fees and delivery windows from the shipping_methods sheet tab. Missing methods fall
+  // back to the built-in table, and the server re-reads the fee when the order is placed.
+  shippingMethods?: ShippingMethodDetail[];
 }
 
 // Value of the "Ship to" select for typing in an address by hand.
 const NEW_ADDRESS = '';
 
-export default function CheckoutForm({ defaultName, savedAddresses, selectedKeys }: CheckoutFormProps) {
+export default function CheckoutForm({ defaultName, savedAddresses, selectedKeys, shippingMethods = [] }: CheckoutFormProps) {
   const router = useRouter();
   const cartLines = useCartLines();
   const [shippingMethod, setShippingMethod] = useState<ShippingMethodId>('STANDARD');
@@ -89,7 +88,8 @@ export default function CheckoutForm({ defaultName, savedAddresses, selectedKeys
   );
 
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const { shippingFee, total } = calcTotals(subtotal, shippingMethod);
+  const shippingOption = (id: ShippingMethodId) => shippingMethods.find((method) => method.id === id) ?? { id, ...SHIPPING_METHODS[id] };
+  const { shippingFee, total } = calcTotals(subtotal, shippingMethod, shippingOption(shippingMethod).fee);
   const orderLines = JSON.stringify(items.map(({ slug, color, quantity }) => ({ slug, color, quantity })));
 
   const fieldErrors = state.fieldErrors ?? {};
@@ -295,7 +295,7 @@ export default function CheckoutForm({ defaultName, savedAddresses, selectedKeys
           </div>
           <div className="mt-6 grid grid-cols-1 gap-4 sm:ml-9 sm:grid-cols-2">
             {SHIPPING_METHOD_IDS.map((id) => {
-              const option = SHIPPING_METHODS[id];
+              const option = shippingOption(id);
               const selected = shippingMethod === id;
               return (
                 <label
@@ -325,7 +325,7 @@ export default function CheckoutForm({ defaultName, savedAddresses, selectedKeys
                     <p className="ml-6 mt-1 flex items-center gap-1 bg-muted px-2 py-1 text-xs text-muted-foreground">
                       <Clock size={12} />
                       {/* Depends on today's date, which can differ between server render and hydration. */}
-                      <span suppressHydrationWarning>Arrives {deliveryEstimate(id)}</span>
+                      <span suppressHydrationWarning>Arrives {deliveryEstimate(id, new Date(), option)}</span>
                     </p>
                   )}
                 </label>

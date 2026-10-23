@@ -1,7 +1,11 @@
 import 'server-only';
 
 import type { Prisma } from '@prisma/client';
+import { findVariant, getProductsBySlugs } from '@/lib/catalog/queries';
+import { recordInventoryMovements, type InventoryMovement } from '@/lib/catalog/stock';
+import { formatOrderNumber } from '@/lib/format';
 import { prisma } from '@/lib/prisma';
+import { isStockWriteEnabled } from '@/lib/sheets/config';
 import {
   CANCELLABLE_STATUSES,
   STATUS_LABELS,
@@ -18,7 +22,7 @@ const CHANGED = { ok: false, error: 'This order was just changed. Refresh the pa
 
 // Every change is a conditional updateMany: the WHERE clause re-checks the rule
 // at write time, so two clicks or two tabs can't both win. That guard is also
-// what makes cancel restore stock exactly once.
+// what makes cancel return stock to the sheet exactly once.
 
 export async function advanceOrder(id: string): Promise<TransitionResult> {
   return prisma.$transaction(async (tx) => {
@@ -55,7 +59,8 @@ export async function markOrderPaid(id: string): Promise<TransitionResult> {
 }
 
 // userId scopes the cancel to its owner for the customer-side action; the admin
-// action leaves it out. Stock goes back in the same transaction as the status.
+// action leaves it out. The units go back to the sheet (a RETURN row in inventory_log)
+// before the status change commits, so a failed sheet write leaves the order untouched.
 export async function cancelOrder(id: string, scope: { userId?: string } = {}): Promise<TransitionResult> {
   return prisma.$transaction(async (tx) => {
     const { count } = await tx.order.updateMany({
@@ -79,15 +84,33 @@ export async function cancelOrder(id: string, scope: { userId?: string } = {}): 
       return CHANGED;
     }
 
-    // Stock is per product, not per color, so sum quantities by slug. OrderItem has
-    // no FK to Product: a product deleted since the order simply matches no rows.
-    const items = await tx.orderItem.findMany({ where: { orderId: id }, select: { productSlug: true, quantity: true } });
-    const restock = new Map<string, number>();
-    for (const item of items) restock.set(item.productSlug, (restock.get(item.productSlug) ?? 0) + item.quantity);
-
-    for (const [slug, quantity] of restock) {
-      await tx.product.updateMany({ where: { slug }, data: { stockQuantity: { increment: quantity } } });
+    // Without the service account there is no sheet to write to; stock then follows
+    // whatever the sheet owner records.
+    if (isStockWriteEnabled()) {
+      const order = await tx.order.findUnique({
+        where: { id },
+        select: { number: true, items: { select: { productSlug: true, color: true, quantity: true } } },
+      });
+      if (order) {
+        // OrderItem has no FK to the catalog: an item whose product has since left the
+        // sheet simply matches no SKU and is skipped.
+        const products = new Map(
+          (await getProductsBySlugs([...new Set(order.items.map((item) => item.productSlug))])).map((product) => [product.slug, product]),
+        );
+        const restock = new Map<string, number>();
+        for (const item of order.items) {
+          const product = products.get(item.productSlug);
+          const variant = product && findVariant(product, item.color ?? undefined);
+          if (variant) restock.set(variant.sku, (restock.get(variant.sku) ?? 0) + item.quantity);
+        }
+        const movements: InventoryMovement[] = [...restock].map(([sku, quantity]) => ({ sku, type: 'RETURN', quantity }));
+        await recordInventoryMovements(
+          movements,
+          formatOrderNumber(order.number).replace('#', ''),
+          `Cancelled order ${formatOrderNumber(order.number)}`,
+        );
+      }
     }
     return { ok: true, message: 'Order cancelled and stock returned.' };
-  });
+  }, { maxWait: 10_000, timeout: 30_000 });
 }

@@ -1,7 +1,9 @@
 import type { FrameMaterial, FrameMaterialSpec, LensOption, LensOptionInfo } from './types';
 
-// Static reference content tied to the FrameMaterial/LensOption enums — not
-// admin-editable business data, so this stays in code rather than the DB.
+// Built-in reference content tied to the FrameMaterial/LensOption enums. The storefront
+// now takes this from the frame_materials and lens_options tabs of the Google Sheet
+// (lib/catalog/sheet-catalog.ts); these values are the fallback when a tab is not
+// configured, and they still feed the legacy admin forms.
 export const FRAME_MATERIAL_SPECS: Record<FrameMaterial, FrameMaterialSpec> = {
   Plastic: {
     dimensions: '48-54 mm / 16-18 mm / 135-140 mm',

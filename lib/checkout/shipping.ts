@@ -33,8 +33,12 @@ function formatDay(date: Date, options: Intl.DateTimeFormatOptions) {
 }
 
 // e.g. "Oct 7–9", or "Oct 30–Nov 3" when the window crosses a month.
-export function deliveryEstimate(method: ShippingMethodId, from: Date = new Date()): string {
-  const { minDays, maxDays } = SHIPPING_METHODS[method];
+export function deliveryEstimate(
+  method: ShippingMethodId,
+  from: Date = new Date(),
+  window: { minDays: number; maxDays: number } = SHIPPING_METHODS[method],
+): string {
+  const { minDays, maxDays } = window;
   const earliest = addBusinessDays(from, minDays);
   const latest = addBusinessDays(from, maxDays);
 

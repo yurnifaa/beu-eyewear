@@ -1,3 +1,4 @@
+// LEGACY-CATALOG-ADMIN: edits the Prisma catalog, which the storefront no longer reads (see docs/google-sheets-catalog.md).
 import { prisma } from '../lib/prisma';
 
 async function main() {

@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { getStoreSettings } from "@/lib/catalog/queries";
 
 function InstagramIcon() {
   return (
@@ -58,7 +59,20 @@ const linkClassName =
 const socialClassName =
   "flex h-9 w-9 cursor-pointer items-center justify-center rounded-md border border-white text-white transition-colors hover:bg-white hover:text-[#111A33] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white";
 
-export default function Footer() {
+const DEFAULT_PHONES = '(02) 8676-9420 / 0912-345-6789';
+
+// The footer must never break a page, so a sheet outage just falls back to the printed numbers.
+async function supportPhones() {
+  try {
+    const { supportPhones: phones } = await getStoreSettings();
+    return phones.length > 0 ? phones.join(' / ') : DEFAULT_PHONES;
+  } catch {
+    return DEFAULT_PHONES;
+  }
+}
+
+export default async function Footer() {
+  const phones = await supportPhones();
   return (
     <footer className="bg-[#111A33] px-6 py-12 text-white md:py-14">
       <div className="mx-auto grid max-w-5xl grid-cols-1 gap-10 md:grid-cols-[1.6fr_1fr_1fr]">
@@ -68,7 +82,7 @@ export default function Footer() {
             Be Your Best Self. Merging trendy aesthetics with smart wearable
             features to protect your vision.
           </p>
-          <p className="mt-6 text-sm">(02) 8676-9420 / 0912-345-6789</p>
+          <p className="mt-6 text-sm">{phones}</p>
           <div className="mt-5 flex items-center gap-3">
             <a href="#" aria-label="Instagram" className={socialClassName}>
               <InstagramIcon />

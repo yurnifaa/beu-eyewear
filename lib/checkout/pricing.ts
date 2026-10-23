@@ -7,8 +7,10 @@ export interface OrderTotals {
 }
 
 // The one place totals are computed: the form uses it for display and
-// placeOrder uses it for the amounts that are actually stored.
-export function calcTotals(subtotal: number, shippingMethod: ShippingMethodId): OrderTotals {
-  const shippingFee = SHIPPING_METHODS[shippingMethod].fee;
+// placeOrder uses it for the amounts that are actually stored. The fee comes
+// from the shipping_methods sheet tab (shippingFee); the built-in table is
+// only the fallback.
+export function calcTotals(subtotal: number, shippingMethod: ShippingMethodId, shippingFee?: number): OrderTotals {
+  shippingFee ??= SHIPPING_METHODS[shippingMethod].fee;
   return { subtotal, shippingFee, total: subtotal + shippingFee };
 }
