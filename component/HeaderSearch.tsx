@@ -39,7 +39,7 @@ export default function HeaderSearch() {
 
   return (
     <div ref={containerRef} onKeyDown={handleKeyDown} className="relative">
-      <button aria-label="Search" aria-expanded={open} type="button" onClick={() => setOpen((o) => !o)}>
+      <button aria-label="Search" aria-expanded={open} type="button" onClick={() => setOpen((o) => !o)} className="cursor-pointer">
         <Search size={20} />
       </button>
       {open && (

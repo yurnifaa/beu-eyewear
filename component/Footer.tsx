@@ -53,10 +53,10 @@ const shopLinks = [
 const aboutLinks = ["Our Story", "Warrants & Returns", "Store Locator", "Contact Us"];
 
 const linkClassName =
-  "text-white/80 transition-colors hover:text-white hover:underline hover:underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white";
+  "cursor-pointer text-white/80 transition-colors hover:text-white hover:underline hover:underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white";
 
 const socialClassName =
-  "flex h-9 w-9 items-center justify-center rounded-md border border-white text-white transition-colors hover:bg-white hover:text-[#111A33] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white";
+  "flex h-9 w-9 cursor-pointer items-center justify-center rounded-md border border-white text-white transition-colors hover:bg-white hover:text-[#111A33] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white";
 
 export default function Footer() {
   return (

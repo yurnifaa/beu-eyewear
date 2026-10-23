@@ -20,16 +20,16 @@ export default async function Header() {
           <Menu size={22} strokeWidth={1.5} />
         </button>
         <nav className="hidden items-center gap-7 md:flex">
-          <Link href="/listing" className="text-[15px] hover:underline hover:underline-offset-4">
+          <Link href="/listing" className="cursor-pointer text-[15px] hover:underline hover:underline-offset-4">
             Shop
           </Link>
-          <Link href="/search" className="text-[15px] hover:underline hover:underline-offset-4">
+          <Link href="/search" className="cursor-pointer text-[15px] hover:underline hover:underline-offset-4">
             Explore
           </Link>
         </nav>
       </div>
 
-      <Link href="/home" aria-label="BeU home">
+      <Link href="/home" aria-label="BeU home" className="cursor-pointer">
         <Image
           src="/Logo-Dark-Mark.png"
           alt="BeU"
@@ -51,23 +51,23 @@ export default async function Header() {
       <div className="flex items-center justify-end gap-4">
         <HeaderSearch />
         {user?.role === "ADMIN" && (
-          <Link href="/admin" aria-label="Admin">
+          <Link href="/admin" aria-label="Admin" className="cursor-pointer">
             <LayoutDashboard size={20} strokeWidth={1.5} />
           </Link>
         )}
         {user ? (
-          <Link href="/account" aria-label="Account">
+          <Link href="/account" aria-label="Account" className="cursor-pointer">
             <User size={20} strokeWidth={1.5} />
           </Link>
         ) : (
           <LoginModalTrigger />
         )}
-        <Link href="/account/wishlist" aria-label="Wishlist" className="relative hidden md:block">
+        <Link href="/account/wishlist" aria-label="Wishlist" className="relative hidden cursor-pointer md:block">
           <Heart size={20} strokeWidth={1.5} />
           <WishlistBadge />
         </Link>
         <div className="flex items-center gap-3">
-          <Link href="/cart" aria-label="Cart" className="relative">
+          <Link href="/cart" aria-label="Cart" className="relative cursor-pointer">
             <ShoppingBag size={20} strokeWidth={1.5} />
             <CartBadge />
           </Link>

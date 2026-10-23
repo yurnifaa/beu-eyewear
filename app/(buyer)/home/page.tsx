@@ -121,24 +121,24 @@ function OfferTicket({
   actionLabel: string;
 }) {
   return (
-    <article className="relative flex min-h-45 overflow-hidden rounded-lg border border-stone-200/80 bg-[#FAF9F5] shadow-sm transition-shadow hover:shadow-md">
+    <article className="relative flex min-h-45 overflow-hidden rounded-lg border border-border bg-[#FAF9F5] shadow-sm transition-shadow hover:shadow-md dark:bg-card">
       <div
         className="relative flex w-14 shrink-0 select-none items-center justify-center text-white after:absolute after:inset-y-3 after:right-0 after:border-r-2 after:border-dashed after:border-white/40 after:content-[''] sm:w-16"
         style={{
           backgroundColor: stubColor,
-          backgroundImage:
-            'radial-gradient(circle at 100% 14px, #FAF9F5 0 8px, transparent 8.5px), radial-gradient(circle at 100% calc(100% - 14px), #FAF9F5 0 8px, transparent 8.5px)',
         }}
       >
+        <span aria-hidden="true" className="absolute -right-2 top-2 h-4 w-4 rounded-full bg-[#FAF9F5] dark:bg-card" />
+        <span aria-hidden="true" className="absolute -right-2 bottom-2 h-4 w-4 rounded-full bg-[#FAF9F5] dark:bg-card" />
         <span className="rotate-180 text-xs font-semibold uppercase tracking-widest opacity-90 [writing-mode:vertical-lr]">
           {stubLabel}
         </span>
       </div>
       <div className="flex min-w-0 flex-1 flex-col justify-between gap-4 p-4 pl-6 sm:p-5 sm:pl-7">
         <div>
-          <p className="mb-1 text-[11px] font-bold uppercase tracking-wider text-stone-600">{eyebrow}</p>
-          <h3 className="font-serif text-lg font-bold leading-snug text-stone-900">{title}</h3>
-          <div className="mt-1 text-sm text-stone-600">{detail}</div>
+          <p className="mb-1 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">{eyebrow}</p>
+          <h3 className="font-serif text-lg font-bold leading-snug text-foreground">{title}</h3>
+          <div className="mt-1 text-sm text-muted-foreground">{detail}</div>
         </div>
         <div className="flex justify-end">
           {href && (
@@ -245,14 +245,14 @@ export default async function Page() {
               stubColor={index % 2 === 0 ? '#5A6DBE' : '#3B4E99'}
               eyebrow="Special Bundle"
               title={bundle.name}
-              detail={<>Starting at <strong className="text-stone-900">{formatPrice(bundle.price)}</strong></>}
+              detail={<>Starting at <strong className="text-foreground">{formatPrice(bundle.price)}</strong></>}
               href={`/listing/${bundle.slug}`}
               actionLabel="Shop Bundle"
             />
           ))}
           <OfferTicket
             stubLabel="5% Off"
-            stubColor="#2B3A42"
+            stubColor="#2F7A5A"
             eyebrow="Student Exclusive"
             title="Student Discount"
             detail="Valid for Classic & Enhanced eyewear at checkout."
@@ -263,13 +263,13 @@ export default async function Page() {
       </Reveal>
 
       {/* Reviews */}
-      <Reveal className="bg-[#EFEFEF] px-6 py-12">
+      <Reveal className="bg-muted px-6 py-12">
         <SectionLabel>What Our Customer Says</SectionLabel>
         <div className="mt-8 flex gap-4 overflow-x-auto snap-x snap-mandatory px-2 py-4 md:grid md:grid-cols-3 md:gap-5 md:overflow-visible">
           {REVIEWS.map((review) => (
             <figure
               key={review.name}
-              className={`flex w-72 shrink-0 snap-start flex-col gap-3 rounded-md bg-white p-4 shadow-sm md:w-full ${review.tilt}`}
+              className={`flex w-72 shrink-0 snap-start flex-col gap-3 rounded-md bg-background p-4 shadow-sm md:w-full ${review.tilt}`}
             >
               <div className="flex gap-0.5" role="img" aria-label={`${review.stars} out of 5 stars`}>
                 {Array.from({ length: 5 }).map((_, i) => (
@@ -280,11 +280,11 @@ export default async function Page() {
                   />
                 ))}
               </div>
-              <blockquote className="text-xs italic leading-relaxed text-[#3D4A7A]">
+              <blockquote className="text-xs italic leading-relaxed text-muted-foreground">
                 &ldquo;{review.quote}&rdquo;
               </blockquote>
-              <figcaption className="mt-auto flex items-center gap-2 border-t pt-3">
-                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#E8EBF5] text-[9px] font-semibold text-[#55608A]">
+              <figcaption className="mt-auto flex items-center gap-2 border-t border-border pt-3">
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-card text-[9px] font-semibold text-foreground">
                   {review.initials}
                 </span>
                 <span className="leading-tight">

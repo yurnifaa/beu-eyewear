@@ -36,7 +36,7 @@ export default function ProductCard({
 
   return (
     <Link href={href} className={`block w-40 shrink-0 snap-start md:w-full ${className}`}>
-      <div className={`relative ${isFeatured ? 'rounded-lg border border-border bg-white p-1' : ''}`}>
+      <div className={`relative ${isFeatured ? 'rounded-lg border border-border bg-background p-1' : ''}`}>
         <ProductImage
           imageUrl={imageUrl}
           alt={name}
