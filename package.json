@@ -4,9 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
+    "postinstall": "prisma generate",
     "admin:create": "tsx --conditions=react-server prisma/create-admin.ts",
     "seed:sample-orders": "tsx --conditions=react-server prisma/seed-sample-orders.ts",
     "seed:sample-orders:clear": "tsx --conditions=react-server prisma/clear-sample-orders.ts"
