@@ -138,6 +138,41 @@ components:
     backgroundColor: "{colors.paper}"
     rounded: "{rounded.panel}"
     padding: "40px"
+  page-ice-sky:
+    backgroundColor: "{colors.ice-soft}"
+    textColor: "{colors.ink}"
+    padding: "24px 32px 56px"
+  panel-glass:
+    backgroundColor: "rgba(255, 255, 255, 0.8)"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.card}"
+    padding: "24px"
+  cart-row:
+    textColor: "{colors.ink}"
+    padding: "16px 20px"
+  thumb-lens:
+    backgroundColor: "{colors.ice-mist}"
+    rounded: "{rounded.pill}"
+    size: "88px"
+  bead:
+    backgroundColor: "{colors.paper}"
+    rounded: "{rounded.pill}"
+    size: "28px"
+  bead-checked:
+    backgroundColor: "{colors.ice}"
+    textColor: "{colors.ink}"
+  stepper-gel:
+    backgroundColor: "rgba(255, 255, 255, 0.8)"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.pill}"
+    height: "46px"
+    padding: "4px"
+  button-text-pill:
+    backgroundColor: "transparent"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.pill}"
+    height: "36px"
+    padding: "0 14px"
 ---
 
 # Design System: BeU Eyewear Storefront
@@ -160,6 +195,7 @@ This system rejects luxury-beige minimalism: no warm neutrals, no hushed serif-o
 - Glossy pill CTAs and round icon buttons; hard-edged ticket cards with a hard offset shadow.
 - Pixel glyph sprite as the recurring ornament; one flat colour per glyph.
 - Motion limited to transform and opacity, with full reduced-motion fallbacks.
+- **Ice Sky pages** (the cart is the first): a pale ice sky, a chrome title, and frosted glass panels that hold the task. Selection, quantity and checkout controls are soft gel beads and pills inside them. See "Ice Sky pages" below; this is the pattern the other buyer pages (account, checkout, orders, wishlist, listing) are to follow as they are redesigned.
 
 ## Colors
 
@@ -188,7 +224,9 @@ A cold, saturated-light palette: an ice-blue family for atmosphere, one mid-satu
 - **Error Red** (`#ef4444`, Tailwind red-500) for form errors; **Star Amber** (`#f59e0b`) for rating stars only.
 
 ### Named Rules
-**The Light Stays Light Rule.** Home-page sections sit inside `.beu-light` and never use `dark:` classes. Dark mode applies to header, footer, account and checkout only.
+**The Light Stays Light Rule.** Home-page sections and Ice Sky pages (the cart) sit inside `.beu-light` and never use `dark:` classes. Dark mode applies to header, footer, account and checkout only. An Ice Sky page that is later redesigned for dark mode needs its own night sky; do not just invert the panels.
+
+**The Ice Sky Rule.** The sky behind a glass panel stays inside the ice family: Ice Mist (`#eaf5ff`) at the top, Ice Soft (`#c7e4ff`) in the middle, fading to the page background at the bottom. Signal Blue and Ice are the only saturated hues; white is the highlight. No chrome fill, no warm tint.
 
 **The Chrome Is Lettering Rule.** The brushed chrome gradient fills type (hero and footer wordmarks) and nothing else. Chrome as a flat panel colour is limited to the ticket stub.
 
@@ -221,6 +259,10 @@ A centred container with generous outer gutters, flexible section stacks, and bi
 
 Spacing is a Tailwind 4px-based rhythm: 8-16px inside components, 24-40px between groups, 48-64px between sections. Hero content stacks the oversized wordmark behind the product photo (z-index layers 1-4), with an eyebrow, CTA pair and script tagline in a three-column row on desktop that collapses to a single centred column on mobile.
 
+### Ice Sky pages
+
+A task page (cart first, then the rest of the buyer flow) is one pale sky with one or two glass panels on it. The page is a single `max-w-[1440px]` container with 16px (mobile) or 32px side padding, 24px above and 56px below. A two-column task layout is a flexible list column plus a fixed summary column: 23rem (25rem from `xl`), 32px gap, the summary sticky at `lg:top-28`. Below `lg` the columns stack and a sticky glass checkout bar carries the main action. The 70% `beu-hero-grid` overlay sits on the sky; seven pixel glyphs drift slowly across it.
+
 ## Elevation & Depth
 
 Hybrid: glass and glow for interactive surfaces, hard offset shadows for tickets, and flat ink bands for rhythm. Shadows are tinted blue, never neutral grey-black, except the ticket's ink block.
@@ -232,15 +274,20 @@ Hybrid: glass and glow for interactive surfaces, hard offset shadows for tickets
 - **Orb** (`inset 0 -14px 34px rgba(60,130,210,0.25), 0 34px 64px rgba(60,130,210,0.22)`): the decorative sphere in the spotlight section.
 - **Footer panel** (`0 24px 50px rgba(40,100,180,0.16)`): the white rounded footer card.
 - **Ticket hard shadow**: a solid Ink block offset 5px right and 5px down behind the ticket (no blur); on hover the ticket slides to widen the offset to 8px.
+- **Sky panel** (`0 14px 40px rgba(40,100,180,0.2), inset 0 1px 0 #fff`, `backdrop-filter: blur(16px)`, `rgba(255,255,255,0.8)` fill, 1px `rgba(255,255,255,0.95)` edge): the glass panel on an Ice Sky page. Denser and brighter than the hero Glass (0.8 against 0.66) so mono text and prices stay at full contrast over a moving sky.
+- **Gel bead** (`0 6px 12px rgba(40,110,200,0.34), inset 0 2px 0 #fff, inset 0 -2px 4px rgba(40,110,200,0.25)`): a checked selection bead; the small cousin of Gloss lift.
+- **Gel step** (`0 2px 6px rgba(40,100,180,0.2), inset 0 1px 0 #fff`): the round buttons inside a quantity stepper.
 
 ### Named Rules
+
+**The One Pane Rule.** On an Ice Sky page each region of information is one glass panel, and rows inside it are separated by 1px Rime Border hairlines. Never nest a card in a panel, and never put a glass panel on another glass panel; the panel's own diffuse shadow is the only elevation.
 **The Hard Shadow Rule.** A solid, blur-free offset shadow belongs to tickets and ink-outlined objects. Every other raised element uses a blue-tinted diffuse shadow.
 
 **The Transform-Only Rule.** Hover feedback animates `transform` and `opacity` only. The lift shadow is its own layer that fades in; `box-shadow` is never animated.
 
 ## Shapes
 
-Round means "touch me", square means "read me". Interactive controls are full pills (`999px`) or circles: buttons, icon buttons, badges, category tiles, the theme toggle. Product plates and tickets use 16px corners. Inputs use 12px (icon fields) or 8px (plain fields). The footer panel is a 32px super-rounded card. Ink-outlined objects use a 2px Ink border; the punk band uses a 3px white top and bottom rule. Tickets add a punched look: two circular notches on the stub edge and a dashed perforation line at 40% opacity. Category images sit inside a 4px Ice ring.
+Round means "touch me", square means "read me". Interactive controls are full pills (`999px`) or circles: buttons, icon buttons, badges, category tiles, the theme toggle. Product plates and tickets use 16px corners. Inputs use 12px (icon fields) or 8px (plain fields). The footer panel is a 32px super-rounded card. Ink-outlined objects use a 2px Ink border; the punk band uses a 3px white top and bottom rule. Tickets add a punched look: two circular notches on the stub edge and a dashed perforation line at 40% opacity. Category images sit inside a 4px Ice ring. Ice Sky panels are 16px, like every information plate. Product images in the cart sit in a round **lens window** (a circle, 88px on mobile and 5.5rem on desktop, with a 3px white inner ring) so the product reads as seen through glass. The empty state uses a larger lens silhouette (border-radius `42% 42% 46% 46% / 56% 56% 44% 44%`, 11rem by 8.5rem).
 
 ## Components
 
@@ -278,6 +325,25 @@ Round means "touch me", square means "read me". Interactive controls are full pi
 - **Ticker:** 40px Ink strip above the header with a looping marquee of uppercase 12px lines separated by Ice sparks.
 - **Footer:** gradient from Ice Mist to dusk blue; three-column panel, a row of twelve 40px glyphs, an oversized chrome wordmark cropped at the baseline, and an Ink copyright bar.
 
+### Ice Sky components (signature)
+
+The vocabulary of the cart, and of every task page that follows it. Code: `component/cart/` (`CartLens.tsx` is the page shell, `CartPanels.tsx` the two panels, `shared.tsx` the controls).
+
+- **Page title:** the chrome wordmark treatment at page scale: Unbounded 900, uppercase, `clamp(3.5rem, 13vw, 6rem)`, line-height 0.95, -0.03em, filled with the brushed-chrome gradient (`.beu-chrome-text`). A visually hidden "Shopping" keeps the `h1` a full phrase. Beside it sit a **count bead** (a 4rem gloss circle holding a Unbounded 900 number) and one **script aside** in Instrument Serif italic (3xl to 4xl, Signal Blue, tilted -2deg: "almost yours."). That aside is the page's single use of the accent font.
+- **Sky panel:** the glass pane described under Elevation & Depth; 16px radius. Its summary variant pads 24px, sticks at `lg:top-28`, and holds an Unbounded 900 `text-sm` uppercase title, label/value rows in DM Mono, a hairline, the Total (Unbounded 900, 3xl) and the one gloss CTA. The list variant opens with a toolbar (Select All, Remove Selected) over a 1px hairline.
+- **List row:** one grid per line. Desktop: selection bead (44px), lens window (5.5rem), name and colour, stepper, line total (7rem, right aligned), remove (40px). Mobile: the same cells, with window 4.5rem, and the total and stepper stacked under the name. Padding 16px by 20px; hairline between rows. A line that is left out of the order dims its window (greyscale 70%, opacity 70%) while its text stays at full contrast. Names are Unbounded 700 `text-sm` uppercase; colour is a 12px Slate Text line; the "each" price appears only when quantity is above 1.
+- **Lens window:** the product photo contained (never cropped) inside a circle with a radial ice-mist fill and a 3px white inner ring. When a product has no photo, draw one of the brand's own frame shapes (`g-round`, `g-wrap`, `g-shield`, `g-rect`, `g-butterfly` from the glyph sprite) in Ink, picked from the product slug so a product always gets the same frame. Never show a blank plate.
+- **Selection bead:** a real checkbox with a 44px hit area; its face is a 28px circle, 2px Rime Border ring, white. Checked, it becomes the gel gloss (white to Ice, Gel bead shadow) with an Ink check that scales in over 180ms. Focus draws a 2px Signal Blue ring, 3px out.
+- **Quantity stepper:** a pill (1px Rime Border, 80% white, 4px padding) holding two 36px gel buttons (white to Ice Mist, Gel step shadow) and a 2.5rem value that rolls up when the number grows and down when it shrinks (200ms, 14px travel). The minus is disabled at 1.
+- **Text pill button:** the quiet action ("Remove Selected"): 36px tall, 14px side padding, 1px Rime Border, 12px DM Mono, full pill. **Icon button:** a 40px circle, Slate Text, 14% Signal Blue wash on hover (the remove "x").
+- **Gloss CTA, in a panel:** the existing gloss pill plus a white sheen that sweeps left to right across it on hover (700ms, transform only). Disabled: 60% opacity and desaturated, not removed; its reason is stated in the panel ("Tick a line..."). Below `lg` a compact version (44px tall) lives in a sticky glass bar (`rgba(255,255,255,0.78)`, blur 14px, full pill) with the live total on its left, and the panel's own button is hidden so there is still one gloss CTA per view.
+- **Rolling price:** any total that responds to a control counts up or down to its new value over 700ms (expo ease-out) instead of jumping. The animated digits are hidden from assistive tech; the final value is always present as text, and a polite live region announces the selection count and total.
+- **Trust list:** three one-line facts under the summary, each led by a 14px pixel glyph in Signal Blue: free case and microfiber cloth, 7-day free return, 1-year warranty (5 years on smart glasses). They are copied from PRODUCT.md; do not add claims.
+- **Drifting glyphs:** seven pixel glyphs (spark, star5, cross, burst, spark-o, bolt, heart) at fixed positions, 20 to 34px, at 80% opacity in Signal Blue, Ice or white, each drifting 8 to 22px and rotating 10 to 20 degrees over 8 to 12 seconds, alternating. Held still under reduced motion.
+- **Empty state:** the lens silhouette in glass holding one 44px spark glyph and bobbing 8px over 3.2s, a 2xl Unbounded heading, two lines of mono copy, and the gloss CTA ("Browse frames"). The title's aside changes to "start here."
+- **Loading:** shimmering ice skeleton blocks the height of a row, with a polite status label; never an empty-state flash while the page is still reading local data.
+- **Motion:** list entrances are 400ms with an expo ease-out (`cubic-bezier(0.16, 1, 0.3, 1)`), staggered 70ms and capped at six items, rising 14px. A removed row slides 40px right and fades over 300ms while the rows below slide up to close the gap. Selection and dim states are colour and opacity changes of 150 to 250ms. All of it transform and opacity, with the reduced-motion fallbacks already required above.
+
 ### Pixel glyph set (signature)
 Twelve single-colour pixel-art glyphs (`spark`, `spark-o`, `burst`, `orbit`, `ball`, `shoot`, `cross`, `heart`, `star5`, `bolt`, `skull`, `cluster`) from a hidden SVG sprite, rendered via `<PixelGlyph>` and filled with `currentColor`. Used at 12-56px as bullets, section-label flanks, hero scatter and the punk band.
 
@@ -295,6 +361,11 @@ A 96px Ink strip with 3px white top and bottom rules, looping a marquee of 40px 
 - **Do** wrap new home-page sections in the existing `.beu-light` scope and avoid `dark:` there.
 - **Do** honour `prefers-reduced-motion`: drop travel and zoom, keep the shadow fade and colour changes.
 
+- **Do** build task pages (cart, checkout, orders, wishlist, account) as an Ice Sky: the ice gradient with the faint grid, one glass panel per region, rows divided by hairlines, one chrome title with one script aside, and a single gloss CTA with the sticky glass bar on mobile.
+- **Do** put products in lens windows with `object-fit: contain`, and draw a brand frame shape when no photo exists.
+- **Do** make every selection control a bead and every quantity control a gel stepper, built on real inputs and buttons with a 44px hit area where the control is small.
+- **Do** write any display or visibility change that depends on a breakpoint inside the component's own CSS module for rules that live there. Module CSS is unlayered and beats Tailwind utilities on the same element, so a `lg:hidden` on a module-styled element silently does nothing.
+
 ### Don't:
 - **Don't** drift into luxury-beige minimalism: no warm neutrals, cream backgrounds or hushed serif-led restraint.
 - **Don't** use `-webkit-text-stroke` on Unbounded; it exposes the overlapping contours of the variable font.
@@ -303,3 +374,6 @@ A 96px Ink strip with 3px white top and bottom rules, looping a marquee of 40px 
 - **Don't** hardcode brand colours in components or restyle the admin area; admin stays on the neutral tokens.
 - **Don't** put more than one gloss CTA in a view, or use the gloss gradient on non-action surfaces.
 - **Don't** add multi-colour or outlined-then-filled glyph treatments; a glyph is one `currentColor`.
+- **Don't** nest cards or stack glass on glass in an Ice Sky page, and don't give each row its own card; the panel and its hairlines are the structure.
+- **Don't** use the hero Glass (66% white) for panels that carry prices or form text; use the Sky panel (80% white).
+- **Don't** invent shipping, discount, stock or rating figures in a summary or trust list; show only data the cart has and facts from PRODUCT.md.

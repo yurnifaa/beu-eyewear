@@ -1,0 +1,208 @@
+/* Pieces shared by the three cart designs. Colours come from the storefront tokens
+   (--ice, --ink, --accent...) set on .beu-theme. */
+
+/* ---------- drifting pixel glyphs ---------- */
+
+@keyframes cart-drift {
+  from { transform: translate3d(0, 0, 0) rotate(0deg); }
+  to { transform: translate3d(var(--dx, 6px), var(--dy, -18px), 0) rotate(var(--rot, 10deg)); }
+}
+
+.glyph {
+  position: absolute;
+  animation: cart-drift var(--dur, 9s) ease-in-out var(--delay, 0s) infinite alternate;
+}
+
+/* ---------- selection bead (a real checkbox, dressed as a gel bead) ---------- */
+
+.bead {
+  position: relative;
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  cursor: pointer;
+}
+
+.beadInput {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.beadFace {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  border: 2px solid var(--bead-border, var(--border));
+  background: var(--bead-bg, #ffffff);
+  color: var(--ink);
+  pointer-events: none;
+  transition: transform 150ms ease-out, background-color 150ms ease-out, border-color 150ms ease-out;
+}
+
+.check {
+  transform: scale(0);
+  transition: transform 180ms ease-out;
+}
+
+.beadInput:hover + .beadFace {
+  border-color: var(--accent);
+}
+
+.beadInput:active + .beadFace {
+  transform: scale(0.9);
+}
+
+.beadInput:checked + .beadFace {
+  border-color: #ffffff;
+  background: linear-gradient(180deg, #ffffff 0%, var(--ice) 100%);
+  box-shadow:
+    0 6px 12px rgba(40, 110, 200, 0.34),
+    inset 0 2px 0 #ffffff,
+    inset 0 -2px 4px rgba(40, 110, 200, 0.25);
+}
+
+.beadInput:checked + .beadFace .check {
+  transform: scale(1);
+}
+
+.beadInput:focus-visible + .beadFace {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+/* ---------- quantity stepper ---------- */
+
+.stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 999px;
+  border: 1px solid var(--stepper-border, var(--border));
+  background: var(--stepper-bg, rgba(255, 255, 255, 0.8));
+}
+
+.stepBtn {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #ffffff 0%, var(--ice-mist) 100%);
+  color: var(--ink);
+  box-shadow:
+    0 2px 6px rgba(40, 100, 180, 0.2),
+    inset 0 1px 0 #ffffff;
+  transition: transform 150ms ease-out, opacity 150ms ease-out;
+}
+
+.stepBtn:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.stepBtn:active:not(:disabled) {
+  transform: scale(0.9);
+}
+
+.stepBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.stepBtn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.stepVal {
+  position: relative;
+  width: 2.5rem;
+  height: 1.5rem;
+  overflow: hidden;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--stepper-fg, var(--foreground));
+}
+
+/* ---------- the gloss call to action (one per view) ---------- */
+
+.cta {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  transition: transform 150ms ease-out;
+}
+
+.cta::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, 0.9) 50%, transparent 65%);
+  transform: translateX(-130%);
+}
+
+.cta:hover:not(:disabled)::after {
+  transform: translateX(130%);
+  transition: transform 700ms ease-out;
+}
+
+.cta:hover:not(:disabled) {
+  transform: translateY(-2px);
+}
+
+.cta:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.cta:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+  filter: saturate(0.5);
+}
+
+.cta:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+/* ---------- loading skeleton ---------- */
+
+@keyframes cart-shimmer {
+  to { transform: translateX(100%); }
+}
+
+.skel {
+  position: relative;
+  overflow: hidden;
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--ice) 22%, #ffffff);
+}
+
+.skel::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, 0.85) 50%, transparent 70%);
+  transform: translateX(-100%);
+  animation: cart-shimmer 1.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glyph,
+  .skel::after {
+    animation: none;
+  }
+
+  .cta::after,
+  .cta:hover:not(:disabled)::after {
+    transition: none;
+  }
+}
