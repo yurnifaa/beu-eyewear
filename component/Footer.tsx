@@ -1,7 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
 import PixelGlyph, { type GlyphName } from "@/component/beu/PixelGlyph";
-import FooterWordmark from "@/component/FooterWordmark";
 import { getStoreSettings } from "@/lib/catalog/queries";
 
 function InstagramIcon() {
@@ -145,7 +144,6 @@ export default async function Footer() {
         </div>
 
         <div className="mt-8 pb-10">
-          <FooterWordmark />
         </div>
       </div>
 

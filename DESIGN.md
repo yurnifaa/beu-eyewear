@@ -15,11 +15,6 @@ colors:
   slate-text: "#4a6079"
   chrome: "#9fadbe"
   paper: "#ffffff"
-  night-bg: "#07111f"
-  night-card: "#0f2038"
-  night-muted: "#0b1a2e"
-  night-border: "#1e3654"
-  night-text: "#9db4cc"
   error-red: "#ef4444"
   star-amber: "#f59e0b"
 typography:
