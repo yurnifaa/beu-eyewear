@@ -1,6 +1,6 @@
-import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { ChevronLeft } from 'lucide-react';
+import AccountHeader from '@/component/account/AccountHeader';
+import Panel from '@/component/account/Panel';
 import CancelOrderButton from '@/component/order/CancelOrderButton';
 import OrderStatusBadge from '@/component/order/OrderStatusBadge';
 import OrderStatusSteps from '@/component/order/OrderStatusSteps';
@@ -23,24 +23,25 @@ export default async function OrderDetailPage(props: PageProps<'/account/orders/
 
   return (
     <div className="flex flex-col gap-8">
-      <div>
-        <Link href="/account/orders" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-          <ChevronLeft size={16} />
-          Order History
-        </Link>
-        <div className="mt-3 flex flex-wrap items-center gap-3">
-          <h1 className="text-2xl font-bold">Order {formatOrderNumber(order.number)}</h1>
-          <OrderStatusBadge bucket={orderBucket(order)} />
-        </div>
-        {order.paymentStatus === 'UNPAID' && order.status !== 'CANCELLED' && (
-          <p className="mt-2 text-sm text-muted-foreground">Payment pending — we&apos;ll start processing once it&apos;s received.</p>
-        )}
-      </div>
+      <AccountHeader
+        eyebrow="Order"
+        title={formatOrderNumber(order.number)}
+        back={{ href: '/account/orders', label: 'Order history' }}
+        description={
+          order.paymentStatus === 'UNPAID' && order.status !== 'CANCELLED'
+            ? "Payment pending — we'll start processing once it's received."
+            : undefined
+        }
+      >
+        <OrderStatusBadge bucket={orderBucket(order)} />
+      </AccountHeader>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div className="flex flex-col gap-8 lg:col-span-2">
-          <OrderStatusSteps status={order.status} />
-          <ShippingInfoCard order={order} />
+      <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
+        <div className="flex flex-col gap-6">
+          <Panel title="Progress" index="01" className="py-8">
+            <OrderStatusSteps status={order.status} variant="storefront" />
+          </Panel>
+          <ShippingInfoCard order={order} variant="storefront" />
           {canCancel(order) ? (
             <CancelOrderButton action={cancelMyOrder.bind(null, order.id)} orderLabel={formatOrderNumber(order.number)} />
           ) : (

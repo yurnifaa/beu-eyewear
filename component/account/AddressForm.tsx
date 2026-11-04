@@ -32,7 +32,7 @@ export default function AddressForm({ address, defaultName, isFirst = false }: A
   const defaultChecked = alwaysDefault || (state.values ? state.values.isDefault === 'on' : false);
 
   return (
-    <form action={formAction} className="flex max-w-xl flex-col gap-4">
+    <form action={formAction} className="flex flex-col gap-4">
       {address && <input type="hidden" name="id" value={address.id} />}
 
       <TextField
@@ -45,14 +45,14 @@ export default function AddressForm({ address, defaultName, isFirst = false }: A
       />
       <AddressFieldsInputs values={values} errors={fieldErrors} />
 
-      <label className="flex cursor-pointer items-center gap-2 text-sm">
+      <label className="flex cursor-pointer items-center gap-3 text-sm">
         <input
           type="checkbox"
           name="isDefault"
           defaultChecked={defaultChecked}
           // A disabled box isn't submitted; the server keeps the default as is.
           disabled={alwaysDefault}
-          className="h-4 w-4 accent-foreground"
+          className="size-5 rounded accent-accent"
         />
         {alwaysDefault ? 'This is your default address' : 'Use as my default address'}
       </label>

@@ -13,52 +13,54 @@ export default function OrderSummaryCard({ order }: { order: OrderDetail }) {
   });
 
   return (
-    <div className="rounded-xl bg-muted p-6">
+    <div className="rounded-3xl border border-border bg-card/80 p-6 shadow-[0_18px_40px_rgba(40,100,180,0.1)] backdrop-blur md:p-7 lg:sticky lg:top-28 lg:self-start">
       <AccordionSection title="Order Summary" defaultOpen>
         <div className="flex flex-col gap-4">
           {order.items.map((item) => (
             <div key={item.id} className="flex gap-3 border-b border-border pb-4 last:border-b-0 last:pb-0">
-              <PlaceholderImage variant="plain" className="h-16 w-16 shrink-0 rounded-lg" />
+              <PlaceholderImage variant="plain" className="size-16 shrink-0 rounded-2xl" />
               <div className="flex flex-1 items-start justify-between gap-2">
-                <div>
-                  <p className="text-sm font-bold">{item.name}</p>
-                  {item.color && <p className="text-xs text-muted-foreground">Color: {item.color}</p>}
-                  <p className="text-xs text-muted-foreground">Qty: {item.quantity}</p>
+                <div className="min-w-0">
+                  <p className="text-sm font-bold text-foreground">{item.name}</p>
+                  {item.color && <p className="mt-0.5 text-xs">Color: {item.color}</p>}
+                  <p className="text-xs">Qty: {item.quantity}</p>
                 </div>
-                <p className="shrink-0 text-sm">{formatPrice(item.unitPrice * item.quantity)}</p>
+                <p className="shrink-0 text-sm text-foreground">{formatPrice(item.unitPrice * item.quantity)}</p>
               </div>
             </div>
           ))}
         </div>
 
-        <div className="mt-4 flex justify-between text-sm">
-          <span className="text-muted-foreground">Subtotal</span>
-          <span>{formatPrice(order.subtotal)}</span>
+        <div className="mt-5 flex justify-between text-sm">
+          <span>Subtotal</span>
+          <span className="text-foreground">{formatPrice(order.subtotal)}</span>
         </div>
         <div className="mt-2 flex justify-between border-b border-border pb-4 text-sm">
-          <span className="text-muted-foreground">Shipping</span>
-          <span>{order.shippingFee === 0 ? 'Free' : formatPrice(order.shippingFee)}</span>
+          <span>Shipping</span>
+          <span className="text-foreground">{order.shippingFee === 0 ? 'Free' : formatPrice(order.shippingFee)}</span>
         </div>
-        <div className="mt-4 flex justify-between font-bold">
-          <span>Total</span>
-          <span>{formatPrice(order.total)}</span>
+        <div className="mt-4 flex items-baseline justify-between text-foreground">
+          <span className="text-[11px] uppercase tracking-[0.16em]">Total</span>
+          <span className="font-display text-2xl font-black tracking-[-0.03em]">{formatPrice(order.total)}</span>
         </div>
 
-        <div className="mt-6 grid grid-cols-3 gap-2 border-t border-border pt-4 text-xs">
-          <div>
-            <p className="text-muted-foreground">Date</p>
-            <p className="mt-1">{orderDate}</p>
+        <dl className="mt-6 flex flex-col gap-3 border-t border-border pt-4 text-xs">
+          <div className="flex justify-between gap-4">
+            <dt className="text-[10px] uppercase tracking-[0.14em]">Date</dt>
+            <dd className="text-right text-foreground">{orderDate}</dd>
           </div>
-          <div>
-            <p className="text-muted-foreground">Order Number</p>
-            <p className="mt-1">{formatOrderNumber(order.number)}</p>
+          <div className="flex justify-between gap-4">
+            <dt className="text-[10px] uppercase tracking-[0.14em]">Order No.</dt>
+            <dd className="text-right text-foreground">{formatOrderNumber(order.number)}</dd>
           </div>
-          <div>
-            <p className="text-muted-foreground">Payment Method</p>
-            <p className="mt-1">{PAYMENT_METHOD_LABELS[order.paymentMethod]}</p>
-            <p className="text-muted-foreground">{order.paymentStatus === 'PAID' ? 'Paid' : 'Payment pending'}</p>
+          <div className="flex justify-between gap-4">
+            <dt className="text-[10px] uppercase tracking-[0.14em]">Payment</dt>
+            <dd className="text-right text-foreground">
+              {PAYMENT_METHOD_LABELS[order.paymentMethod]}
+              <span className="block text-muted-foreground">{order.paymentStatus === 'PAID' ? 'Paid' : 'Payment pending'}</span>
+            </dd>
           </div>
-        </div>
+        </dl>
       </AccordionSection>
     </div>
   );

@@ -1,3 +1,4 @@
+import AccountHeader from '@/component/account/AccountHeader';
 import EmptyOrders from '@/component/order/EmptyOrders';
 import OrderCard from '@/component/order/OrderCard';
 import OrderTabs from '@/component/order/OrderTabs';
@@ -23,14 +24,18 @@ export default async function OrdersPage(props: PageProps<'/account/orders'>) {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-bold">Order History</h1>
+      <AccountHeader eyebrow="Orders" title="Order history" description="Track what's on its way and revisit everything you've bought.">
+        <span className="beu-chip inline-flex h-9 items-center px-4 text-[11px] uppercase tracking-[0.18em]">
+          [ {orders.length} {orders.length === 1 ? 'order' : 'orders'} ]
+        </span>
+      </AccountHeader>
 
       <OrderTabs active={tab} counts={counts} />
 
       {visible.length === 0 ? (
         <EmptyOrders message={activeTab.empty} />
       ) : (
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-5">
           {visible.map(({ order, bucket }) => (
             <OrderCard key={order.id} order={order} bucket={bucket} />
           ))}

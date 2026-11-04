@@ -1,5 +1,7 @@
 import { notFound } from 'next/navigation';
+import AccountHeader from '@/component/account/AccountHeader';
 import AddressForm from '@/component/account/AddressForm';
+import Panel from '@/component/account/Panel';
 import { requireUser } from '@/lib/auth/session';
 import { getSavedAddress } from '@/lib/checkout/saved-address';
 
@@ -12,8 +14,10 @@ export default async function EditAddressPage(props: PageProps<'/account/address
 
   return (
     <div className="flex flex-col gap-8">
-      <h1 className="text-2xl font-bold">Edit Address</h1>
-      <AddressForm address={address} />
+      <AccountHeader eyebrow="Address book" title="Edit address" back={{ href: '/account/addresses', label: 'Address book' }} />
+      <Panel title="Address details" className="max-w-2xl">
+        <AddressForm address={address} />
+      </Panel>
     </div>
   );
 }

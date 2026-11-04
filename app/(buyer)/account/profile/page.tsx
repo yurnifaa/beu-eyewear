@@ -1,4 +1,6 @@
+import AccountHeader from '@/component/account/AccountHeader';
 import ChangePasswordForm from '@/component/account/ChangePasswordForm';
+import Panel from '@/component/account/Panel';
 import ProfileForm from '@/component/account/ProfileForm';
 import VerificationCard from '@/component/account/VerificationCard';
 import { requireUser } from '@/lib/auth/session';
@@ -10,34 +12,29 @@ export default async function ProfilePage() {
 
   return (
     <div className="flex flex-col gap-8">
-      <div>
-        <h1 className="text-2xl font-bold">Profile</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Update your details, verify your email and change your password.</p>
+      <AccountHeader
+        eyebrow="Profile"
+        title="Your details"
+        description="Update your details, verify your email and change your password."
+      />
+
+      <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-2">
+        <div className="flex flex-col gap-6">
+          <Panel id="details" title="Your details" index="01">
+            <ProfileForm name={user.name} email={user.email} />
+          </Panel>
+          <Panel id="verify" title="Email verification" index="02">
+            <VerificationCard email={user.email} verified={Boolean(user.emailVerifiedAt)} />
+          </Panel>
+        </div>
+
+        <Panel id="password" title="Change password" index="03">
+          <ChangePasswordForm />
+          <p className="mt-4 text-xs leading-relaxed text-muted-foreground">
+            Changing your password signs you out of your other devices.
+          </p>
+        </Panel>
       </div>
-
-      <section aria-labelledby="details-heading" className="max-w-xl rounded-2xl border border-border p-6">
-        <h2 id="details-heading" className="mb-4 text-lg font-bold">
-          Your details
-        </h2>
-        <ProfileForm name={user.name} email={user.email} />
-      </section>
-
-      <section aria-labelledby="verify-heading" className="max-w-xl rounded-2xl border border-border p-6">
-        <h2 id="verify-heading" className="mb-4 text-lg font-bold">
-          Email verification
-        </h2>
-        <VerificationCard email={user.email} verified={Boolean(user.emailVerifiedAt)} />
-      </section>
-
-      <section aria-labelledby="password-heading" className="max-w-xl rounded-2xl border border-border p-6">
-        <h2 id="password-heading" className="mb-4 text-lg font-bold">
-          Change password
-        </h2>
-        <ChangePasswordForm />
-        <p className="mt-4 text-xs text-muted-foreground">
-          Changing your password signs you out of your other devices.
-        </p>
-      </section>
     </div>
   );
 }

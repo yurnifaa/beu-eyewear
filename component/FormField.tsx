@@ -2,7 +2,7 @@ import React from 'react';
 
 export function FieldLabel({ htmlFor, children }: { htmlFor: string; children: React.ReactNode }) {
   return (
-    <label htmlFor={htmlFor} className="text-sm text-muted-foreground">
+    <label htmlFor={htmlFor} className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
       {children}
     </label>
   );
@@ -32,7 +32,7 @@ export default function TextField({ id, label, errors, type = 'text', floatingLa
             placeholder=" "
             aria-invalid={hasError || undefined}
             aria-describedby={hasError ? `${id}-error` : undefined}
-            className={`peer h-14 w-full rounded-none border bg-background px-4 pt-6 pb-2 text-base text-foreground outline-none focus:ring-1 ${hasError ? 'border-red-500 focus:ring-red-500' : 'border-border focus:border-foreground focus:ring-foreground'}`}
+            className={`peer h-14 w-full rounded-2xl border bg-background px-4 pt-6 pb-2 text-base text-foreground outline-none focus:ring-1 ${hasError ? 'border-red-500 focus:ring-red-500' : 'border-border focus:border-foreground focus:ring-foreground'}`}
           />
           <label
             htmlFor={id}
@@ -55,8 +55,8 @@ export default function TextField({ id, label, errors, type = 'text', floatingLa
         type={type}
         aria-invalid={hasError || undefined}
         aria-describedby={hasError ? `${id}-error` : undefined}
-        className={`w-full rounded-lg bg-muted px-4 py-3 text-sm outline-none ${
-          hasError ? 'ring-1 ring-red-500' : ''
+        className={`h-12 w-full rounded-2xl border bg-background/70 px-4 text-sm outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-accent focus:ring-2 focus:ring-accent/30 ${
+          hasError ? 'border-red-500 focus:border-red-500 focus:ring-red-500/30' : 'border-border'
         }`}
         {...props}
       />
