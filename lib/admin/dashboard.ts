@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { getStockSummary } from '@/lib/catalog/queries';
+import { getStockSummary, getStoreSettings } from '@/lib/catalog/queries';
 import { prisma } from '@/lib/prisma';
 import { parseSalesRange, periodDates, type SalesRange } from './dates';
 
@@ -30,12 +30,12 @@ export async function getDashboard(now = new Date()) {
   const parsed = parseSalesRange({}, now);
   if (!parsed.range) throw new Error('Could not determine dashboard dates.');
   const range = parsed.range;
-  const [revenue, paidRevenue, statuses, stock, trend, recentOrders] = await Promise.all([
+  const [revenue, paidRevenue, statuses, stock, settings, trend, recentOrders] = await Promise.all([
     prisma.order.aggregate({ where: { status: { not: 'CANCELLED' } }, _sum: { total: true } }),
     prisma.order.aggregate({ where: { status: { not: 'CANCELLED' }, paymentStatus: 'PAID' }, _sum: { total: true } }),
     prisma.order.groupBy({ by: ['status'], _count: { _all: true } }),
-    // Stock lives in the Google Sheet now; a sheet outage shows zeros instead of breaking the dashboard.
-    getStockSummary().catch(() => ({ lowStock: 0, outOfStock: 0 })),
+    getStockSummary(),
+    getStoreSettings(),
     getDailyTrend(range),
     prisma.order.findMany({ orderBy: [{ createdAt: 'desc' }, { id: 'desc' }], take: 5,
       select: { id: true, number: true, total: true, status: true, user: { select: { name: true } } } }),
@@ -44,7 +44,7 @@ export async function getDashboard(now = new Date()) {
     revenue: revenue._sum.total ?? 0, paidRevenue: paidRevenue._sum.total ?? 0,
     totalOrders: statuses.reduce((sum, row) => sum + row._count._all, 0),
     waitingOrders: statuses.filter((row) => row.status === 'PENDING' || row.status === 'PROCESSING').reduce((sum, row) => sum + row._count._all, 0),
-    statuses, lowStock: stock.lowStock, outOfStock: stock.outOfStock, trend, recentOrders,
+    statuses, lowStock: stock.lowStock, outOfStock: stock.outOfStock, lowStockThreshold: settings.lowStockThreshold, trend, recentOrders,
     startDate: range.startDate, endDate: range.endDate,
   };
 }

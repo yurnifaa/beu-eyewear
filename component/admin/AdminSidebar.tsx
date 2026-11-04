@@ -4,14 +4,12 @@ import type { ElementType } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BarChart3, Boxes, LayoutDashboard, Package, ShoppingCart, Tags, Users, X } from 'lucide-react';
+import { BarChart3, Boxes, LayoutDashboard, ListFilter, MessageSquare, Package, Percent, Settings, ShoppingCart, Tags, Users, X } from 'lucide-react';
 
 interface NavItem {
   href: string;
   label: string;
   icon: ElementType;
-  // LEGACY-CATALOG-ADMIN: pages that edit the old Prisma catalog (see docs/google-sheets-catalog.md).
-  legacy?: boolean;
 }
 
 interface NavGroup {
@@ -27,9 +25,10 @@ const NAV_GROUPS: NavGroup[] = [
   {
     label: 'Catalog',
     items: [
-      { href: '/admin/products', label: 'Products', icon: Package, legacy: true },
-      { href: '/admin/categories', label: 'Categories', icon: Tags, legacy: true },
-      { href: '/admin/inventory', label: 'Inventory', icon: Boxes, legacy: true },
+      { href: '/admin/products', label: 'Products', icon: Package },
+      { href: '/admin/categories', label: 'Categories', icon: Tags },
+      { href: '/admin/inventory', label: 'Inventory', icon: Boxes },
+      { href: '/admin/reviews', label: 'Reviews', icon: MessageSquare },
     ],
   },
   {
@@ -38,6 +37,14 @@ const NAV_GROUPS: NavGroup[] = [
       { href: '/admin/orders', label: 'Orders', icon: ShoppingCart },
       { href: '/admin/customers', label: 'Customers', icon: Users },
       { href: '/admin/reports', label: 'Reports', icon: BarChart3 },
+    ],
+  },
+  {
+    label: 'Store',
+    items: [
+      { href: '/admin/offers', label: 'Offers', icon: Percent },
+      { href: '/admin/options', label: 'Catalog options', icon: ListFilter },
+      { href: '/admin/settings', label: 'Settings', icon: Settings },
     ],
   },
 ];
@@ -83,7 +90,7 @@ export default function AdminSidebar({ open, onClose }: AdminSidebarProps) {
             <div key={group.label}>
               <p className="px-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{group.label}</p>
               <div className="mt-2 flex flex-col gap-1">
-                {group.items.map(({ href, label, icon: Icon, legacy }) => {
+                {group.items.map(({ href, label, icon: Icon }) => {
                   const active = isActive(href);
                   return (
                     <Link
@@ -97,11 +104,6 @@ export default function AdminSidebar({ open, onClose }: AdminSidebarProps) {
                     >
                       <Icon size={18} />
                       {label}
-                      {legacy && (
-                        <span className="ml-auto rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase text-amber-600">
-                          Legacy
-                        </span>
-                      )}
                     </Link>
                   );
                 })}

@@ -10,8 +10,9 @@ import { NextResponse, type NextRequest } from 'next/server';
 
 const isAdminPath = (pathname: string) => pathname === '/admin' || pathname.startsWith('/admin/');
 
-// Files at the root of public/, such as the logo the admin sidebar shows.
-const isRootPublicFile = (pathname: string) => /^\/[^/]+\.[A-Za-z0-9]+$/.test(pathname);
+// Static files the admin pages show: the logo at the root of public/, and product photos
+// under /products (the admin product list and form display them).
+const isPublicAsset = (pathname: string) => /^\/[^/]+\.[A-Za-z0-9]+$/.test(pathname) || /^\/products\/[^/]+\.[A-Za-z0-9]+$/.test(pathname);
 
 function notFound(request: NextRequest) {
   // A path with no route makes the app render its 404 page with a 404 status.
@@ -35,7 +36,7 @@ export function proxy(request: NextRequest) {
     if (pathname === '/') {
       return NextResponse.redirect(new URL('/admin', request.url));
     }
-    if (!isAdminPath(pathname) && !isRootPublicFile(pathname)) {
+    if (!isAdminPath(pathname) && !isPublicAsset(pathname)) {
       return notFound(request);
     }
   }

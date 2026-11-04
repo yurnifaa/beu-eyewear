@@ -4,7 +4,6 @@ import SalesTrendChart from '@/component/admin/SalesTrendChart';
 import { OrderStatusBadge } from '@/component/admin/OrderStatusBadge';
 import { requireAdmin } from '@/lib/auth/session';
 import { getDashboard } from '@/lib/admin/dashboard';
-import { LOW_STOCK_THRESHOLD } from '@/lib/admin/config';
 import { formatOrderNumber, formatPrice } from '@/lib/format';
 
 export const dynamic = 'force-dynamic';
@@ -21,7 +20,7 @@ export default async function AdminDashboardPage() {
         <DashboardStatCard label="Paid revenue" value={formatPrice(data.paidRevenue)} note="Paid orders only; excludes cancelled orders" />
         <DashboardStatCard label="Total orders" value={count(data.totalOrders)} note="All statuses, including cancelled orders" />
         <DashboardStatCard label="Orders waiting for action" value={count(data.waitingOrders)} note="Pending + Processing · View Orders" href="/admin/orders" />
-        <DashboardStatCard label={`Low stock (1–${LOW_STOCK_THRESHOLD})`} value={count(data.lowStock)} note="Products · View filtered Inventory" href="/admin/inventory?filter=low" />
+        <DashboardStatCard label={`Low stock (1–${data.lowStockThreshold})`} value={count(data.lowStock)} note="Products · View filtered Inventory" href="/admin/inventory?filter=low" />
         <DashboardStatCard label="Out of stock (0)" value={count(data.outOfStock)} note="Products · View filtered Inventory" href="/admin/inventory?filter=out" />
       </div>
       {data.totalOrders === 0 && <p className="rounded-xl border border-border p-5 text-sm text-muted-foreground">No orders yet. Sales will appear here when orders are placed.</p>}

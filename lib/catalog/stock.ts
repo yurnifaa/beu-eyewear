@@ -1,97 +1,87 @@
 import 'server-only';
 
-import { cached, invalidate } from '@/lib/sheets/cache';
-import { isStockWriteEnabled, stockCacheMs } from '@/lib/sheets/config';
-import { appendSheetRows, readSheetRange, type SheetCell } from '@/lib/sheets/google-api';
+import type { Prisma } from '@prisma/client';
 
-// Live stock lives in the sheet: `inventory` shows the quantities the formulas calculate
-// from `inventory_log`. The storefront reads `inventory` through the authenticated API
-// (the published CSV can lag by minutes) and records every sale or return by appending
-// a row to `inventory_log`, which the formulas then pick up.
+// Stock lives on ProductVariant (one row per SKU) and every change is recorded in
+// StockMovement. These helpers run inside the caller's transaction, so an order and its
+// stock change commit or roll back together.
 
-const INVENTORY_RANGE = 'inventory!A:Z';
-const LOG_TAB = 'inventory_log';
-
-function rowsToObjects(values: SheetCell[][]) {
-  const [header, ...body] = values;
-  if (!header) return [];
-  const names = header.map((cell) => String(cell ?? '').trim());
-  return body
-    .filter((row) => row.some((cell) => cell !== null && cell !== ''))
-    .map((row) => Object.fromEntries(names.map((name, index) => [name, row[index] ?? null])) as Record<string, SheetCell>);
-}
-
-async function readInventory(): Promise<Map<string, number>> {
-  const stock = new Map<string, number>();
-  for (const row of rowsToObjects(await readSheetRange(INVENTORY_RANGE))) {
-    const sku = typeof row.sku === 'string' ? row.sku.trim() : '';
-    const available = Number(row.qty_available);
-    if (sku && Number.isFinite(available)) stock.set(sku, Math.max(0, Math.floor(available)));
-  }
-  return stock;
-}
-
-// sku -> units available, a few seconds old at most. Undefined when the service account
-// isn't configured (callers then fall back to the CSV copy of the inventory tab).
-export async function getLiveStock(): Promise<Map<string, number> | undefined> {
-  if (!isStockWriteEnabled()) return undefined;
-  try {
-    return await cached('stock:live', stockCacheMs(), readInventory);
-  } catch (error) {
-    console.warn('[stock] live stock unavailable, using the published copy:', error instanceof Error ? error.message : 'unknown');
-    return undefined;
+// Thrown when a SKU doesn't have enough units; the transaction rolls back and the
+// shopper is told which product ran short.
+export class OutOfStockError extends Error {
+  constructor(
+    readonly productName: string,
+    readonly available: number,
+  ) {
+    super(`${productName} is out of stock`);
   }
 }
 
-// Straight from the sheet, never cached: checkout validates against this.
-export function readFreshStock(): Promise<Map<string, number>> {
-  return readInventory();
-}
-
-export interface InventoryMovement {
+export interface StockLine {
   sku: string;
-  type: 'SALE' | 'RETURN';
-  // Always positive; the sign is applied from the type.
   quantity: number;
+  // Only used in the out-of-stock message.
+  name: string;
 }
 
-function manilaTimestamp(date = new Date()) {
-  // sv-SE formats as "2026-10-24 09:30:00".
-  return date.toLocaleString('sv-SE', { timeZone: 'Asia/Manila' });
-}
-
-// Appends one inventory_log row per movement, then drops the stock cache so the next
-// read shows the change. Throws if the sheet can't be written; callers decide whether
-// that should abort the order.
-export async function recordInventoryMovements(movements: InventoryMovement[], reference: string, reason: string) {
-  if (movements.length === 0) return;
-
-  const header = await cached('stock:log-header', 60 * 60 * 1000, async () => {
-    const [names] = await readSheetRange(`${LOG_TAB}!1:1`);
-    return (names ?? []).map((cell) => String(cell ?? '').trim());
-  });
-  const required = ['log_id', 'sku', 'movement_type', 'qty_change', 'reason', 'reference_id', 'performed_by_role', 'created_at'];
-  if (required.some((name) => !header.includes(name))) {
-    invalidate('stock:log-header');
-    throw new Error('inventory_log is missing expected columns');
+// Takes stock for a sale. Each SKU is updated with a single conditional UPDATE, which
+// checks the quantity and locks the row at once, so two buyers can never both take the
+// last unit. SKUs are processed in a fixed order so concurrent orders can't deadlock.
+export async function takeStock(tx: Prisma.TransactionClient, lines: StockLine[], reference: string, reason: string) {
+  const movements: Prisma.StockMovementCreateManyInput[] = [];
+  for (const line of [...lines].sort((a, b) => a.sku.localeCompare(b.sku))) {
+    const { count } = await tx.productVariant.updateMany({
+      where: { sku: line.sku, stockQuantity: { gte: line.quantity } },
+      data: { stockQuantity: { decrement: line.quantity } },
+    });
+    if (count === 0) {
+      const current = await tx.productVariant.findUnique({ where: { sku: line.sku }, select: { stockQuantity: true } });
+      throw new OutOfStockError(line.name, current?.stockQuantity ?? 0);
+    }
+    const after = await tx.productVariant.findUniqueOrThrow({ where: { sku: line.sku }, select: { stockQuantity: true } });
+    movements.push({ sku: line.sku, type: 'SALE', quantityChange: -line.quantity, stockAfter: after.stockQuantity, reason, reference });
   }
+  if (movements.length > 0) await tx.stockMovement.createMany({ data: movements });
+}
 
-  const now = manilaTimestamp();
-  const tag = reference.replace(/[^A-Za-z0-9]/g, '');
-  const rows = movements.map((movement, index): SheetCell[] => {
-    const values: Record<string, SheetCell> = {
-      log_id: `LOG-APP-${movement.type === 'SALE' ? 'S' : 'R'}-${tag}-${index + 1}`,
-      sku: movement.sku,
-      movement_type: movement.type,
-      qty_change: movement.type === 'SALE' ? -movement.quantity : movement.quantity,
-      reason,
-      reference_id: reference,
-      performed_by_role: 'SYSTEM',
-      created_at: now,
-    };
-    return header.map((name) => values[name] ?? null);
+// Puts units back (a cancelled order). A SKU that no longer exists is skipped: the
+// product was deleted after the order was placed.
+export async function returnStock(
+  tx: Prisma.TransactionClient,
+  lines: { sku: string; quantity: number }[],
+  reference: string,
+  reason: string,
+) {
+  const movements: Prisma.StockMovementCreateManyInput[] = [];
+  for (const line of [...lines].sort((a, b) => a.sku.localeCompare(b.sku))) {
+    const { count } = await tx.productVariant.updateMany({
+      where: { sku: line.sku },
+      data: { stockQuantity: { increment: line.quantity } },
+    });
+    if (count === 0) continue;
+    const after = await tx.productVariant.findUniqueOrThrow({ where: { sku: line.sku }, select: { stockQuantity: true } });
+    movements.push({ sku: line.sku, type: 'RETURN', quantityChange: line.quantity, stockAfter: after.stockQuantity, reason, reference });
+  }
+  if (movements.length > 0) await tx.stockMovement.createMany({ data: movements });
+}
+
+// OrderItem snapshots the product slug and color, not the SKU, so find the SKU again.
+// A color of null means the single "Standard" option.
+export async function returnOrderItemsToStock(
+  tx: Prisma.TransactionClient,
+  items: { productSlug: string; color: string | null; quantity: number }[],
+  reference: string,
+  reason: string,
+) {
+  if (items.length === 0) return;
+  const variants = await tx.productVariant.findMany({
+    where: { OR: items.map((item) => ({ productSlug: item.productSlug, color: item.color ?? 'Standard' })) },
+    select: { sku: true, productSlug: true, color: true },
   });
-
-  await appendSheetRows(LOG_TAB, rows);
-  invalidate('stock:live');
+  const bySku = new Map<string, number>();
+  for (const item of items) {
+    const variant = variants.find((candidate) => candidate.productSlug === item.productSlug && candidate.color === (item.color ?? 'Standard'));
+    if (variant) bySku.set(variant.sku, (bySku.get(variant.sku) ?? 0) + item.quantity);
+  }
+  await returnStock(tx, [...bySku].map(([sku, quantity]) => ({ sku, quantity })), reference, reason);
 }

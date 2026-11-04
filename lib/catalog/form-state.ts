@@ -1,24 +1,41 @@
-// LEGACY-CATALOG-ADMIN: edits the Prisma catalog, which the storefront no longer reads (see docs/google-sheets-catalog.md).
 // Shape returned by the admin product actions and read by useActionState.
 // `values` echoes the submitted text so a failed save doesn't wipe the form
-// (file inputs can't be echoed, so the photo has to be picked again).
+// (file inputs can't be echoed, so photos have to be picked again).
 export interface ProductFormState {
   error?: string;
   fieldErrors?: Record<string, string[] | undefined>;
   values?: Record<string, string>;
 }
 
-export const PRODUCT_FORM_FIELDS = [
+// Plain text fields read straight from the form. Checkboxes, the colors/SKUs editor and
+// the bundle editor are handled separately in the action.
+export const PRODUCT_TEXT_FIELDS = [
   'slug',
   'name',
+  'shortDescription',
   'description',
-  'price',
-  'stockQuantity',
-  'warrantyYears',
+  'productType',
   'categorySlug',
   'subcategorySlug',
   'frameMaterial',
   'lensOption',
   'frameShape',
-  'colors',
+  'lensSummary',
+  'nosePadType',
+  'lensWidthMm',
+  'bridgeWidthMm',
+  'templeLengthMm',
+  'weightG',
+  'compatibleWith',
+  'features',
+  'tags',
+  'listPrice',
+  'salePrice',
+  'featuredRank',
+  'warrantyYears',
+  'returnWindowDays',
+  'sortOrder',
+  'status',
 ] as const;
+
+export const PRODUCT_CHECKBOX_FIELDS = ['isStudentEligible', 'hasEyewearKit', 'isFeatured', 'isNewArrival'] as const;

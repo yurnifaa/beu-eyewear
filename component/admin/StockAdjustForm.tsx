@@ -1,5 +1,4 @@
 'use client';
-// LEGACY-CATALOG-ADMIN: edits the Prisma catalog, which the storefront no longer reads (see docs/google-sheets-catalog.md).
 
 import { useActionState, useId } from 'react';
 import { buttonClassName } from '@/component/Button';
@@ -8,6 +7,7 @@ import type { StockFormState } from '@/lib/admin/inventory';
 export default function StockAdjustForm({ action, quantity, name }: {
   action: (previous: StockFormState, data: FormData) => Promise<StockFormState>;
   quantity: number;
+  // Product and color, for the field labels.
   name: string;
 }) {
   const [state, formAction, pending] = useActionState(action, {});
@@ -23,6 +23,7 @@ export default function StockAdjustForm({ action, quantity, name }: {
         <input name="amount" required inputMode="numeric" pattern="[+\-]?[0-9]+" maxLength={7} defaultValue={state.values?.amount ?? quantity} aria-label={`Stock value or signed adjustment for ${name}`} aria-describedby={`${id}-help`} className={`${fieldClassName} w-28 text-right tabular-nums`} disabled={pending} />
         <button type="submit" disabled={pending} className={buttonClassName({ size: 'sm' })}>{pending ? 'Saving…' : 'Apply'}</button>
       </div>
+      <input name="reason" maxLength={120} placeholder="Reason (optional)" aria-label={`Reason for the change to ${name}`} className={`${fieldClassName} text-right`} disabled={pending} />
       <p id={`${id}-help`} className="text-right text-xs text-muted-foreground">Set an exact stock, or adjust by a signed amount (e.g. -2).</p>
       {state.error && <p role="alert" className="text-right text-sm text-red-600">{state.error}</p>}
       {state.message && <p role="status" className="text-right text-xs text-muted-foreground">{state.message}</p>}

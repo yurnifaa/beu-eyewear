@@ -6,7 +6,6 @@ export interface Category {
   slug: CategorySlug;
   name: string;
   description: string;
-  // Only set for sheet-backed categories.
   imageUrl?: string;
   displayOrder?: number;
 }
@@ -44,10 +43,9 @@ export interface Product {
 export const LOW_STOCK_THRESHOLD = 5;
 
 // ---------------------------------------------------------------------------
-// Storefront catalog, read from the Google Sheet (lib/catalog/queries.ts).
-// `Product` above is the legacy Prisma-backed shape (see LEGACY-CATALOG-ADMIN
-// in docs/google-sheets-catalog.md); CatalogProduct extends it, so existing
-// cards and cart code keep working: `price` is what the shopper pays today.
+// Storefront catalog, read from Postgres (lib/catalog/queries.ts).
+// `Product` above is the small shape the cart and cards use; CatalogProduct
+// extends it, so `price` is always what the shopper pays today.
 // ---------------------------------------------------------------------------
 
 export type StockStatus = 'IN_STOCK' | 'LOW_STOCK' | 'OUT_OF_STOCK';
@@ -173,16 +171,4 @@ export interface StoreSettings {
   supportPhones: string[];
   website?: string;
   socialHandle?: string;
-}
-
-export interface FrameMaterialSpec {
-  dimensions: string;
-  weight: string;
-  composition: string;
-  performance: string;
-  nosePad: 'Fixed' | 'Adjustable Silicone';
-}
-
-export interface LensOptionInfo {
-  description: string;
 }

@@ -1,8 +1,7 @@
-// LEGACY-CATALOG-ADMIN: edits the Prisma catalog, which the storefront no longer reads (see docs/google-sheets-catalog.md).
 import 'server-only';
 
 import { del, put } from '@vercel/blob';
-import { IMAGE_EXTENSIONS, imageFileError } from '@/lib/storage/image-rules';
+import { IMAGE_EXTENSIONS, imageFileError, isBlobUrl } from '@/lib/storage/image-rules';
 
 export { MAX_IMAGE_BYTES } from '@/lib/storage/image-rules';
 
@@ -31,9 +30,10 @@ export async function uploadProductImage(slug: string, file: File): Promise<stri
 }
 
 // Best-effort: an orphaned blob is harmless, but a failed cleanup must never
-// turn a saved product into an error.
+// turn a saved product into an error. Only Blob uploads are deleted; images that
+// ship with the app under /products are left alone.
 export async function deleteProductImage(url: string | null | undefined) {
-  if (!url) return;
+  if (!url || !isBlobUrl(url)) return;
   try {
     await del(url);
   } catch (error) {

@@ -6,10 +6,18 @@ datasource db {
   provider = "postgresql"
 }
 
+// ---------------------------------------------------------------------------
+// Catalog. Postgres is the source of truth: the admin app edits these tables and
+// the storefront reads them (lib/catalog/queries.ts). Money columns are whole pesos.
+// ---------------------------------------------------------------------------
+
 model Category {
   slug          String        @id
   name          String
   description   String
+  imageUrl      String?
+  displayOrder  Int           @default(99)
+  isActive      Boolean       @default(true)
   subcategories Subcategory[]
   products      Product[]
 }
@@ -18,32 +26,254 @@ model Subcategory {
   slug         String    @id
   categorySlug String
   name         String
+  description  String?
+  displayOrder Int       @default(99)
+  isActive     Boolean   @default(true)
   category     Category  @relation(fields: [categorySlug], references: [slug])
   products     Product[]
 
   @@index([categorySlug])
 }
 
-model Product {
-  slug            String   @id
-  name            String
-  description     String
-  price           Int
-  categorySlug    String
-  subcategorySlug String
-  frameMaterial   String?
-  lensOption      String?
-  frameShape      String?
-  colors          String[]
-  warrantyYears   Int
-  imageUrl        String?
-  stockQuantity   Int      @default(0)
+enum ProductType {
+  FRAME
+  SMART_FRAME
+  ACCESSORY
+  BUNDLE
+}
 
-  category    Category   @relation(fields: [categorySlug], references: [slug])
-  subcategory Subcategory @relation(fields: [subcategorySlug], references: [slug])
+// ACTIVE products are sold; DRAFT and ARCHIVED are hidden from the shop.
+enum ProductStatus {
+  ACTIVE
+  DRAFT
+  ARCHIVED
+}
+
+// The slug is the primary key: the cart, wishlist and OrderItem.productSlug all use it.
+// Frame material, lens option and shape are plain text so the admin can manage the lists
+// (FilterOption). Stock lives on ProductVariant, ratings come from Review.
+model Product {
+  slug             String      @id
+  name             String
+  shortDescription String      @default("")
+  description      String      @default("")
+  productType      ProductType @default(FRAME)
+  categorySlug     String
+  subcategorySlug  String
+  frameMaterial    String?
+  lensOption       String?
+  frameShape       String?
+  lensSummary      String?
+  nosePadType      String?
+  lensWidthMm      Int?
+  bridgeWidthMm    Int?
+  templeLengthMm   Int?
+  weightG          Int?
+  compatibleWith   String[]
+  features         String[]
+  tags             String[]
+
+  // listPrice is the normal price; salePrice, when set and lower, is what the shopper pays.
+  listPrice         Int
+  salePrice         Int?
+  isStudentEligible Boolean @default(false)
+  hasEyewearKit     Boolean @default(false)
+  isFeatured        Boolean @default(false)
+  featuredRank      Int?
+  isNewArrival      Boolean @default(false)
+  warrantyYears     Int     @default(1)
+  // Falls back to the store-wide return window when null.
+  returnWindowDays  Int?
+
+  imageUrl    String?
+  galleryUrls String[]
+  status      ProductStatus @default(ACTIVE)
+  // Position in the shop when no sort is chosen (lowest first); ties fall back to the slug.
+  sortOrder   Int           @default(0)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  category    Category         @relation(fields: [categorySlug], references: [slug])
+  subcategory Subcategory      @relation(fields: [subcategorySlug], references: [slug])
+  variants    ProductVariant[]
+  reviews     Review[]
+  bundleItems BundleItem[]
 
   @@index([categorySlug])
   @@index([subcategorySlug])
+  @@index([status])
+}
+
+// One sellable color (or the single "Standard" option of a care kit or set). Stock is
+// per SKU. The migration adds a CHECK so it can never go below zero.
+model ProductVariant {
+  sku           String  @id
+  productSlug   String
+  color         String  @default("Standard")
+  colorFamily   String?
+  hex           String?
+  lensTint      String?
+  isDefault     Boolean @default(false)
+  isActive      Boolean @default(true)
+  sortOrder     Int     @default(0)
+  stockQuantity Int     @default(0)
+
+  product Product @relation(fields: [productSlug], references: [slug], onDelete: Cascade)
+
+  @@unique([productSlug, color])
+  @@index([productSlug])
+}
+
+enum StockMovementType {
+  RECEIVE
+  SALE
+  RETURN
+  ADJUSTMENT
+}
+
+// Audit trail for every stock change. No foreign keys on purpose: history must outlive
+// a deleted product or SKU.
+model StockMovement {
+  id             String            @id @default(cuid())
+  sku            String
+  type           StockMovementType
+  // Signed: negative for sales.
+  quantityChange Int
+  stockAfter     Int
+  reason         String
+  reference      String?
+  actorId        String?
+  createdAt      DateTime          @default(now())
+
+  @@index([sku, createdAt])
+  @@index([createdAt])
+}
+
+enum ReviewStatus {
+  PUBLISHED
+  PENDING
+  HIDDEN
+}
+
+model Review {
+  id                 String       @id @default(cuid())
+  productSlug        String
+  rating             Int
+  title              String       @default("")
+  body               String
+  authorName         String
+  authorInitials     String
+  isVerifiedPurchase Boolean      @default(false)
+  helpfulCount       Int          @default(0)
+  status             ReviewStatus @default(PENDING)
+  // Position in the home page testimonial row; null for ordinary reviews.
+  featuredOrder      Int?
+  createdAt          DateTime     @default(now())
+
+  product Product @relation(fields: [productSlug], references: [slug], onDelete: Cascade)
+
+  @@index([productSlug, status])
+}
+
+// Known keys only (see lib/catalog/settings.ts): store name, low-stock threshold, page
+// size, return window, benefits bar text, support contacts, website, social handle.
+model StoreSetting {
+  key   String @id
+  value String
+}
+
+// One row per value of the ShippingMethod enum that orders already use.
+model ShippingRate {
+  method   ShippingMethod @id
+  label    String
+  fee      Int
+  minDays  Int
+  maxDays  Int
+  isActive Boolean        @default(true)
+}
+
+// Per-material text on the product page (the "Frame" accordion).
+model FrameMaterialInfo {
+  material         String  @id
+  dimensions       String  @default("")
+  weight           String  @default("")
+  composition      String  @default("")
+  performance      String  @default("")
+  nosePad          String  @default("")
+  isHypoallergenic Boolean @default(false)
+  isActive         Boolean @default(true)
+}
+
+// Per-lens text on the product page.
+model LensOptionInfo {
+  lensOption      String  @id
+  description     String  @default("")
+  metric          String?
+  upgradeMinPrice Int?
+  upgradeMaxPrice Int?
+  isActive        Boolean @default(true)
+}
+
+enum FilterKind {
+  FRAME_MATERIAL
+  LENS_OPTION
+  FRAME_SHAPE
+  COLOR_FAMILY
+}
+
+// The choices offered by the listing filters, the product form selects and the home page
+// shape picker.
+model FilterOption {
+  kind         FilterKind
+  value        String
+  label        String
+  hex          String?
+  displayOrder Int        @default(0)
+  isActive     Boolean    @default(true)
+
+  @@id([kind, value])
+}
+
+enum OfferKind {
+  PERCENT
+  FIXED_AMOUNT
+}
+
+enum OfferEligibility {
+  NONE
+  STUDENT_ID
+  FIRST_ORDER
+}
+
+// Promotions shown on the home and product pages. Prices already reflect any sale, so an
+// offer is display-only; it does not change what checkout charges.
+model Offer {
+  id           String           @id @default(cuid())
+  name         String
+  description  String           @default("")
+  badge        String           @default("Offer")
+  kind         OfferKind        @default(PERCENT)
+  value        Int              @default(0)
+  eligibility  OfferEligibility @default(NONE)
+  requiresCode Boolean          @default(false)
+  isActive     Boolean          @default(true)
+  endsAt       DateTime?
+  createdAt    DateTime         @default(now())
+}
+
+// What is inside a BUNDLE product. componentSlug is optional and not a foreign key: a
+// component may be a plain description such as "Free microfiber cloth".
+model BundleItem {
+  id            String  @id @default(cuid())
+  bundleSlug    String
+  name          String
+  quantity      Int     @default(1)
+  componentSlug String?
+  sortOrder     Int     @default(0)
+
+  bundle Product @relation(fields: [bundleSlug], references: [slug], onDelete: Cascade)
+
+  @@index([bundleSlug])
 }
 
 enum OrderStatus {
@@ -149,7 +379,7 @@ model Session {
   @@index([userId])
 }
 
-// Money columns are whole pesos, matching Product.price.
+// Money columns are whole pesos, matching Product.listPrice.
 model Order {
   id             String         @id @default(cuid())
   number         Int            @unique @default(autoincrement())

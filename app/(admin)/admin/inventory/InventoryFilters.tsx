@@ -1,5 +1,4 @@
 'use client';
-// LEGACY-CATALOG-ADMIN: edits the Prisma catalog, which the storefront no longer reads (see docs/google-sheets-catalog.md).
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -22,7 +21,7 @@ export default function InventoryFilters({ q, filter }: { q: string; filter: Inv
       const search = params.toString();
       router.push(`/admin/inventory${search ? `?${search}` : ''}`, { scroll: false });
     }}>
-      <input type="search" name="q" maxLength={120} defaultValue={q} placeholder="Search by product name" aria-label="Search inventory by product name" className={`${fieldClassName} w-full sm:w-64`} />
+      <input type="search" name="q" maxLength={120} defaultValue={q} placeholder="Search by product, color or SKU" aria-label="Search inventory by product, color or SKU" className={`${fieldClassName} w-full sm:w-72`} />
       <select name="filter" defaultValue={filter} aria-label="Filter by stock status" className={fieldClassName}>
         <option value="all">All</option>
         <option value="low">Low stock</option>

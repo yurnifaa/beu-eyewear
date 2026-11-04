@@ -1,337 +1,116 @@
-// LEGACY-CATALOG-ADMIN: edits the Prisma catalog, which the storefront no longer reads (see docs/google-sheets-catalog.md).
+// Loads prisma/seed-data/catalog.json (the catalog as imported from the old Google Sheet)
+// into Postgres: `npx prisma db seed`.
+//
+// Safe to re-run. It only creates what is missing and never overwrites rows, so it can't
+// undo admin edits or reset live stock. A product that already exists is skipped whole,
+// including its colors and stock.
+import 'dotenv/config';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { prisma } from '../lib/prisma';
+import type { CatalogSnapshot } from './seed-data/snapshot';
+
+const snapshot = JSON.parse(readFileSync(join(__dirname, 'seed-data', 'catalog.json'), 'utf8')) as CatalogSnapshot;
 
 async function main() {
-  await prisma.category.createMany({
-    data: [
-      {
-        slug: 'classic',
-        name: 'BeU Classic',
-        description: 'Premium TR-90, stainless steel, or handcrafted acetate frames with standard clear UV400 lenses.',
-      },
-      {
-        slug: 'premium',
-        name: 'BeU Premium',
-        description:
-          'Titanium, mixed-material, and handcrafted acetate frames with anti-radiation, polarized, or photochromic lenses.',
-      },
-      {
-        slug: 'smart',
-        name: 'BeU Smart',
-        description: 'Meta smart glasses with integrated camera, audio, connectivity, and charging accessories.',
-      },
-      {
-        slug: 'accessories',
-        name: 'Accessories',
-        description: 'Cases, chains, care kits, and pouches to protect and accessorize your eyewear.',
-      },
-      {
-        slug: 'collections',
-        name: 'Collections',
-        description: 'Curated bundles and seasonal picks across the BeU lineup.',
-      },
-    ],
-  });
+  const counts: Record<string, number> = {};
+  const created = (label: string, result: { count: number }) => {
+    counts[label] = result.count;
+  };
 
-  await prisma.subcategory.createMany({
-    data: [
-      { slug: 'plastic-frames', categorySlug: 'classic', name: 'Plastic Frames' },
-      { slug: 'metal-frames', categorySlug: 'classic', name: 'Metal Frames' },
-      { slug: 'acetate-frames', categorySlug: 'classic', name: 'Acetate Frames' },
+  created('categories', await prisma.category.createMany({ data: snapshot.categories, skipDuplicates: true }));
+  created('subcategories', await prisma.subcategory.createMany({ data: snapshot.subcategories, skipDuplicates: true }));
 
-      { slug: 'anti-radiation', categorySlug: 'premium', name: 'Anti-Radiation' },
-      { slug: 'polarized', categorySlug: 'premium', name: 'Polarized' },
-      { slug: 'photochromic', categorySlug: 'premium', name: 'Photochromic' },
+  // Categories left over from the old seed exist but still have the default display order
+  // (99). Fill those from the snapshot; a row an admin has ordered is left alone.
+  let filledIn = 0;
+  for (const { slug, ...data } of snapshot.categories) {
+    filledIn += (await prisma.category.updateMany({ where: { slug, displayOrder: 99 }, data })).count;
+  }
+  for (const { slug, ...data } of snapshot.subcategories) {
+    filledIn += (await prisma.subcategory.updateMany({ where: { slug, displayOrder: 99 }, data })).count;
+  }
+  counts['category rows filled in'] = filledIn;
 
-      { slug: 'meta-smart-glasses', categorySlug: 'smart', name: 'Meta Smart Glasses' },
+  const existing = new Set((await prisma.product.findMany({ select: { slug: true } })).map((product) => product.slug));
+  const fresh = snapshot.products.filter((product) => !existing.has(product.slug));
 
-      { slug: 'leather-cases', categorySlug: 'accessories', name: 'Leather Cases' },
-      { slug: 'chains-lanyards', categorySlug: 'accessories', name: 'Chains & Lanyards' },
-      { slug: 'care-kits', categorySlug: 'accessories', name: 'Care Kits' },
-      { slug: 'power-case', categorySlug: 'accessories', name: 'Power-Case' },
-      { slug: 'pouches', categorySlug: 'accessories', name: 'Pouches' },
+  await prisma.$transaction(
+    async (tx) => {
+      created(
+        'products',
+        await tx.product.createMany({
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars -- the colors are created below
+          data: fresh.map(({ variants, createdAt, ...product }) => ({ ...product, createdAt: new Date(createdAt) })),
+        }),
+      );
+      const variants = fresh.flatMap((product) =>
+        product.variants.map(({ stock, ...variant }) => ({ ...variant, productSlug: product.slug, stockQuantity: stock })),
+      );
+      created('variants', await tx.productVariant.createMany({ data: variants, skipDuplicates: true }));
+      // Opening stock gets a movement, so the stock history starts from the import.
+      created(
+        'opening stock movements',
+        await tx.stockMovement.createMany({
+          data: variants
+            .filter((variant) => variant.stockQuantity > 0)
+            .map((variant) => ({
+              sku: variant.sku,
+              type: 'ADJUSTMENT' as const,
+              quantityChange: variant.stockQuantity,
+              stockAfter: variant.stockQuantity,
+              reason: 'Opening stock (imported from Google Sheet)',
+            })),
+        }),
+      );
+    },
+    { maxWait: 10_000, timeout: 60_000 },
+  );
 
-      { slug: 'bundles', categorySlug: 'collections', name: 'Bundles' },
-      { slug: 'student-picks', categorySlug: 'collections', name: 'Student Picks' },
-    ],
-  });
+  // Products seeded before sortOrder existed sit at 0; give them the Sheet's order.
+  let ordered = 0;
+  for (const { slug, sortOrder } of snapshot.products) {
+    ordered += (await prisma.product.updateMany({ where: { slug, sortOrder: 0 }, data: { sortOrder } })).count;
+  }
+  counts['products given a display order'] = ordered;
 
-  await prisma.product.createMany({
-    data: [
-      // Classic — Plastic Frames
-      {
-        slug: 'horizon-plastic-round',
-        name: 'Horizon Round Frame',
-        description: 'A lightweight TR-90 round frame with memory-flex shape recovery for everyday wear.',
-        price: 9990,
-        categorySlug: 'classic',
-        subcategorySlug: 'plastic-frames',
-        frameMaterial: 'Plastic',
-        frameShape: 'Round',
-        colors: ['Matte Black', 'Tortoiseshell'],
-        warrantyYears: 1,
-      },
-      {
-        slug: 'drift-plastic-square',
-        name: 'Drift Square Frame',
-        description: 'A crisp square silhouette in impact-resistant polycarbonate.',
-        price: 10990,
-        categorySlug: 'classic',
-        subcategorySlug: 'plastic-frames',
-        frameMaterial: 'Plastic',
-        frameShape: 'Square',
-        colors: ['Jet Black', 'Crystal Clear'],
-        warrantyYears: 1,
-      },
-      // Classic — Metal Frames
-      {
-        slug: 'aria-metal-aviator',
-        name: 'Aria Aviator Frame',
-        description: 'A classic aviator in marine-grade stainless steel with anodized aluminum accents.',
-        price: 11990,
-        categorySlug: 'classic',
-        subcategorySlug: 'metal-frames',
-        frameMaterial: 'Metal',
-        frameShape: 'Aviator',
-        colors: ['Gunmetal', 'Gold'],
-        warrantyYears: 1,
-      },
-      {
-        slug: 'nova-metal-rectangle',
-        name: 'Nova Rectangle Frame',
-        description: 'A refined rectangular frame with an ultra-lightweight aluminum alloy build.',
-        price: 12990,
-        categorySlug: 'classic',
-        subcategorySlug: 'metal-frames',
-        frameMaterial: 'Metal',
-        frameShape: 'Rectangle',
-        colors: ['Silver', 'Rose Gold'],
-        warrantyYears: 1,
-      },
-      // Classic — Acetate Frames
-      {
-        slug: 'luna-acetate-cateye',
-        name: 'Luna Cat-Eye Frame',
-        description: 'A handcrafted cat-eye silhouette with a custom thermo-adjusted fit.',
-        price: 12490,
-        categorySlug: 'classic',
-        subcategorySlug: 'acetate-frames',
-        frameMaterial: 'Acetate',
-        frameShape: 'Cat-Eye',
-        colors: ['Amber Tortoise', 'Onyx'],
-        warrantyYears: 1,
-      },
-      {
-        slug: 'reyes-acetate-round',
-        name: 'Reyes Round Frame',
-        description: 'A high-density cellulose acetate round frame with a warm, tactile finish.',
-        price: 11490,
-        categorySlug: 'classic',
-        subcategorySlug: 'acetate-frames',
-        frameMaterial: 'Acetate',
-        frameShape: 'Round',
-        colors: ['Honey Fleck', 'Black Matte'],
-        warrantyYears: 1,
-      },
+  const slugs = new Set([...existing, ...snapshot.products.map((product) => product.slug)]);
+  created(
+    'reviews',
+    await prisma.review.createMany({
+      data: snapshot.reviews.filter((review) => slugs.has(review.productSlug)).map((review) => ({ ...review, createdAt: new Date(review.createdAt) })),
+      skipDuplicates: true,
+    }),
+  );
 
-      // Premium — Anti-Radiation
-      {
-        slug: 'titan-drift-anti-radiation',
-        name: 'Titan Drift Anti-Radiation Frame',
-        description: 'Aerospace-grade titanium paired with a multilayer anti-radiation coating for all-day screen work.',
-        price: 16990,
-        categorySlug: 'premium',
-        subcategorySlug: 'anti-radiation',
-        frameMaterial: 'Titanium',
-        lensOption: 'Anti-Radiation',
-        frameShape: 'Rectangle',
-        colors: ['Brushed Titanium', 'Matte Black'],
-        warrantyYears: 1,
-      },
-      {
-        slug: 'clarity-mixed-anti-radiation',
-        name: 'Clarity Mixed-Frame Anti-Radiation',
-        description: 'A hybrid metal-core, acetate-rimmed frame with HEV blue-light filtering.',
-        price: 15990,
-        categorySlug: 'premium',
-        subcategorySlug: 'anti-radiation',
-        frameMaterial: 'Mixed',
-        lensOption: 'Anti-Radiation',
-        frameShape: 'Square',
-        colors: ['Black/Gunmetal', 'Tortoise/Gold'],
-        warrantyYears: 1,
-      },
-      // Premium — Polarized
-      {
-        slug: 'solstice-titanium-polarized',
-        name: 'Solstice Polarized Aviator',
-        description: 'A titanium aviator with a polarized film that cuts surface glare on the road or water.',
-        price: 17990,
-        categorySlug: 'premium',
-        subcategorySlug: 'polarized',
-        frameMaterial: 'Titanium',
-        lensOption: 'Polarized',
-        frameShape: 'Aviator',
-        colors: ['Gunmetal', 'Silver'],
-        warrantyYears: 1,
-      },
-      {
-        slug: 'meridian-acetate-polarized',
-        name: 'Meridian Polarized Cat-Eye',
-        description: 'A handcrafted acetate cat-eye frame with a polarized lens for enhanced outdoor contrast.',
-        price: 16490,
-        categorySlug: 'premium',
-        subcategorySlug: 'polarized',
-        frameMaterial: 'Acetate',
-        lensOption: 'Polarized',
-        frameShape: 'Cat-Eye',
-        colors: ['Tortoise', 'Black'],
-        warrantyYears: 1,
-      },
-      // Premium — Photochromic
-      {
-        slug: 'eclipse-titanium-photochromic',
-        name: 'Eclipse Photochromic Round',
-        description: 'A titanium round frame with a lens that adapts tint automatically between indoor and outdoor light.',
-        price: 18990,
-        categorySlug: 'premium',
-        subcategorySlug: 'photochromic',
-        frameMaterial: 'Titanium',
-        lensOption: 'Photochromic',
-        frameShape: 'Round',
-        colors: ['Matte Black', 'Champagne'],
-        warrantyYears: 1,
-      },
-      {
-        slug: 'halo-mixed-photochromic',
-        name: 'Halo Photochromic Square',
-        description: 'A mixed-material square frame with fast-transitioning photochromic lenses.',
-        price: 17490,
-        categorySlug: 'premium',
-        subcategorySlug: 'photochromic',
-        frameMaterial: 'Mixed',
-        lensOption: 'Photochromic',
-        frameShape: 'Square',
-        colors: ['Black/Silver', 'Brown/Gold'],
-        warrantyYears: 1,
-      },
+  created(
+    'settings',
+    await prisma.storeSetting.createMany({
+      data: Object.entries(snapshot.settings).map(([key, value]) => ({ key, value })),
+      skipDuplicates: true,
+    }),
+  );
+  created('shipping rates', await prisma.shippingRate.createMany({ data: snapshot.shippingRates, skipDuplicates: true }));
+  created('frame materials', await prisma.frameMaterialInfo.createMany({ data: snapshot.frameMaterials, skipDuplicates: true }));
+  created('lens options', await prisma.lensOptionInfo.createMany({ data: snapshot.lensOptions, skipDuplicates: true }));
+  created('filter options', await prisma.filterOption.createMany({ data: snapshot.filterOptions, skipDuplicates: true }));
 
-      // Smart
-      {
-        slug: 'beu-smart-classic',
-        name: 'BeU Smart Glasses — Classic Build',
-        description: 'Hands-free photo, video, and audio in a frame that still reads as a normal pair of glasses.',
-        price: 34990,
-        categorySlug: 'smart',
-        subcategorySlug: 'meta-smart-glasses',
-        frameMaterial: 'Mixed',
-        frameShape: 'Square',
-        colors: ['Black', 'Tortoise'],
-        warrantyYears: 5,
-      },
-      {
-        slug: 'beu-smart-aviator',
-        name: 'BeU Smart Glasses — Aviator Build',
-        description: 'The full BeU Smart feature set in a metal aviator silhouette.',
-        price: 39990,
-        categorySlug: 'smart',
-        subcategorySlug: 'meta-smart-glasses',
-        frameMaterial: 'Metal',
-        frameShape: 'Aviator',
-        colors: ['Gunmetal'],
-        warrantyYears: 5,
-      },
+  // These have no natural key, so only fill them while the table is still empty.
+  if ((await prisma.offer.count()) === 0) {
+    created(
+      'offers',
+      await prisma.offer.createMany({ data: snapshot.offers.map((offer) => ({ ...offer, endsAt: offer.endsAt ? new Date(offer.endsAt) : null })) }),
+    );
+  }
+  if ((await prisma.bundleItem.count()) === 0) {
+    created('bundle items', await prisma.bundleItem.createMany({ data: snapshot.bundleItems.filter((item) => slugs.has(item.bundleSlug)) }));
+  }
 
-      // Accessories
-      {
-        slug: 'premium-leather-hard-case',
-        name: 'Premium Leather Hard Case',
-        description: 'A crush-proof aluminum-core case wrapped in high-density vegan leather with a micro-velvet lining.',
-        price: 2999,
-        categorySlug: 'accessories',
-        subcategorySlug: 'leather-cases',
-        colors: ['Black', 'Cognac'],
-        warrantyYears: 1,
-      },
-      {
-        slug: 'fashion-chain-gold',
-        name: 'Fashion Chain & Lanyard',
-        description: 'High-tensile metallic links with adjustable silicone loop anchors that grip temple arms securely.',
-        price: 1999,
-        categorySlug: 'accessories',
-        subcategorySlug: 'chains-lanyards',
-        colors: ['Gold', 'Silver'],
-        warrantyYears: 1,
-      },
-      {
-        slug: 'beu-lens-care-kit',
-        name: 'BeU Lens Care Kit',
-        description: 'An alcohol-free, anti-static cleaning spray with a suede microfiber cloth, safe for AR coatings.',
-        price: 1099,
-        categorySlug: 'accessories',
-        subcategorySlug: 'care-kits',
-        colors: [],
-        warrantyYears: 1,
-      },
-      {
-        slug: 'beu-power-case',
-        name: 'BeU Power-Case',
-        description: 'A 2000mAh charging case for BeU Smart Glasses with rapid USB-C input and LED telemetry.',
-        price: 7990,
-        categorySlug: 'accessories',
-        subcategorySlug: 'power-case',
-        colors: ['Black'],
-        warrantyYears: 1,
-      },
-      {
-        slug: 'active-lifestyle-pouch',
-        name: 'Active-Lifestyle Pouch',
-        description: 'A shock-absorbing, water-resistant neoprene pouch with a matte metal carabiner.',
-        price: 1999,
-        categorySlug: 'accessories',
-        subcategorySlug: 'pouches',
-        colors: ['Black', 'Navy'],
-        warrantyYears: 1,
-      },
-
-      // Collections
-      {
-        slug: 'classic-care-bundle',
-        name: 'BeU Classic + Care Bundle',
-        description: 'Any Classic frame paired with the BeU Lens Care Kit.',
-        price: 9799,
-        categorySlug: 'collections',
-        subcategorySlug: 'bundles',
-        colors: [],
-        warrantyYears: 1,
-      },
-      {
-        slug: 'premium-care-bundle',
-        name: 'BeU Premium + Care Bundle',
-        description: 'Any Premium frame paired with the BeU Lens Care Kit.',
-        price: 15799,
-        categorySlug: 'collections',
-        subcategorySlug: 'bundles',
-        colors: [],
-        warrantyYears: 1,
-      },
-      {
-        slug: 'student-classic-pick',
-        name: 'Student Pick — Horizon Round Frame',
-        description: '5% off the Horizon Round Frame with a valid student ID.',
-        price: 9490,
-        categorySlug: 'collections',
-        subcategorySlug: 'student-picks',
-        frameMaterial: 'Plastic',
-        frameShape: 'Round',
-        colors: ['Matte Black'],
-        warrantyYears: 1,
-      },
-    ],
-  });
-
-  // Seeded products start with stock so the storefront doesn't show them as sold out.
-  await prisma.product.updateMany({ data: { stockQuantity: 20 } });
+  console.log('Catalog seeded (rows created this run):');
+  console.table(counts);
+  if (snapshot.defaultedTabs.length > 0) {
+    console.log(`Filled from built-in defaults (the Sheet tabs were not available): ${snapshot.defaultedTabs.join(', ')}`);
+  }
 }
 
 main()

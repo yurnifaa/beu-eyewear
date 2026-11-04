@@ -1,5 +1,4 @@
 'use server';
-// LEGACY-CATALOG-ADMIN: edits the Prisma catalog, which the storefront no longer reads (see docs/google-sheets-catalog.md).
 
 import { Prisma } from '@prisma/client';
 import { revalidatePath } from 'next/cache';
@@ -7,11 +6,11 @@ import { requireAdmin } from '@/lib/auth/session';
 import { categoryFields, categorySchema, subcategorySchema, type CategoryFormState } from '@/lib/admin/categories';
 import { prisma } from '@/lib/prisma';
 
-function revalidateCatalog() {
-  for (const path of ['/admin/categories', '/admin/products', '/admin/inventory', '/admin', '/admin/reports', '/listing', '/home', '/search']) {
+// The storefront reads categories straight from the database, so only admin pages need refreshing.
+function revalidateAdmin() {
+  for (const path of ['/admin/categories', '/admin/products', '/admin/inventory', '/admin', '/admin/reports']) {
     revalidatePath(path);
   }
-  revalidatePath('/listing/[slug]', 'page');
 }
 
 function databaseError(error: unknown): CategoryFormState {
@@ -25,43 +24,57 @@ function databaseError(error: unknown): CategoryFormState {
 }
 
 async function save(kind: 'category' | 'subcategory', originalSlug: string | null, formData: FormData): Promise<CategoryFormState> {
-  const keys = kind === 'category' ? ['name', 'slug', 'description'] : ['name', 'slug', 'categorySlug'];
-  const values = Object.fromEntries(keys.map((key) => [key, typeof formData.get(key) === 'string' ? String(formData.get(key)) : '']));
+  const keys = kind === 'category'
+    ? ['name', 'slug', 'description', 'imageUrl', 'displayOrder']
+    : ['name', 'slug', 'categorySlug', 'description', 'displayOrder'];
+  const values: Record<string, string> = Object.fromEntries(keys.map((key) => [key, typeof formData.get(key) === 'string' ? String(formData.get(key)) : '']));
+  values.isActive = formData.get('isActive') === 'on' ? 'on' : '';
   if (originalSlug !== null && !categoryFields.shape.slug.safeParse(originalSlug).success) return { values, error: 'Invalid original slug.' };
-  const parsed = (kind === 'category' ? categorySchema : subcategorySchema).safeParse(values);
-  if (!parsed.success) return { values, error: parsed.error.issues[0].message };
-  try {
-    const error = await prisma.$transaction(async (tx) => {
-      const { slug, name } = parsed.data;
-      const other = originalSlug === null ? {} : { slug: { not: originalSlug } };
-      if (kind === 'category') {
-        const duplicate = await tx.category.findFirst({ where: { ...other, OR: [{ slug }, { name: { equals: name, mode: 'insensitive' } }] } });
+  const input = { ...values, isActive: values.isActive === 'on' };
+
+  if (kind === 'category') {
+    const parsed = categorySchema.safeParse(input);
+    if (!parsed.success) return { values, error: parsed.error.issues[0].message };
+    const data = parsed.data;
+    try {
+      const error = await prisma.$transaction(async (tx) => {
+        const other = originalSlug === null ? {} : { slug: { not: originalSlug } };
+        const duplicate = await tx.category.findFirst({ where: { ...other, OR: [{ slug: data.slug }, { name: { equals: data.name, mode: 'insensitive' } }] } });
         if (duplicate) return 'A category with that name or slug already exists.';
-        const data = { slug, name, description: values.description.trim() };
         if (originalSlug === null) await tx.category.create({ data });
         else await tx.category.update({ where: { slug: originalSlug }, data });
-      } else {
-        const categorySlug = values.categorySlug.trim();
-        if (!await tx.category.findUnique({ where: { slug: categorySlug } })) return 'Choose an existing parent category.';
+        return null;
+      }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+      if (error) return { values, error };
+    } catch (error) {
+      return { values, ...databaseError(error) };
+    }
+  } else {
+    const parsed = subcategorySchema.safeParse(input);
+    if (!parsed.success) return { values, error: parsed.error.issues[0].message };
+    const data = parsed.data;
+    try {
+      const error = await prisma.$transaction(async (tx) => {
+        const other = originalSlug === null ? {} : { slug: { not: originalSlug } };
+        if (!await tx.category.findUnique({ where: { slug: data.categorySlug } })) return 'Choose an existing parent category.';
         // Keep the parent fixed so products cannot end up in mismatched categories.
         if (originalSlug !== null) {
           const existing = await tx.subcategory.findUnique({ where: { slug: originalSlug } });
           if (!existing) return 'This subcategory no longer exists.';
-          if (existing.categorySlug !== categorySlug) return 'A subcategory’s parent cannot be changed here. Refresh the page.';
+          if (existing.categorySlug !== data.categorySlug) return 'A subcategory’s parent cannot be changed here. Refresh the page.';
         }
-        const duplicate = await tx.subcategory.findFirst({ where: { ...other, OR: [{ slug }, { categorySlug, name: { equals: name, mode: 'insensitive' } }] } });
+        const duplicate = await tx.subcategory.findFirst({ where: { ...other, OR: [{ slug: data.slug }, { categorySlug: data.categorySlug, name: { equals: data.name, mode: 'insensitive' } }] } });
         if (duplicate) return 'That subcategory slug is in use, or its name already exists in this category.';
-        const data = { slug, name, categorySlug };
         if (originalSlug === null) await tx.subcategory.create({ data });
         else await tx.subcategory.update({ where: { slug: originalSlug }, data });
-      }
-      return null;
-    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
-    if (error) return { values, error };
-  } catch (error) {
-    return { values, ...databaseError(error) };
+        return null;
+      }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+      if (error) return { values, error };
+    } catch (error) {
+      return { values, ...databaseError(error) };
+    }
   }
-  revalidateCatalog();
+  revalidateAdmin();
   return { message: originalSlug === null ? 'Added successfully.' : 'Changes saved.' };
 }
 
@@ -102,7 +115,7 @@ async function remove(kind: 'category' | 'subcategory', slug: string): Promise<C
   } catch (error) {
     return databaseError(error);
   }
-  revalidateCatalog();
+  revalidateAdmin();
   return { message: 'Deleted successfully.' };
 }
 

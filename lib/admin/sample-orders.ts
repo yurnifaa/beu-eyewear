@@ -84,10 +84,20 @@ export async function seedSampleOrders(prisma: PrismaClient) {
     if (users || existingOrders) {
       throw new SampleOrdersError('Sample data or a reserved marker already exists. Run seed:sample-orders:clear first; do not overwrite it.');
     }
-    const products = await tx.product.findMany({
+    const rows = await tx.product.findMany({
+      where: { status: 'ACTIVE' },
       orderBy: [{ categorySlug: 'asc' }, { slug: 'asc' }],
-      select: { slug: true, name: true, price: true, colors: true, categorySlug: true },
+      select: {
+        slug: true, name: true, listPrice: true, salePrice: true, categorySlug: true,
+        variants: { where: { isActive: true }, orderBy: { sortOrder: 'asc' }, select: { color: true } },
+      },
     });
+    const products = rows.map((row) => ({
+      slug: row.slug, name: row.name, categorySlug: row.categorySlug,
+      // What a shopper would have paid: the sale price when it is a real reduction.
+      price: row.salePrice !== null && row.salePrice > 0 && row.salePrice < row.listPrice ? row.salePrice : row.listPrice,
+      colors: row.variants.map((variant) => variant.color).filter((color) => color !== 'Standard'),
+    }));
     const { orders, items } = buildSampleOrders(products);
     await tx.user.create({ data: {
       id: SAMPLE_USER_ID, email: SAMPLE_EMAIL, name: SAMPLE_USER_NAME, role: 'CUSTOMER',

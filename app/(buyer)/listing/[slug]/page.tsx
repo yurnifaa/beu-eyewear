@@ -25,7 +25,7 @@ import {
 } from '@/lib/catalog/queries';
 import { formatPrice } from '@/lib/format';
 
-// Reads live catalog data from the Google Sheet: don't bake it into a static
+// Reads live catalog data from the database: don't bake it into a static
 // build-time snapshot.
 export const dynamic = 'force-dynamic';
 

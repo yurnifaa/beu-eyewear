@@ -1,5 +1,4 @@
 'use client';
-// LEGACY-CATALOG-ADMIN: edits the Prisma catalog, which the storefront no longer reads (see docs/google-sheets-catalog.md).
 
 import { buttonClassName } from '@/component/Button';
 
@@ -15,7 +14,9 @@ export default function DeleteProductButton({ action, productName, size = 'md' }
     <form
       action={action}
       onSubmit={(event) => {
-        const confirmed = window.confirm(`Delete “${productName}”? This permanently removes the product and its photo.`);
+        const confirmed = window.confirm(
+          `Delete “${productName}”? This permanently removes the product, its colors, reviews and photos from the shop. Past orders keep their own record. To just hide it, set its status to Draft or Archived instead.`,
+        );
         if (!confirmed) event.preventDefault();
       }}
     >

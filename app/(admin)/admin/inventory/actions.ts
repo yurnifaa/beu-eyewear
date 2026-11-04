@@ -1,29 +1,33 @@
 'use server';
-// LEGACY-CATALOG-ADMIN: edits the Prisma catalog, which the storefront no longer reads (see docs/google-sheets-catalog.md).
 
 import { revalidatePath } from 'next/cache';
 import { requireAdmin } from '@/lib/auth/session';
 import { applyStockAdjustment, stockAdjustmentSchema, type StockFormState } from '@/lib/admin/inventory';
 
-export async function adjustStock(slug: string, _previous: StockFormState, formData: FormData): Promise<StockFormState> {
-  await requireAdmin();
-  const values = {
-    mode: typeof formData.get('mode') === 'string' ? String(formData.get('mode')) : '',
-    amount: typeof formData.get('amount') === 'string' ? String(formData.get('amount')) : '',
-  };
-  const parsed = stockAdjustmentSchema.safeParse({ slug, ...values });
+export async function adjustStock(sku: string, _previous: StockFormState, formData: FormData): Promise<StockFormState> {
+  const admin = await requireAdmin();
+  const text = (key: string) => (typeof formData.get(key) === 'string' ? String(formData.get(key)) : '');
+  const values = { mode: text('mode'), amount: text('amount') };
+  const parsed = stockAdjustmentSchema.safeParse({ sku, ...values, reason: text('reason') });
   if (!parsed.success) return { values, error: 'Use a whole number from 0 to 100,000 for Set stock, or -100,000 to +100,000 for Adjust by.' };
+
+  let result;
   try {
-    if (!await applyStockAdjustment(parsed.data)) {
-      return { values, error: 'This product no longer exists, or this adjustment would put stock outside 0–100,000. Refresh and try again.' };
-    }
+    result = await applyStockAdjustment(parsed.data, admin.id);
   } catch {
     return { values, error: 'We couldn’t adjust stock. Please try again.' };
   }
-  for (const path of ['/admin/inventory', '/admin', '/admin/products', `/admin/products/${parsed.data.slug}`, '/home', '/listing', '/search', '/cart', '/check-out', '/account/wishlist']) {
-    revalidatePath(path);
+  if (!result.ok) {
+    return {
+      values,
+      error:
+        result.reason === 'missing'
+          ? 'This color no longer exists. Refresh the page.'
+          : 'That would put stock outside 0–100,000. Refresh and try again.',
+    };
   }
-  // Detail pages also show stock for related products, so invalidate the pattern.
-  revalidatePath('/listing/[slug]', 'page');
-  return { message: 'Stock updated.' };
+
+  // The storefront reads stock straight from the database, so only admin pages need refreshing.
+  for (const path of ['/admin/inventory', '/admin', '/admin/products']) revalidatePath(path);
+  return { message: `Stock is now ${result.after.toLocaleString('en-PH')}.` };
 }

@@ -47,20 +47,28 @@ app/
 └── (admin)/
 	└── admin/
 		├── page.tsx                        → admin dashboard overview
-		├── login/                          → admin login (separate from buyer)
+		├── login/                          → admin login (separate from buyer; lives in app/(admin-auth))
 		├── products/                       → product list
-		│   ├── new/                        → add product
+		│   ├── new/                        → add product (colors/SKUs, photos, pricing)
 		│   └── [id]/                       → edit product
-		├── categories/                     → category management
+		├── categories/                     → categories and subcategories
+		├── inventory/                      → stock per color (SKU), low stock, stock history
+		├── reviews/                        → publish / hide reviews, home page testimonials
 		├── orders/                         → order list
 		│   └── [id]/                       → order detail
-		├── inventory/                      → stock levels, low stock alerts
 		├── customers/                      → customer list
 		│   └── [id]/                       → customer detail
-		└── reports/                        → sales reports, best sellers
+		├── reports/                        → sales reports, best sellers
+		├── offers/                         → promotions shown on the shop
+		├── options/                        → filter lists, frame material and lens descriptions
+		└── settings/                       → store details, delivery options
 ```
 
-**Catalog data source:** products, prices, stock, discounts, reviews and shipping come from a Google Sheet, not the database. Setup, security notes and the list of legacy admin pages are in [docs/google-sheets-catalog.md](docs/google-sheets-catalog.md).
+**Catalog:** products, colors/SKUs, prices, stock, categories, reviews, offers, delivery options and store settings all live in the Neon Postgres database (see `prisma/schema.prisma`). The admin app edits them and the storefront reads them straight from the database, so a change shows up on the shop on its next page load. There is no spreadsheet or other external catalog source.
+
+- **Stock** is per SKU (one per color) on `ProductVariant`. Checkout and order cancellation change it inside the same database transaction as the order, and every change (sale, return, delivery, correction) is recorded in `StockMovement`, which the admin Inventory page shows.
+- **Product photos** are uploaded from the admin to Vercel Blob (`BLOB_READ_WRITE_TOKEN`). Images that ship with the app live under `public/products/` and are referenced as `/products/<file>`.
+- **New database:** run `npx prisma migrate deploy`, then `npx prisma db seed` to load the starter catalog from `prisma/seed-data/catalog.json` (it only creates what is missing, so it never overwrites admin edits or live stock), then `npm run admin:create` for the admin account.
 
 **Notes**
 - Buyer-facing routes have no URL prefix (e.g. `/cart`, `/listing/123`)

@@ -4,24 +4,13 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { requireUser } from '@/lib/auth/session';
 import { findVariant, getProductsBySlugs, getShippingMethods } from '@/lib/catalog/queries';
-import { readFreshStock, recordInventoryMovements, type InventoryMovement } from '@/lib/catalog/stock';
+import { OutOfStockError, takeStock } from '@/lib/catalog/stock';
 import { MAX_SAVED_ADDRESSES } from '@/lib/checkout/address';
 import { calcTotals } from '@/lib/checkout/pricing';
 import type { PlaceOrderState } from '@/lib/checkout/types';
 import { formatOrderNumber } from '@/lib/format';
 import { prisma } from '@/lib/prisma';
-import { isStockWriteEnabled } from '@/lib/sheets/config';
 import { checkoutSchema } from '@/lib/validation/checkout';
-
-// Thrown inside the order transaction so the order and its stock rows roll back together.
-class OutOfStockError extends Error {
-  constructor(
-    readonly productName: string,
-    readonly available: number,
-  ) {
-    super(`${productName} is out of stock`);
-  }
-}
 
 function stockMessage(name: string, available: number) {
   return available <= 0
@@ -69,7 +58,7 @@ export async function placeOrder(_prevState: PlaceOrderState, formData: FormData
   const { lines, shippingMethod, paymentMethod, ...address } = parsed.data;
 
   // The client only says *what* to buy. Names, prices and which colors exist all come
-  // from the catalog sheet, read here on the server.
+  // from the catalog in the database, read here on the server.
   const products = await getProductsBySlugs([...new Set(lines.map((line) => line.slug))]);
   const bySlug = new Map(products.map((product) => [product.slug, product]));
 
@@ -103,8 +92,8 @@ export async function placeOrder(_prevState: PlaceOrderState, formData: FormData
     demand.set(variant.sku, entry);
   }
 
-  // Early, friendly check against the stock the storefront just showed. When the sheet can
-  // be written, the authoritative check runs again inside the transaction.
+  // Early, friendly check against the stock just read. The authoritative check is the
+  // conditional update inside the transaction below.
   for (const { name, quantity, available } of demand.values()) {
     if (available < quantity) return { values, error: stockMessage(name, available) };
   }
@@ -113,28 +102,10 @@ export async function placeOrder(_prevState: PlaceOrderState, formData: FormData
   const shippingFee = (await getShippingMethods()).find((method) => method.id === shippingMethod)?.fee;
   const totals = calcTotals(subtotal, shippingMethod, shippingFee);
 
-  // With the service account configured, every sale is written back to the sheet's
-  // inventory_log, so the sheet and the storefront never disagree. If that write fails the
-  // whole transaction rolls back and no order exists.
-  const writeBack = isStockWriteEnabled();
-
   let orderId: string;
   try {
     const order = await prisma.$transaction(
       async (tx) => {
-        if (writeBack) {
-          // Two buyers going for the last unit queue up here, per SKU and in a fixed order
-          // so they can't deadlock; the second one then reads the already reduced stock.
-          for (const sku of [...demand.keys()].sort()) {
-            await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${sku}, 0))`;
-          }
-          const fresh = await readFreshStock();
-          for (const [sku, { name, quantity }] of demand) {
-            const available = fresh.get(sku) ?? 0;
-            if (available < quantity) throw new OutOfStockError(name, available);
-          }
-        }
-
         const created = await tx.order.create({
           data: {
             userId: user.id,
@@ -152,18 +123,18 @@ export async function placeOrder(_prevState: PlaceOrderState, formData: FormData
           select: { id: true, number: true },
         });
 
-        if (writeBack) {
-          const movements: InventoryMovement[] = [...demand].map(([sku, { quantity }]) => ({ sku, type: 'SALE', quantity }));
-          await recordInventoryMovements(
-            movements,
-            formatOrderNumber(created.number).replace('#', ''),
-            `App order ${formatOrderNumber(created.number)}`,
-          );
-        }
+        // Takes the units, or throws OutOfStockError so the order above rolls back with it.
+        // Two buyers going for the last unit can't both succeed: the second one's
+        // conditional update finds the stock already gone.
+        await takeStock(
+          tx,
+          [...demand].map(([sku, { name, quantity }]) => ({ sku, name, quantity })),
+          formatOrderNumber(created.number).replace('#', ''),
+          `Order ${formatOrderNumber(created.number)}`,
+        );
         return created;
       },
-      // The sheet is called from inside the transaction, so allow for its latency.
-      { maxWait: 10_000, timeout: 30_000 },
+      { maxWait: 10_000, timeout: 20_000 },
     );
     orderId = order.id;
   } catch (error) {
