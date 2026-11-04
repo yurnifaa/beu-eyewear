@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import PixelGlyph, { type GlyphName } from "@/component/beu/PixelGlyph";
 import { getStoreSettings } from "@/lib/catalog/queries";
 
 function InstagramIcon() {
@@ -54,10 +55,17 @@ const shopLinks = [
 const aboutLinks = ["Our Story", "Warrants & Returns", "Store Locator", "Contact Us"];
 
 const linkClassName =
-  "cursor-pointer text-white/80 transition-colors hover:text-white hover:underline hover:underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white";
+  "cursor-pointer text-foreground/80 transition-colors hover:text-accent hover:underline hover:underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-4";
 
 const socialClassName =
-  "flex h-9 w-9 cursor-pointer items-center justify-center rounded-md border border-white text-white transition-colors hover:bg-white hover:text-[#111A33] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white";
+  "flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-ink text-ink transition-colors hover:bg-ink hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 dark:border-ice dark:text-ice dark:hover:bg-ice dark:hover:text-ink";
+
+const headingClassName = "text-[11px] font-medium uppercase tracking-[0.2em] text-muted-foreground";
+
+const GLYPH_ROW: GlyphName[] = [
+  "spark", "spark-o", "burst", "orbit", "ball", "shoot",
+  "cross", "heart", "star5", "bolt", "skull", "cluster",
+];
 
 const DEFAULT_PHONES = '(02) 8676-9420 / 0912-345-6789';
 
@@ -74,50 +82,77 @@ async function supportPhones() {
 export default async function Footer() {
   const phones = await supportPhones();
   return (
-    <footer className="bg-[#111A33] px-6 py-12 text-white md:py-14">
-      <div className="mx-auto grid max-w-5xl grid-cols-1 gap-10 md:grid-cols-[1.6fr_1fr_1fr]">
-        <div>
-          <Image src="/Logo-Light-Mark.png" alt="BeU" width={380} height={380} className="h-14 w-14" />
-          <p className="mt-5 max-w-xs text-xs leading-relaxed">
-            Be Your Best Self. Merging trendy aesthetics with smart wearable
-            features to protect your vision.
-          </p>
-          <p className="mt-6 text-sm">{phones}</p>
-          <div className="mt-5 flex items-center gap-3">
-            <a href="#" aria-label="Instagram" className={socialClassName}>
-              <InstagramIcon />
-            </a>
-            <a href="#" aria-label="Facebook" className={socialClassName}>
-              <FacebookIcon />
-            </a>
+    <footer className="beu-footer-bg relative overflow-hidden px-4 pt-12 text-foreground md:px-14 md:pt-16">
+      <div className="mx-auto max-w-[1328px]">
+        <div className="grid grid-cols-1 gap-10 rounded-[2rem] border border-white bg-background/80 p-7 shadow-[0_24px_50px_rgba(40,100,180,0.16)] dark:border-border md:grid-cols-[1.6fr_1fr_1fr] md:p-10">
+          <div>
+            <Image src="/Logo-Dark-Mark.png" alt="BeU" width={380} height={380} className="h-14 w-14 dark:hidden" />
+            <Image src="/Logo-Light-Mark.png" alt="BeU" width={380} height={380} className="hidden h-14 w-14 dark:block" />
+            <p className="mt-5 font-display text-3xl font-bold uppercase leading-[1.05] tracking-tight">
+              Be your
+              <br />
+              <span className="font-accent text-5xl normal-case">best self.</span>
+            </p>
+            <p className="mt-4 max-w-xs text-xs leading-relaxed text-muted-foreground">
+              Merging trendy aesthetics with smart wearable features to protect your vision.
+            </p>
+            <p className="mt-6 text-sm">{phones}</p>
+            <div className="mt-5 flex items-center gap-3">
+              <a href="#" aria-label="Instagram" className={socialClassName}>
+                <InstagramIcon />
+              </a>
+              <a href="#" aria-label="Facebook" className={socialClassName}>
+                <FacebookIcon />
+              </a>
+            </div>
           </div>
+
+          <nav aria-label="Shop">
+            <h2 className={headingClassName}>Shop</h2>
+            <ul className="mt-5 flex flex-col gap-3 text-sm">
+              {shopLinks.map(({ label, href }) => (
+                <li key={label}>
+                  <Link href={href} className={linkClassName}>
+                    {label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
+
+          <nav aria-label="About BeU">
+            <h2 className={headingClassName}>About BeU</h2>
+            <ul className="mt-5 flex flex-col gap-3 text-sm">
+              {aboutLinks.map((label) => (
+                <li key={label}>
+                  <Link href="/home" className={linkClassName}>
+                    {label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
         </div>
 
-        <nav aria-label="Shop">
-          <h2 className="text-xl font-semibold uppercase">Shop</h2>
-          <ul className="mt-4 flex flex-col gap-3 text-base">
-            {shopLinks.map(({ label, href }) => (
-              <li key={label}>
-                <Link href={href} className={linkClassName}>
-                  {label}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </nav>
+        <div aria-hidden="true" className="mt-12 flex flex-wrap items-center justify-between gap-4 text-ink dark:text-ice">
+          {GLYPH_ROW.map((name) => (
+            <PixelGlyph key={name} name={name} size={40} className="shrink-0" />
+          ))}
+        </div>
 
-        <nav aria-label="About BeU">
-          <h2 className="text-xl font-semibold uppercase">About BeU</h2>
-          <ul className="mt-4 flex flex-col gap-3 text-base">
-            {aboutLinks.map((label) => (
-              <li key={label}>
-                <Link href="/home" className={linkClassName}>
-                  {label}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </nav>
+        <div aria-hidden="true" className="mt-6 h-[clamp(7rem,24vw,20rem)] overflow-hidden text-center">
+          <div className="beu-chrome-text font-display text-[clamp(8rem,34vw,30rem)] font-black leading-[0.85] tracking-[-0.05em]">
+            BeU
+          </div>
+        </div>
+      </div>
+
+      <div className="-mx-4 flex flex-wrap items-center justify-between gap-4 bg-ink px-4 py-4 text-[11px] uppercase tracking-[0.14em] text-ice-mist md:-mx-14 md:px-14">
+        <span>© {new Date().getFullYear()} BeU Eyewear</span>
+        <span className="flex items-center gap-2">
+          <PixelGlyph name="spark" size={12} className="text-ice" />
+          Be seen. Be you.
+        </span>
       </div>
     </footer>
   );

@@ -7,14 +7,14 @@ const DEFAULT_LABELS = ['Free Eyewear Kit Included', '7-Day Free Returns', 'Up T
 export default function BenefitsBar({ labels = DEFAULT_LABELS }: { labels?: string[] }) {
   const BENEFITS = labels.slice(0, ICONS.length).map((label, index) => ({ icon: ICONS[index], label }));
   return (
-    <section aria-label="Shopping benefits" className="benefits-bar relative overflow-hidden bg-[#4F6BB5] py-6 text-white">
+    <section aria-label="Shopping benefits" className="benefits-bar relative overflow-hidden border-y-2 border-ink bg-ice py-5 text-ink">
       <div className="benefits-track">
         {[0, 1].map((copy) => (
           <ul key={copy} aria-hidden={copy === 1 ? true : undefined} className="benefits-group">
             {BENEFITS.map(({ icon: Icon, label }) => (
               <li key={label} className="flex shrink-0 items-center gap-3">
-                <Icon size={24} strokeWidth={1.5} aria-hidden="true" />
-                <span className="whitespace-nowrap text-sm uppercase">{label}</span>
+                <Icon size={22} strokeWidth={1.75} aria-hidden="true" />
+                <span className="whitespace-nowrap text-xs font-medium uppercase tracking-[0.14em]">{label}</span>
               </li>
             ))}
           </ul>

@@ -31,7 +31,7 @@ function CardField({ id, label }: { id: string; label: string }) {
   return (
     <div className="flex flex-col gap-1.5">
       <FieldLabel htmlFor={id}>{label}</FieldLabel>
-      <input id={id} type="text" className="h-10 w-full border border-border bg-background px-3 text-sm outline-none focus:border-[#4F6BB5] focus:ring-1 focus:ring-[#4F6BB5]" />
+      <input id={id} type="text" className="h-10 w-full border border-border bg-background px-3 text-sm outline-none focus:border-accent focus:ring-1 focus:ring-accent" />
     </div>
   );
 }
@@ -192,11 +192,11 @@ export default function CheckoutForm({ defaultName, savedAddresses, selectedKeys
                 if (e.key === 'Enter') e.preventDefault();
               }}
               placeholder="Enter code"
-              className="min-w-0 w-full rounded-sm border border-[#4F6BB5] bg-[#4F6BB5]/45 px-3 py-2 text-sm outline-none placeholder:text-white focus:ring-1 focus:ring-[#4F6BB5]"
+              className="min-w-0 w-full rounded-sm border border-accent bg-accent/10 px-3 py-2 text-sm outline-none placeholder:text-muted-foreground focus:ring-1 focus:ring-accent"
             />
             <button
               type="button"
-              className="shrink-0 rounded-sm border border-[#4F6BB5] px-4 text-sm text-[#334783] hover:bg-muted dark:text-foreground"
+              className="shrink-0 rounded-sm border border-accent px-4 text-sm text-accent hover:bg-muted"
             >
               Apply
             </button>
@@ -301,7 +301,7 @@ export default function CheckoutForm({ defaultName, savedAddresses, selectedKeys
                 <label
                   key={id}
                   className={`flex cursor-pointer flex-col gap-1 rounded-sm border p-4 ${
-                    selected ? 'border-[#7B93D4] ring-1 ring-[#7B93D4]' : 'border-border'
+                    selected ? 'border-accent ring-1 ring-accent' : 'border-border'
                   }`}
                 >
                   <div className="flex items-start justify-between gap-2">
@@ -312,7 +312,7 @@ export default function CheckoutForm({ defaultName, savedAddresses, selectedKeys
                         name="shipping-option"
                         checked={selected}
                         onChange={() => setShippingMethod(id)}
-                        className="h-4 w-4 accent-[#7B93D4]"
+                        className="h-4 w-4 accent-accent"
                       />
                       {option.label}
                     </span>
@@ -350,10 +350,10 @@ export default function CheckoutForm({ defaultName, savedAddresses, selectedKeys
                   onClick={() => setPaymentMethod(id)}
                   aria-pressed={selected}
                   className={`relative flex min-w-0 flex-1 flex-col items-center gap-2 rounded-sm border px-3 py-3 text-xs font-semibold uppercase ${
-                    selected ? 'border-[#7F96EB] ring-1 ring-[#7F96EB]' : 'border-border text-muted-foreground'
+                    selected ? 'border-accent ring-1 ring-accent' : 'border-border text-muted-foreground'
                   }`}
                 >
-                  <Icon size={24} aria-hidden="true" className={id === 'CARD' ? 'text-[#B78B39]' : id === 'WALLET' ? 'text-[#6959BF]' : 'text-[#4F9138]'} />
+                  <Icon size={24} aria-hidden="true" className="text-accent" />
                   {PAYMENT_METHOD_LABELS[id]}
                   {selected && <CheckCircle2 size={18} aria-hidden="true" className="absolute -top-2 -right-2 rounded-full bg-background text-green-600" />}
                 </button>

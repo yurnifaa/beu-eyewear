@@ -8,6 +8,22 @@
   --muted: #f3f4f6;
   --muted-foreground: #4b5563;
   --border: #d1d5db;
+
+  /* Shared semantic tokens. The values here keep the admin area looking as it
+     always did; the storefront re-skins them in app/(buyer)/beu-theme.css. */
+  --brand-700: #404040;
+  --brand-800: #262626;
+  --brand-900: #171717;
+  --on-brand: #ffffff;
+  --accent: #5a6dbe;
+  --accent-hover: #4a5ca8;
+  --on-accent: #ffffff;
+  --ice: #8fcbff;
+  --ice-soft: #c7e4ff;
+  --ice-mist: #eaf5ff;
+  --ink: #111a33;
+  --chrome: #9fadbe;
+  --radius-control: 0.75rem;
 }
 
 @theme inline {
@@ -17,10 +33,22 @@
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
   --color-border: var(--border);
-  --color-brand-700: #404040;
-  --color-brand-800: #262626;
-  --color-brand-900: #171717;
+  --color-brand-700: var(--brand-700);
+  --color-brand-800: var(--brand-800);
+  --color-brand-900: var(--brand-900);
+  --color-on-brand: var(--on-brand);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-on-accent: var(--on-accent);
+  --color-ice: var(--ice);
+  --color-ice-soft: var(--ice-soft);
+  --color-ice-mist: var(--ice-mist);
+  --color-ink: var(--ink);
+  --color-chrome: var(--chrome);
   --font-sans: var(--font-inter);
+  /* Only resolve inside the storefront, where beu-theme loads the fonts. */
+  --font-display: var(--font-unbounded, var(--font-inter));
+  --font-body: var(--font-dm-mono, var(--font-inter));
 }
 
 /* Light is the default appearance regardless of OS preference — dark mode

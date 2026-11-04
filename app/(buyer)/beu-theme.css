@@ -1,0 +1,242 @@
+/* BeU storefront theme: ice blue, chrome and ink (Y2K x punk).
+   Everything is scoped to .beu-theme (set in app/(buyer)/layout.tsx), so the
+   admin area keeps the neutral tokens from app/globals.css. */
+
+@layer theme, base, components, utilities;
+
+/* ---------- tokens ---------- */
+
+.beu-theme,
+.beu-theme .beu-light {
+  --background: #ffffff;
+  --foreground: #0a1a2f;
+  --card: #eaf5ff;
+  --muted: #f3f9ff;
+  --muted-foreground: #4a6079;
+  --border: #c9dcf0;
+
+  --brand-700: #12294a;
+  --brand-800: #0a1a2f;
+  --brand-900: #050d18;
+  --on-brand: #ffffff;
+
+  --accent: #2f66c4;
+  --accent-hover: #234f9e;
+  --on-accent: #ffffff;
+
+  --ink: #0a1a2f;
+  --ice: #8fcbff;
+  --ice-soft: #c7e4ff;
+  --ice-mist: #eaf5ff;
+  --chrome: #9fadbe;
+
+  --radius-control: 999px;
+  color-scheme: light;
+}
+
+/* Header, footer and the account/checkout pages follow the theme toggle. */
+:root.dark .beu-theme {
+  --background: #07111f;
+  --foreground: #eaf5ff;
+  --card: #0f2038;
+  --muted: #0b1a2e;
+  --muted-foreground: #9db4cc;
+  --border: #1e3654;
+
+  --brand-700: #8fcbff;
+  --brand-800: #b5dcff;
+  --brand-900: #6fb4f0;
+  --on-brand: #0a1a2f;
+
+  --accent: #8fcbff;
+  --accent-hover: #b5dcff;
+  --on-accent: #0a1a2f;
+
+  --ink: #0a1a2f;
+  color-scheme: dark;
+}
+
+/* The home page stays light in both modes (see app/(buyer)/home/page.tsx). */
+@layer base {
+  .beu-theme .beu-light {
+    background: var(--background);
+    color: var(--foreground);
+  }
+
+  .beu-theme {
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-dm-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+
+  .beu-theme :is(h1, h2) {
+    font-family: var(--font-unbounded), var(--font-inter), system-ui, sans-serif;
+    letter-spacing: -0.02em;
+  }
+
+  .beu-theme :focus-visible {
+    outline-color: var(--accent);
+  }
+
+  .beu-theme ::selection {
+    background: var(--ice);
+    color: #0a1a2f;
+  }
+}
+
+@keyframes beu-marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+@keyframes beu-spin {
+  to { transform: rotate(360deg); }
+}
+
+@layer components {
+  /* ---------- type helpers ---------- */
+  /* font-display (Unbounded) is a Tailwind utility, registered in app/globals.css. */
+
+  .beu-theme .font-accent {
+    font-family: var(--font-instrument), Georgia, serif;
+    font-style: italic;
+    font-weight: 400;
+    letter-spacing: -0.01em;
+  }
+
+  /* Brushed-chrome lettering (hero wordmark, footer wordmark). The outline is built from
+     drop-shadows, not -webkit-text-stroke: stroking a variable font also draws the
+     overlapping contours inside each letter. */
+  .beu-theme .beu-chrome-text {
+    background: linear-gradient(
+      180deg,
+      #ffffff 0%,
+      #e4eaf1 26%,
+      #9fadbe 48%,
+      #f4f7fa 56%,
+      #b9c4d1 80%,
+      #ffffff 100%
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    filter:
+      drop-shadow(1px 0 0 rgba(70, 110, 160, 0.8))
+      drop-shadow(-1px 0 0 rgba(70, 110, 160, 0.8))
+      drop-shadow(0 1px 0 rgba(70, 110, 160, 0.8))
+      drop-shadow(0 -1px 0 rgba(70, 110, 160, 0.8))
+      drop-shadow(0 18px 24px rgba(40, 100, 180, 0.25));
+  }
+
+  /* ---------- surfaces ---------- */
+
+  .beu-theme .beu-hero-bg {
+    background:
+      radial-gradient(ellipse 60% 52% at 50% 42%, #ffffff 0%, rgba(255, 255, 255, 0) 72%),
+      linear-gradient(180deg, #c7e4ff 0%, #9fd0ff 58%, #eaf5ff 100%);
+  }
+
+  .beu-theme .beu-hero-grid {
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.5) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.5) 1px, transparent 1px);
+    background-size: 72px 72px;
+    -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 60%, #000 100%);
+    mask-image: linear-gradient(180deg, transparent 0%, #000 60%, #000 100%);
+  }
+
+  .beu-theme .beu-hero-dots {
+    background-image: radial-gradient(rgba(10, 26, 47, 0.22) 1.1px, transparent 1.6px);
+    background-size: 7px 7px;
+    -webkit-mask-image: radial-gradient(ellipse 62% 70% at 50% 46%, transparent 55%, #000 100%);
+    mask-image: radial-gradient(ellipse 62% 70% at 50% 46%, transparent 55%, #000 100%);
+  }
+
+  .beu-theme .beu-spot-bg {
+    background:
+      radial-gradient(ellipse 55% 40% at 20% 16%, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0) 70%),
+      radial-gradient(ellipse 50% 40% at 86% 66%, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0) 70%),
+      linear-gradient(180deg, #e3e9f0 0%, #c5d0dc 100%);
+  }
+
+  .beu-theme .beu-spot-dots {
+    background-image: radial-gradient(rgba(10, 26, 47, 0.16) 1px, transparent 1.5px);
+    background-size: 6px 6px;
+    opacity: 0.55;
+    -webkit-mask-image: linear-gradient(180deg, #000 0%, transparent 35%, transparent 65%, #000 100%);
+    mask-image: linear-gradient(180deg, #000 0%, transparent 35%, transparent 65%, #000 100%);
+  }
+
+  .beu-theme .beu-orb {
+    background: radial-gradient(circle at 34% 28%, #ffffff 0%, #d6ecff 52%, #a9d6ff 100%);
+    box-shadow:
+      inset 0 -14px 34px rgba(60, 130, 210, 0.25),
+      0 34px 64px rgba(60, 130, 210, 0.22);
+  }
+
+  .beu-theme .beu-footer-bg {
+    background: linear-gradient(180deg, #eaf5ff 0%, #c9dff5 55%, #b5c4d6 100%);
+  }
+
+  :root.dark .beu-theme .beu-footer-bg {
+    background: linear-gradient(180deg, #0b1a2e 0%, #081525 60%, #050d18 100%);
+  }
+
+  /* ---------- controls ---------- */
+
+  /* Glossy ice-blue pill: the signature CTA. */
+  .beu-theme .beu-gloss {
+    background: linear-gradient(180deg, #ffffff 0%, var(--ice) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.95);
+    box-shadow:
+      0 10px 22px rgba(40, 110, 200, 0.34),
+      inset 0 2px 0 #ffffff,
+      inset 0 -3px 6px rgba(40, 110, 200, 0.25);
+    color: #0a1a2f;
+  }
+
+  .beu-theme .beu-glass {
+    background: rgba(255, 255, 255, 0.66);
+    border: 1px solid rgba(255, 255, 255, 0.95);
+    box-shadow:
+      0 10px 30px rgba(40, 100, 180, 0.18),
+      inset 0 1px 0 #ffffff;
+    -webkit-backdrop-filter: blur(14px);
+    backdrop-filter: blur(14px);
+  }
+
+  /* ---------- motion ---------- */
+
+  .beu-theme .beu-marquee {
+    display: flex;
+    width: max-content;
+    animation: beu-marquee 40s linear infinite;
+  }
+
+  .beu-theme .beu-spin {
+    animation: beu-spin 22s linear infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .beu-theme .beu-marquee,
+    .beu-theme .beu-spin {
+      animation: none;
+    }
+  }
+
+  /* Round icon button used in the header (search, account, cart...). */
+  .beu-theme .beu-icon-btn {
+    display: inline-flex;
+    width: 2.5rem;
+    height: 2.5rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+  }
+
+  .beu-theme .beu-icon-btn:hover {
+    background: color-mix(in srgb, var(--accent) 15%, transparent);
+  }
+}

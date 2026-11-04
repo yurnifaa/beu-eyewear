@@ -9,7 +9,7 @@ import type { FormState } from '@/lib/auth/types';
 const initialState: FormState = {};
 
 const primaryClass =
-  'flex h-11 w-full items-center justify-center rounded-full bg-[#8499D9] text-sm font-semibold text-white transition-colors hover:bg-[#6F86CF] disabled:cursor-not-allowed disabled:opacity-70';
+  'flex h-11 w-full items-center justify-center rounded-full bg-accent text-sm font-semibold text-on-accent transition-colors hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-70';
 
 // The token is only spent when this form is submitted, not when the page loads,
 // so email security scanners that prefetch links can't use it up.

@@ -40,3 +40,9 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 !.env.example
+
+# AI agent skills (local only)
+/.agents/
+/.claude/skills/
+/.windsurf/
+/skills-lock.json

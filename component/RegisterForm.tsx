@@ -59,7 +59,7 @@ export default function RegisterForm({ next }: { next?: string }) {
         <button
           type="submit"
           disabled={pending}
-          className="mt-2 h-11 w-full rounded-full bg-[#8499D9] text-sm font-semibold text-white transition-colors hover:bg-[#6F86CF] disabled:cursor-not-allowed disabled:opacity-70"
+          className="mt-2 h-11 w-full rounded-full bg-accent text-sm font-semibold text-on-accent transition-colors hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-70"
         >
           {pending ? 'Creating account...' : 'Create Account'}
         </button>
@@ -69,7 +69,7 @@ export default function RegisterForm({ next }: { next?: string }) {
         Already have an account?{' '}
         <Link
           href={next ? `/login?next=${encodeURIComponent(next)}` : '/login'}
-          className="font-semibold text-[#7B8FD6] hover:underline"
+          className="font-semibold text-accent hover:underline"
         >
           Sign In
         </Link>
