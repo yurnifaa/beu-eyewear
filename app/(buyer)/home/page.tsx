@@ -74,8 +74,7 @@ export default async function Page() {
   }));
 
   return (
-    // The home page stays light in both modes; the header and footer still follow the toggle.
-    <div className="beu-light">
+    <>
       <HomeHero />
       <PunkBand />
       <ShapePicker shapes={shapes} />
@@ -169,6 +168,6 @@ export default async function Page() {
           <ReviewsSection reviews={reviews} />
         </Reveal>
       )}
-    </div>
+    </>
   );
 }

@@ -37,7 +37,7 @@ export default async function AccountPage() {
       {!user.emailVerifiedAt && (
         <Link
           href="/account/profile"
-          className="flex items-center gap-3 rounded-2xl border border-amber-400/60 bg-amber-50 p-4 text-sm text-amber-900 dark:bg-amber-950/30 dark:text-amber-200"
+          className="flex items-center gap-3 rounded-2xl border border-amber-400/60 bg-amber-50 p-4 text-sm text-amber-900"
         >
           <MailWarning size={18} aria-hidden="true" className="shrink-0" />
           <span>Your email isn&apos;t verified yet. Verify it so you can recover your account.</span>

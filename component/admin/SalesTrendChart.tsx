@@ -21,7 +21,7 @@ export default function SalesTrendChart({ data }: { data: DailySales[] }) {
   return (
     <div>
       <div className="flex flex-wrap gap-5 text-xs font-semibold">
-        <span className="text-brand-700 dark:text-foreground">━ Revenue (excl. cancelled)</span>
+        <span className="text-brand-700">━ Revenue (excl. cancelled)</span>
         <span className="text-muted-foreground">┄ Orders (all statuses)</span>
       </div>
       <div className="mt-3 overflow-x-auto">
@@ -39,7 +39,7 @@ export default function SalesTrendChart({ data }: { data: DailySales[] }) {
               <text x={width - right + 12} y={axisY + 4} className="fill-muted-foreground text-xs">{maxOrders * level}</text>
             </g>;
           })}
-          <polyline points={points('revenue', maxRevenue)} fill="none" stroke="currentColor" strokeWidth={2.5} className="text-brand-700 dark:text-foreground" />
+          <polyline points={points('revenue', maxRevenue)} fill="none" stroke="currentColor" strokeWidth={2.5} className="text-brand-700" />
           <polyline points={points('orders', maxOrders)} fill="none" stroke="currentColor" strokeWidth={2} strokeDasharray="6 4" className="text-muted-foreground" />
           {data.map((row, index) => <g key={row.date}>
             {(index % 7 === 0 || index === data.length - 1) && <text x={x(index)} y={height - 25} textAnchor="middle" className="fill-muted-foreground text-xs">{row.date.slice(5)}</text>}

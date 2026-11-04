@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ChevronRight, LogOut, Menu } from 'lucide-react';
-import ThemeToggle from '@/component/ThemeToggle';
 import { logout } from '@/lib/auth/actions';
 
 const ADMIN_ROLE_LABEL = 'Store Administrator';
@@ -90,9 +89,6 @@ export default function AdminHeader({ adminName, onMobileMenuToggle }: AdminHead
       </div>
 
       <div className="flex items-center gap-3 sm:gap-4">
-        <ThemeToggle />
-        <span aria-hidden="true" className="hidden h-6 w-px bg-border sm:block" />
-
         <div className="relative" ref={profileRef}>
           <button
             type="button"

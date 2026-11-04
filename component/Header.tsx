@@ -6,7 +6,6 @@ import CartPill from "@/component/CartPill";
 import HeaderSearch from "@/component/HeaderSearch";
 import HeaderNav from "@/component/HeaderNav";
 import LoginModalTrigger from "@/component/LoginModalTrigger";
-import ThemeToggle from "@/component/ThemeToggle";
 import WishlistBadge from "@/component/WishlistBadge";
 import { NAV_LINKS } from "@/component/nav-links";
 import { getCurrentUser } from "@/lib/auth/session";
@@ -47,9 +46,6 @@ export default async function Header() {
             <Heart size={20} strokeWidth={1.75} />
             <WishlistBadge />
           </Link>
-          <span className="hidden sm:block">
-            <ThemeToggle />
-          </span>
           <CartPill />
         </div>
       </div>

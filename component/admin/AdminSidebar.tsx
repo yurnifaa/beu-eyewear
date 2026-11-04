@@ -70,8 +70,7 @@ export default function AdminSidebar({ open, onClose }: AdminSidebarProps) {
       >
         <div className="flex items-center justify-between px-6 py-5">
           <Link href="/admin" onClick={onClose} className="flex items-center gap-2">
-            <Image src="/Logo-Dark-Mark.png" alt="BeU" width={380} height={380} className="h-8 w-8 dark:hidden" />
-            <Image src="/Logo-Light-Mark.png" alt="BeU" width={380} height={380} className="hidden h-8 w-8 dark:block" />
+            <Image src="/Logo-Dark-Mark.png" alt="BeU" width={380} height={380} className="h-8 w-8" />
             <span className="font-bold uppercase tracking-wide">Admin</span>
           </Link>
           <button type="button" aria-label="Close menu" onClick={onClose} className="md:hidden">

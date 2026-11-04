@@ -41,7 +41,7 @@ export default function LoginModal({ open, onClose, next }: LoginModalProps) {
         if (event.target === event.currentTarget) onClose();
       }}
       aria-labelledby="login-title"
-      className="m-auto w-[calc(100%-2rem)] max-w-md rounded-2xl bg-white p-0 text-foreground shadow-xl backdrop:bg-black/60 dark:bg-background"
+      className="m-auto w-[calc(100%-2rem)] max-w-md rounded-2xl bg-white p-0 text-foreground shadow-xl backdrop:bg-black/60"
     >
       <div className="px-6 py-8 sm:px-10">
         {/* Mounted only while open, so errors and fields reset every time. */}

@@ -11,7 +11,7 @@ export default async function ForgotPasswordPage() {
 
   return (
     <Reveal mode="mount" className="mx-auto w-full max-w-md px-6 py-12">
-      <div className="rounded-2xl border border-border bg-white px-6 py-8 shadow-lg sm:px-10 dark:bg-background">
+      <div className="rounded-2xl border border-border bg-white px-6 py-8 shadow-lg sm:px-10">
         <ForgotPasswordForm />
       </div>
     </Reveal>

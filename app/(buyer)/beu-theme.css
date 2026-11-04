@@ -6,8 +6,7 @@
 
 /* ---------- tokens ---------- */
 
-.beu-theme,
-.beu-theme .beu-light {
+.beu-theme {
   --background: #ffffff;
   --foreground: #0a1a2f;
   --card: #eaf5ff;
@@ -34,35 +33,7 @@
   color-scheme: light;
 }
 
-/* Header, footer and the account/checkout pages follow the theme toggle. */
-:root.dark .beu-theme {
-  --background: #07111f;
-  --foreground: #eaf5ff;
-  --card: #0f2038;
-  --muted: #0b1a2e;
-  --muted-foreground: #9db4cc;
-  --border: #1e3654;
-
-  --brand-700: #8fcbff;
-  --brand-800: #b5dcff;
-  --brand-900: #6fb4f0;
-  --on-brand: #0a1a2f;
-
-  --accent: #8fcbff;
-  --accent-hover: #b5dcff;
-  --on-accent: #0a1a2f;
-
-  --ink: #0a1a2f;
-  color-scheme: dark;
-}
-
-/* The home page stays light in both modes (see app/(buyer)/home/page.tsx). */
 @layer base {
-  .beu-theme .beu-light {
-    background: var(--background);
-    color: var(--foreground);
-  }
-
   .beu-theme {
     background: var(--background);
     color: var(--foreground);
@@ -178,10 +149,6 @@
     background: linear-gradient(180deg, #eaf5ff 0%, #c9dff5 55%, #b5c4d6 100%);
   }
 
-  :root.dark .beu-theme .beu-footer-bg {
-    background: linear-gradient(180deg, #0b1a2e 0%, #081525 60%, #050d18 100%);
-  }
-
   /* ---------- controls ---------- */
 
   /* Glossy ice-blue pill: the signature CTA. */
@@ -245,17 +212,6 @@
       inset 0 1px 0 #ffffff;
     -webkit-backdrop-filter: blur(14px);
     backdrop-filter: blur(14px);
-  }
-
-  /* Nearly opaque ink navy (the ticker's colour). The home hero stays light in dark mode, so a
-     translucent navy let the pale ice show through and turned it slate; the edge and shadow are
-     tuned to read cleanly over both the light hero and dark pages. */
-  :root.dark .beu-theme .beu-header-pill {
-    background: rgba(10, 26, 47, 0.94);
-    border-color: rgba(143, 203, 255, 0.4);
-    box-shadow:
-      0 10px 30px rgba(20, 50, 100, 0.32),
-      inset 0 1px 0 rgba(143, 203, 255, 0.25);
   }
 
   .beu-theme .beu-icon-btn {

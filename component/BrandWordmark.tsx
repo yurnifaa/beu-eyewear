@@ -7,7 +7,7 @@ export default function BrandWordmark() {
       alt="BeU"
       width={512}
       height={512}
-      className="mx-auto size-14 dark:brightness-0 dark:invert"
+      className="mx-auto size-14"
       priority
     />
   );

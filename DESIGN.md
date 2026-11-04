@@ -185,7 +185,7 @@ Everything in the storefront should look like light passing through eyewear: bru
 
 The system pairs two temperaments. Controls are soft, round and tactile (pills, circles, blurred glass). Containers that carry information are hard-edged and graphic (ink-outlined tickets with offset shadows, heavy ink bands, a dashed perforation). Pixel glyphs (sparks, bursts, crosses, skulls, bolts) act as the punk punctuation, always in a single flat `currentColor`.
 
-The storefront is scoped to `.beu-theme`. The admin area keeps the neutral grey tokens from `app/globals.css` and is deliberately outside this system. The home page is wrapped in `.beu-light` and stays light even when the dark toggle is on; header, footer, account and checkout follow the toggle.
+The storefront is scoped to `.beu-theme`. The admin area keeps the neutral grey tokens from `app/globals.css` and is deliberately outside this system.
 
 This system rejects luxury-beige minimalism: no warm neutrals, no hushed serif-on-cream restraint, no quiet "accessible luxury" tropes.
 
@@ -202,8 +202,8 @@ This system rejects luxury-beige minimalism: no warm neutrals, no hushed serif-o
 A cold, saturated-light palette: an ice-blue family for atmosphere, one mid-saturation blue for action, deep ink navy for structure, and a single chrome grey that only appears in lettering gradients and ticket stubs.
 
 ### Primary
-- **Signal Blue** (`#2f66c4`): the accent for links, focus rings, eyebrows, sale badges, spark glyphs and the accent ticket stub. Shifts to Ice (`#8fcbff`) in dark mode. Hover state is Signal Blue Deep (`#234f9e`).
-- **Midnight Navy** (`#12294a`): the primary button fill (`--brand-700`), deepening through Ink (`#0a1a2f`) on hover to Ink Deep (`#050d18`) on press. In dark mode the brand scale inverts to ice tints so the primary button becomes a light button on dark.
+- **Signal Blue** (`#2f66c4`): the accent for links, focus rings, eyebrows, sale badges, spark glyphs and the accent ticket stub. Hover state is Signal Blue Deep (`#234f9e`).
+- **Midnight Navy** (`#12294a`): the primary button fill (`--brand-700`), deepening through Ink (`#0a1a2f`) on hover to Ink Deep (`#050d18`) on press.
 
 ### Secondary
 - **Ice** (`#8fcbff`): the glass-and-gloss colour. Fills the glossy CTA gradient, selection highlight, category ring (`ring-ice/60`), the ice ticket stub and glyphs on ink.
@@ -217,15 +217,10 @@ A cold, saturated-light palette: an ice-blue family for atmosphere, one mid-satu
 - **Slate Text** (`#4a6079`): secondary text, labels and inactive controls.
 - **Chrome** (`#9fadbe`): mid-tone of the chrome gradient and the chrome ticket stub. Never a large flat fill.
 
-### Dark mode (header, footer, account, checkout)
-- **Night** (`#07111f`) background, **Night Card** (`#0f2038`), **Night Muted** (`#0b1a2e`), **Night Border** (`#1e3654`), **Night Text** (`#9db4cc`); foreground becomes Ice Mist (`#eaf5ff`).
-
 ### Functional
 - **Error Red** (`#ef4444`, Tailwind red-500) for form errors; **Star Amber** (`#f59e0b`) for rating stars only.
 
 ### Named Rules
-**The Light Stays Light Rule.** Home-page sections and Ice Sky pages (the cart) sit inside `.beu-light` and never use `dark:` classes. Dark mode applies to header, footer, account and checkout only. An Ice Sky page that is later redesigned for dark mode needs its own night sky; do not just invert the panels.
-
 **The Ice Sky Rule.** The sky behind a glass panel stays inside the ice family: Ice Mist (`#eaf5ff`) at the top, Ice Soft (`#c7e4ff`) in the middle, fading to the page background at the bottom. Signal Blue and Ice are the only saturated hues; white is the highlight. No chrome fill, no warm tint.
 
 **The Chrome Is Lettering Rule.** The brushed chrome gradient fills type (hero and footer wordmarks) and nothing else. Chrome as a flat panel colour is limited to the ticket stub.
@@ -287,7 +282,7 @@ Hybrid: glass and glow for interactive surfaces, hard offset shadows for tickets
 
 ## Shapes
 
-Round means "touch me", square means "read me". Interactive controls are full pills (`999px`) or circles: buttons, icon buttons, badges, category tiles, the theme toggle. Product plates and tickets use 16px corners. Inputs use 12px (icon fields) or 8px (plain fields). The footer panel is a 32px super-rounded card. Ink-outlined objects use a 2px Ink border; the punk band uses a 3px white top and bottom rule. Tickets add a punched look: two circular notches on the stub edge and a dashed perforation line at 40% opacity. Category images sit inside a 4px Ice ring. Ice Sky panels are 16px, like every information plate. Product images in the cart sit in a round **lens window** (a circle, 88px on mobile and 5.5rem on desktop, with a 3px white inner ring) so the product reads as seen through glass. The empty state uses a larger lens silhouette (border-radius `42% 42% 46% 46% / 56% 56% 44% 44%`, 11rem by 8.5rem).
+Round means "touch me", square means "read me". Interactive controls are full pills (`999px`) or circles: buttons, icon buttons, badges, category tiles. Product plates and tickets use 16px corners. Inputs use 12px (icon fields) or 8px (plain fields). The footer panel is a 32px super-rounded card. Ink-outlined objects use a 2px Ink border; the punk band uses a 3px white top and bottom rule. Tickets add a punched look: two circular notches on the stub edge and a dashed perforation line at 40% opacity. Category images sit inside a 4px Ice ring. Ice Sky panels are 16px, like every information plate. Product images in the cart sit in a round **lens window** (a circle, 88px on mobile and 5.5rem on desktop, with a 3px white inner ring) so the product reads as seen through glass. The empty state uses a larger lens silhouette (border-radius `42% 42% 46% 46% / 56% 56% 44% 44%`, 11rem by 8.5rem).
 
 ## Components
 
@@ -300,11 +295,11 @@ Round means "touch me", square means "read me". Interactive controls are full pi
 - **Disabled:** 60% opacity, no lift, no shadow.
 
 ### Icon buttons
-- **Style:** 40px circle, transparent; hover fills with 15% Signal Blue (`color-mix`). Used for search, account, wishlist, cart and theme toggle at 20px Lucide icons with 1.75 stroke.
+- **Style:** 40px circle, transparent; hover fills with 15% Signal Blue (`color-mix`). Used for search, account, wishlist and cart at 20px Lucide icons with 1.75 stroke.
 
 ### Chips / Badges
 - **Sale:** Signal Blue pill, white 12px semibold text, bottom-left of the product image.
-- **Out of stock:** foreground-filled pill (Ink in light, Ice Mist in dark) over a 60%-opacity image.
+- **Out of stock:** foreground-filled pill (Ink) over a 60%-opacity image.
 - **Swatches:** 10px colour dots with a 10% black border.
 
 ### Cards / Containers
@@ -321,7 +316,7 @@ Round means "touch me", square means "read me". Interactive controls are full pi
 - **Error:** red ring and a 12px red message beneath, wired with `aria-describedby`.
 
 ### Navigation
-- **Header:** sticky, 85% background blur, 1px bottom border, a three-column grid of nav (left), logo mark (centre) and icon buttons (right) in a 1440px container. Mobile collapses the nav into a menu. The logo swaps between dark and light marks with the theme.
+- **Header:** sticky, 85% background blur, 1px bottom border, a three-column grid of nav (left), logo mark (centre) and icon buttons (right) in a 1440px container. Mobile collapses the nav into a menu.
 - **Ticker:** 40px Ink strip above the header with a looping marquee of uppercase 12px lines separated by Ice sparks.
 - **Footer:** gradient from Ice Mist to dusk blue; three-column panel, a row of twelve 40px glyphs, an oversized chrome wordmark cropped at the baseline, and an Ink copyright bar.
 
@@ -353,12 +348,11 @@ A 96px Ink strip with 3px white top and bottom rules, looping a marquee of 40px 
 ## Do's and Don'ts
 
 ### Do:
-- **Do** use the token classes (`bg-accent`, `text-ink`, `bg-ice`, `border-border`) so the storefront can be re-themed from the two token blocks in `beu-theme.css`.
+- **Do** use the token classes (`bg-accent`, `text-ink`, `bg-ice`, `border-border`) so the storefront can be re-themed from the token block in `beu-theme.css`.
 - **Do** make interactive controls pills or circles (`--radius-control: 999px`) and informational containers 16px-radius plates.
 - **Do** keep chrome as gradient lettering and use Ice for everything glassy.
 - **Do** tint every diffuse shadow blue (`rgba(40,100,180,…)`) and give tickets the solid Ink offset block.
 - **Do** build outlines of chrome type from stacked `drop-shadow` filters.
-- **Do** wrap new home-page sections in the existing `.beu-light` scope and avoid `dark:` there.
 - **Do** honour `prefers-reduced-motion`: drop travel and zoom, keep the shadow fade and colour changes.
 
 - **Do** build task pages (cart, checkout, orders, wishlist, account) as an Ice Sky: the ice gradient with the faint grid, one glass panel per region, rows divided by hairlines, one chrome title with one script aside, and a single gloss CTA with the sticky glass bar on mobile.

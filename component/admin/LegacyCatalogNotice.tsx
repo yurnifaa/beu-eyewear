@@ -5,7 +5,7 @@
 export default function LegacyCatalogNotice() {
   return (
     <div role="note" className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-4 text-sm">
-      <p className="font-semibold text-amber-700 dark:text-amber-500">Legacy page: not connected to the storefront</p>
+      <p className="font-semibold text-amber-700">Legacy page: not connected to the storefront</p>
       <p className="mt-1 text-muted-foreground">
         The storefront now reads products, categories and stock from the Google Sheet catalog. This page still edits the
         old database tables, so changes made here will not appear in the shop. Edit the Sheet instead. Kept for reference

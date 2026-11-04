@@ -82,7 +82,7 @@ export default function MobileMenu({ links }: {
                   href={href}
                   aria-current={active ? "page" : undefined}
                   onClick={() => dialogRef.current?.close()}
-                  className={`rounded-full px-4 py-3 text-sm uppercase tracking-[0.14em] transition-colors hover:bg-accent/15 focus-visible:outline-2 ${active ? "bg-ink text-white dark:bg-ice dark:text-ink" : ""}`}
+                  className={`rounded-full px-4 py-3 text-sm uppercase tracking-[0.14em] transition-colors hover:bg-accent/15 focus-visible:outline-2 ${active ? "bg-ink text-white" : ""}`}
                 >
                   {label}
                 </Link>

@@ -63,7 +63,7 @@ const linkClassName =
   "cursor-pointer text-foreground/80 transition-colors hover:text-accent hover:underline hover:underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-4";
 
 const socialClassName =
-  "flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-ink text-ink transition-colors hover:bg-ink hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 dark:border-ice dark:text-ice dark:hover:bg-ice dark:hover:text-ink";
+  "flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-ink text-ink transition-colors hover:bg-ink hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2";
 
 const headingClassName = "text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground";
 
@@ -89,10 +89,9 @@ export default async function Footer() {
   return (
     <footer className="beu-footer-bg relative overflow-hidden px-4 pt-12 text-foreground md:px-14 md:pt-16">
       <div className="mx-auto max-w-[1328px]">
-        <div className="grid grid-cols-1 gap-10 rounded-[2rem] border border-white bg-background/80 p-7 shadow-[0_24px_50px_rgba(40,100,180,0.16)] dark:border-border md:grid-cols-[1.6fr_1fr_1fr] md:p-10">
+        <div className="grid grid-cols-1 gap-10 rounded-[2rem] border border-white bg-background/80 p-7 shadow-[0_24px_50px_rgba(40,100,180,0.16)] md:grid-cols-[1.6fr_1fr_1fr] md:p-10">
           <div>
-            <Image src="/Logo-Dark-Mark.png" alt="BeU" width={380} height={380} className="h-14 w-14 dark:hidden" />
-            <Image src="/Logo-Light-Mark.png" alt="BeU" width={380} height={380} className="hidden h-14 w-14 dark:block" />
+            <Image src="/Logo-Dark-Mark.png" alt="BeU" width={380} height={380} className="h-14 w-14" />
             <p className="mt-5 font-display text-3xl font-bold uppercase leading-[1.05] tracking-tight">
               Be your
               <br />
@@ -139,7 +138,7 @@ export default async function Footer() {
           </nav>
         </div>
 
-        <div aria-hidden="true" className="mt-12 flex flex-wrap items-center justify-between gap-4 text-ink dark:text-ice">
+        <div aria-hidden="true" className="mt-12 flex flex-wrap items-center justify-between gap-4 text-ink">
           {GLYPH_ROW.map((name) => (
             <PixelGlyph key={name} name={name} size={40} className="shrink-0" />
           ))}

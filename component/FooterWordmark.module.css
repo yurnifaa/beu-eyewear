@@ -1,6 +1,5 @@
-/* The footer wordmark: the BeU script logo (public/Hero-Logo-Script.png) as a mask. The footer follows
-   the theme toggle, so the fill does too: deep blue gloss on the light footer, ice gloss on the dark
-   one. Outline, glow and shadow sit on the wrapper because a filter on the masked element itself
+/* The footer wordmark: the BeU script logo (public/Hero-Logo-Script.png) as a mask, filled with a deep
+   blue gloss. Outline, glow and shadow sit on the wrapper because a filter on the masked element itself
    would be clipped away by its own mask. */
 .wordmark {
   margin-inline: auto;
@@ -23,20 +22,4 @@
     linear-gradient(180deg, #6fb4f0 0%, #3a7bd6 50%, #234f9e 100%);
   -webkit-mask: url(/Hero-Logo-Script.png) center / 100% 100% no-repeat;
   mask: url(/Hero-Logo-Script.png) center / 100% 100% no-repeat;
-}
-
-:global(:root.dark) .wordmark {
-  filter:
-    drop-shadow(0.75px 0 0 rgba(143, 203, 255, 0.55))
-    drop-shadow(-0.75px 0 0 rgba(143, 203, 255, 0.55))
-    drop-shadow(0 0.75px 0 rgba(143, 203, 255, 0.55))
-    drop-shadow(0 -0.75px 0 rgba(143, 203, 255, 0.55))
-    drop-shadow(0 0 26px rgba(143, 203, 255, 0.38))
-    drop-shadow(0 18px 30px rgba(0, 0, 0, 0.45));
-}
-
-:global(:root.dark) .script {
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.3) 46%, rgba(255, 255, 255, 0) 50%),
-    linear-gradient(180deg, #f4faff 0%, #bfe0ff 45%, #6fb4f0 100%);
 }

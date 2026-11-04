@@ -18,7 +18,7 @@ export default function RevenueBarChart({ data }: { data: { label: string; axisL
         <text x={left} y={15} className="fill-foreground text-xs">Revenue (₱), excl. cancelled</text>
         {[0, 0.5, 1].map((level) => <g key={level}><line x1={left} x2={width - 20} y1={top + plotHeight * (1 - level)} y2={top + plotHeight * (1 - level)} className="stroke-border" /><text x={left - 10} y={top + plotHeight * (1 - level) + 4} textAnchor="end" className="fill-muted-foreground text-xs">{formatPrice(Math.round(max * level))}</text></g>)}
         {data.map((row, index) => <g key={row.label}>
-          <rect x={left + index * slot + slot * 0.15} y={top + plotHeight * (1 - row.revenue / max)} width={slot * 0.7} height={plotHeight * row.revenue / max} rx={2} className="fill-brand-700 dark:fill-foreground" />
+          <rect x={left + index * slot + slot * 0.15} y={top + plotHeight * (1 - row.revenue / max)} width={slot * 0.7} height={plotHeight * row.revenue / max} rx={2} className="fill-brand-700" />
           <rect x={left + index * slot} y={top} width={slot} height={plotHeight} fill="transparent" tabIndex={0} role="button" aria-label={`${row.label}: ${formatPrice(row.revenue)}, ${row.orders} orders`}
             onMouseEnter={() => setActive(index)} onFocus={() => setActive(index)} onClick={() => setActive(index)}
             onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); setActive(index); } }}

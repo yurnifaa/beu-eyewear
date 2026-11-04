@@ -36,7 +36,7 @@ export default function CartLens({ recommendations }: { recommendations: ReactNo
   const empty = model.ready && model.items.length === 0;
 
   return (
-    <div className="beu-light relative isolate overflow-clip">
+    <div className="relative isolate overflow-clip">
       <div aria-hidden="true" className={`${s.sky} absolute inset-0 -z-10`} />
       <div aria-hidden="true" className="beu-hero-grid absolute inset-0 -z-10 opacity-70" />
       <GlyphDrift />
