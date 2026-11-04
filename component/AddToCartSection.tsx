@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { Check, ShoppingBag } from 'lucide-react';
-import Button from '@/component/Button';
 import QuantityStepper from '@/component/QuantityStepper';
 import WishlistButton from '@/component/WishlistButton';
 import { addToCart } from '@/lib/cart';
@@ -47,8 +46,10 @@ export default function AddToCartSection({ slug, name, variants, lowStockThresho
     <>
       {colored.length > 0 && (
         <fieldset>
-          <legend className="text-sm font-semibold">Color</legend>
-          <div className="mt-2 flex flex-wrap gap-2">
+          <legend className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+            Color — <span className="text-foreground">{selected?.color}</span>
+          </legend>
+          <div className="mt-3 flex flex-wrap gap-2">
             {colored.map((variant) => (
               <label key={variant.color} className="cursor-pointer">
                 <input
@@ -63,19 +64,19 @@ export default function AddToCartSection({ slug, name, variants, lowStockThresho
                   className="peer sr-only"
                 />
                 <span
-                  className={`flex items-center gap-2 rounded-full border border-border px-4 py-2 text-xs font-semibold text-muted-foreground peer-checked:border-foreground peer-checked:bg-foreground peer-checked:text-background ${
+                  className={`beu-chip flex h-11 items-center gap-2.5 px-4 text-xs uppercase tracking-[0.1em] peer-checked:!border-ink peer-checked:!bg-ink peer-checked:!text-white peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-accent ${
                     variant.available <= 0 ? 'opacity-50' : ''
                   }`}
                 >
                   {variant.hex && (
                     <span
                       aria-hidden="true"
-                      className="size-3 rounded-full border border-black/10"
+                      className="size-3.5 rounded-full border border-black/15"
                       style={{ backgroundColor: variant.hex }}
                     />
                   )}
                   {variant.color}
-                  {variant.available <= 0 && <span className="font-normal">(sold out)</span>}
+                  {variant.available <= 0 && <span className="normal-case opacity-70">(sold out)</span>}
                 </span>
               </label>
             ))}
@@ -84,23 +85,36 @@ export default function AddToCartSection({ slug, name, variants, lowStockThresho
       )}
 
       {soldOut ? (
-        <p className="text-sm font-semibold text-red-600">Out of stock</p>
+        <p className="inline-flex w-fit items-center gap-2 rounded-full bg-red-600/10 px-3 py-1.5 text-[11px] uppercase tracking-[0.14em] text-red-700">
+          <span aria-hidden="true" className="size-1.5 rounded-full bg-current" />
+          Out of stock
+        </p>
       ) : (
-        available <= lowStockThreshold && <p className="text-sm font-semibold text-amber-600">Only {available} left</p>
+        available <= lowStockThreshold && (
+          <p className="inline-flex w-fit items-center gap-2 rounded-full bg-amber-500/15 px-3 py-1.5 text-[11px] uppercase tracking-[0.14em] text-amber-800">
+            <span aria-hidden="true" className="size-1.5 rounded-full bg-current" />
+            Only {available} left
+          </p>
+        )
       )}
 
       <div>
-        <p className="text-sm font-semibold">Quantity</p>
-        <div className="mt-2">
+        <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Quantity</p>
+        <div className="mt-3">
           <QuantityStepper value={quantity} onChange={(next) => setQuantity(Math.min(next, Math.max(1, Math.min(available, MAX_QUANTITY))))} />
         </div>
       </div>
 
-      <div className="flex gap-4">
-        <Button variant="primary" className="uppercase" onClick={handleAddToCart} disabled={soldOut}>
+      <div className="flex flex-wrap gap-3">
+        <button
+          type="button"
+          onClick={handleAddToCart}
+          disabled={soldOut}
+          className="inline-flex h-14 min-w-48 flex-1 items-center justify-center gap-2.5 rounded-full bg-ink px-8 text-xs uppercase tracking-[0.14em] text-white shadow-[0_14px_28px_rgba(10,26,47,0.28)] transition duration-150 hover:-translate-y-0.5 disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none sm:flex-none"
+        >
           {justAdded ? <Check size={16} /> : <ShoppingBag size={16} />}
           {soldOut ? 'Out of stock' : justAdded ? 'Added' : 'Add to Cart'}
-        </Button>
+        </button>
         <WishlistButton slug={slug} name={name} variant="labeled" />
       </div>
     </>

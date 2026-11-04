@@ -230,6 +230,23 @@
     backdrop-filter: blur(14px);
   }
 
+  /* ---------- product page ---------- */
+
+  .beu-theme .beu-pdp-bg {
+    background:
+      radial-gradient(ellipse 55% 35% at 28% 22%, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0) 70%),
+      linear-gradient(180deg, #c7e4ff 0%, #e3f1ff 38%, #ffffff 78%);
+  }
+
+  /* The sphere-lit stage behind the product photo. */
+  .beu-theme .beu-stage {
+    background: radial-gradient(circle at 34% 28%, #ffffff 0%, #d6ecff 55%, #a9d6ff 100%);
+    border: 1px solid rgba(255, 255, 255, 0.95);
+    box-shadow:
+      inset 0 -14px 34px rgba(60, 130, 210, 0.2),
+      0 34px 64px rgba(60, 130, 210, 0.22);
+  }
+
   /* ---------- motion ---------- */
 
   .beu-theme .beu-marquee {

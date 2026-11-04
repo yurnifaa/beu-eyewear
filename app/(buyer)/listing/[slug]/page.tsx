@@ -3,12 +3,13 @@ import { notFound } from 'next/navigation';
 import { Star } from 'lucide-react';
 import AccordionSection from '@/component/AccordionSection';
 import AddToCartSection from '@/component/AddToCartSection';
-import Breadcrumb from '@/component/Breadcrumb';
-import ProductImage from '@/component/ProductImage';
+import PixelGlyph from '@/component/beu/PixelGlyph';
+import Crumbs from '@/component/listing/Crumbs';
+import SubcategoryHeading from '@/component/listing/SubcategoryHeading';
+import ProductGallery from '@/component/product/ProductGallery';
 import ProductCard from '@/component/ProductCard';
 import ProductRow from '@/component/ProductRow';
 import Reveal, { RevealItem } from '@/component/Reveal';
-import SectionLabel from '@/component/SectionLabel';
 import {
   getBundleComponents,
   getCategoryBySlug,
@@ -32,7 +33,7 @@ function Stars({ value }: { value: number }) {
   return (
     <span className="flex gap-0.5" role="img" aria-label={`${value} out of 5 stars`}>
       {Array.from({ length: 5 }).map((_, i) => (
-        <Star key={i} size={14} className={i < Math.round(value) ? 'fill-amber-400 text-amber-400' : 'text-muted-foreground'} />
+        <Star key={i} size={14} className={i < Math.round(value) ? 'fill-foreground text-foreground' : 'text-border'} />
       ))}
     </span>
   );
@@ -74,69 +75,102 @@ export default async function Page(props: PageProps<'/listing/[slug]'>) {
 
   // Only photos that exist are used; until they are uploaded the page keeps its placeholders.
   const images = [product.imageUrl, ...product.galleryUrls].filter((url): url is string => Boolean(url));
-  const thumbnails = images.length > 0 ? images : [undefined, undefined, undefined, undefined];
+  const categoryName = category?.name.replace(/^BeU\s+/i, '');
+  const onSale = Boolean(product.compareAtPrice);
+  const perks = [
+    { glyph: 'bolt' as const, label: `${product.returnWindowDays}-day free returns` },
+    { glyph: 'star5' as const, label: `${product.warrantyYears}-year warranty` },
+    ...(product.hasEyewearKit ? [{ glyph: 'spark' as const, label: 'Free case + cloth' }] : []),
+  ];
 
   return (
     <>
-      <Reveal mode="mount" className="px-6 pt-6">
-        <Breadcrumb
-          items={[
-            { label: 'Home', href: '/home' },
-            ...(category ? [{ label: category.name, href: `/listing?category=${category.slug}` }] : []),
-            ...(subcategory
-              ? [{ label: subcategory.name, href: `/listing?category=${product.categorySlug}&sub=${subcategory.slug}` }]
-              : []),
-            { label: product.name },
-          ]}
-        />
-      </Reveal>
-
-      <Reveal mode="mount" className="grid grid-cols-1 gap-8 px-6 py-8 md:grid-cols-2">
-        <div className="flex flex-col gap-4 md:flex-row">
-          <div className="flex flex-row gap-3 md:flex-col">
-            {thumbnails.map((url, i) => (
-              <ProductImage key={i} imageUrl={url} alt={product.name} sizes="64px" className="h-16 w-16 shrink-0 rounded-md" />
-            ))}
-          </div>
-          <ProductImage
-            imageUrl={images[0]}
-            alt={product.name}
-            sizes="(min-width: 768px) 40vw, 100vw"
-            className="aspect-3/4 flex-1 rounded-xl"
-          />
+      <section className="beu-pdp-bg relative isolate -mt-[var(--beu-header-h)] overflow-hidden">
+        {/* Texture fades out before the band ends so there is no hard edge. */}
+        <div aria-hidden="true" className="absolute inset-0 [mask-image:linear-gradient(180deg,#000_0%,#000_45%,transparent_92%)]">
+          <div className="beu-band-grid absolute inset-0" />
+          <div className="beu-band-dots absolute inset-0" />
         </div>
+        <PixelGlyph name="cross" size={34} className="absolute right-[6%] top-[calc(var(--beu-header-h)+3rem)] z-[1] hidden text-foreground lg:block" />
 
-        <div className="flex flex-col gap-6">
-          <div>
-            <h1 className="text-2xl font-bold">{product.name}</h1>
-            {specLine && <p className="mt-1 text-sm text-muted-foreground">{specLine}</p>}
-            <p className="mt-3 flex items-baseline gap-2 text-lg font-semibold">
-              {formatPrice(product.price)}
-              {product.compareAtPrice && (
-                <span className="text-sm font-normal text-muted-foreground line-through">{formatPrice(product.compareAtPrice)}</span>
-              )}
-            </p>
-            {product.reviewCount > 0 && product.rating !== undefined && (
-              <p className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
-                <Stars value={product.rating} />
-                {product.rating.toFixed(1)} ({product.reviewCount})
-              </p>
-            )}
-            {studentOffer && (
-              <p className="mt-2 text-xs text-muted-foreground">
-                Student? {studentOffer.kind === 'PERCENT' ? `${studentOffer.value}% off` : 'A discount'} at checkout with a valid student ID.
-              </p>
-            )}
-          </div>
+        <div className="relative z-[2] mx-auto max-w-[1328px] px-6 pb-16 pt-[calc(var(--beu-header-h)+1.25rem)] md:px-14 md:pb-24">
+          <Reveal mode="mount">
+            <Crumbs
+              crumbs={[
+                { label: 'Home', href: '/home' },
+                ...(category ? [{ label: categoryName ?? category.name, href: `/listing?category=${category.slug}` }] : []),
+                ...(subcategory
+                  ? [{ label: subcategory.name, href: `/listing?category=${product.categorySlug}&sub=${subcategory.slug}` }]
+                  : []),
+                { label: product.name },
+              ]}
+            />
+          </Reveal>
 
-          <AddToCartSection
-            slug={product.slug}
-            name={product.name}
-            variants={product.variants.map(({ color, hex, available }) => ({ color, hex, available }))}
-            lowStockThreshold={settings.lowStockThreshold}
-          />
+          <Reveal mode="mount" delay={0.05} className="mt-8 grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] lg:gap-14">
+            <div className="lg:sticky lg:top-28 lg:self-start">
+              <ProductGallery images={images} alt={product.name} />
+            </div>
 
-          <div>
+            <div className="flex min-w-0 flex-col gap-7">
+              <div>
+                <div className="flex flex-wrap items-center gap-2 text-[11px] uppercase tracking-[0.18em]">
+                  {categoryName && <span className="beu-chip px-3 py-1.5">{categoryName}</span>}
+                  {subcategory && <span className="text-muted-foreground">{subcategory.name}</span>}
+                </div>
+                <h1 className="mt-5 text-balance font-display text-3xl font-black uppercase leading-[1.02] tracking-[-0.03em] md:text-5xl">
+                  {product.name}
+                </h1>
+                {specLine && <p className="mt-3 text-sm text-muted-foreground">{specLine}</p>}
+
+                <p className="mt-6 flex flex-wrap items-center gap-x-3 gap-y-2">
+                  <span className="font-display text-3xl font-black tracking-[-0.03em] md:text-4xl">{formatPrice(product.price)}</span>
+                  {product.compareAtPrice && (
+                    <span className="text-base text-muted-foreground line-through">{formatPrice(product.compareAtPrice)}</span>
+                  )}
+                  {onSale && (
+                    <span className="rounded-full bg-accent px-3 py-1 text-[10px] uppercase tracking-[0.16em] text-on-accent">Sale</span>
+                  )}
+                </p>
+
+                {product.reviewCount > 0 && product.rating !== undefined && (
+                  <p className="mt-3 flex items-center gap-2.5 text-xs text-muted-foreground">
+                    <Stars value={product.rating} />
+                    <span className="text-foreground">{product.rating.toFixed(1)}</span>
+                    <span>({product.reviewCount} reviews)</span>
+                  </p>
+                )}
+
+                {studentOffer && (
+                  <p className="beu-chip mt-5 inline-flex items-center gap-2.5 px-4 py-2.5 text-xs leading-snug">
+                    <PixelGlyph name="spark" size={14} className="shrink-0 text-accent" />
+                    <span>
+                      Student? {studentOffer.kind === 'PERCENT' ? `${studentOffer.value}% off` : 'A discount'} at checkout with a valid student ID.
+                    </span>
+                  </p>
+                )}
+              </div>
+
+              <AddToCartSection
+                slug={product.slug}
+                name={product.name}
+                variants={product.variants.map(({ color, hex, available }) => ({ color, hex, available }))}
+                lowStockThreshold={settings.lowStockThreshold}
+              />
+
+              <ul className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                {perks.map((perk) => (
+                  <li
+                    key={perk.label}
+                    className="flex items-center gap-2.5 rounded-2xl border border-border bg-background/60 px-3.5 py-3 text-[11px] uppercase leading-snug tracking-[0.1em] backdrop-blur"
+                  >
+                    <PixelGlyph name={perk.glyph} size={18} className="shrink-0 text-accent" />
+                    {perk.label}
+                  </li>
+                ))}
+              </ul>
+
+              <div className="border-t-2 border-foreground">
             <AccordionSection title="Product Details" defaultOpen>
               <p>{product.description}</p>
               {product.features.length > 0 && (
@@ -210,13 +244,13 @@ export default async function Page(props: PageProps<'/listing/[slug]'>) {
               ) : (
                 <ul className="flex flex-col gap-4">
                   {reviews.map((review) => (
-                    <li key={review.id}>
-                      <div className="flex items-center gap-2">
+                    <li key={review.id} className="rounded-2xl border border-border bg-background/60 p-4">
+                      <div className="flex flex-wrap items-center gap-2">
                         <Stars value={review.rating} />
                         {review.title && <span className="font-semibold text-foreground">{review.title}</span>}
                       </div>
                       <p className="mt-1">{review.body}</p>
-                      <p className="mt-1 text-xs">
+                      <p className="mt-2 text-[11px] uppercase tracking-[0.14em]">
                         {review.authorName}
                         {review.isVerifiedPurchase ? ' · Verified Buyer' : ''}
                       </p>
@@ -225,16 +259,19 @@ export default async function Page(props: PageProps<'/listing/[slug]'>) {
                 </ul>
               )}
             </AccordionSection>
-          </div>
+              </div>
+            </div>
+          </Reveal>
         </div>
-      </Reveal>
+      </section>
 
       {relatedProducts.length > 0 && (
-        <Reveal stagger className="px-6 py-14">
+        <Reveal stagger className="px-6 pb-16 pt-6 md:px-14 md:pb-24">
+          <div className="mx-auto max-w-[1328px]">
           <RevealItem>
-            <SectionLabel>You Might Also Like</SectionLabel>
+            <SubcategoryHeading name="You might also like" />
           </RevealItem>
-          <ProductRow className="mt-8">
+          <ProductRow className="mt-6">
             {relatedProducts.map((related) => (
               <ProductCard
                 key={related.slug}
@@ -249,6 +286,7 @@ export default async function Page(props: PageProps<'/listing/[slug]'>) {
               />
             ))}
           </ProductRow>
+          </div>
         </Reveal>
       )}
     </>

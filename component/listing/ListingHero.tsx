@@ -1,11 +1,6 @@
-import Link from "next/link";
 import type { ReactNode } from "react";
 import PixelGlyph from "@/component/beu/PixelGlyph";
-
-export interface Crumb {
-  label: string;
-  href?: string;
-}
+import Crumbs, { type Crumb } from "@/component/listing/Crumbs";
 
 interface ListingHeroProps {
   crumbs: Crumb[];
@@ -35,25 +30,7 @@ export default function ListingHero({ crumbs, title, description, meta, children
 
       <div className="relative z-[2] mx-auto max-w-[1328px] px-6 pb-14 pt-[calc(var(--beu-header-h)+1.25rem)] md:px-14 md:pb-20">
         <div className="flex items-center justify-between gap-4 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-          <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-2">
-            {crumbs.map((crumb, i) => {
-              const last = i === crumbs.length - 1;
-              return (
-                <span key={crumb.label} className="flex items-center gap-2">
-                  {last || !crumb.href ? (
-                    <span aria-current={last ? "page" : undefined} className={last ? "font-medium text-foreground" : undefined}>
-                      {crumb.label}
-                    </span>
-                  ) : (
-                    <Link href={crumb.href} className="transition-opacity hover:opacity-70">
-                      {crumb.label}
-                    </Link>
-                  )}
-                  {!last && <span aria-hidden="true">/</span>}
-                </span>
-              );
-            })}
-          </nav>
+          <Crumbs crumbs={crumbs} />
           {meta && <span className="shrink-0">[ {meta} ]</span>}
         </div>
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type ReactNode } from 'react';
+import { useId, useState, type ReactNode } from 'react';
 import { Plus, Minus } from 'lucide-react';
 
 export interface AccordionSectionProps {
@@ -12,17 +12,30 @@ export interface AccordionSectionProps {
 
 export default function AccordionSection({ title, defaultOpen = false, extra, children }: AccordionSectionProps) {
   const [open, setOpen] = useState(defaultOpen);
+  const panelId = useId();
 
   return (
-    <div className="border-b border-border py-4">
-      <button type="button" onClick={() => setOpen((o) => !o)} className="flex w-full items-center justify-between text-left">
-        <span className="text-sm font-semibold">{title}</span>
+    <div className="border-b border-border py-5">
+      <button
+        type="button"
+        aria-expanded={open}
+        aria-controls={panelId}
+        onClick={() => setOpen((o) => !o)}
+        className="group flex w-full items-center justify-between gap-4 text-left"
+      >
+        <span className="font-display text-xs font-black uppercase tracking-[0.02em] md:text-sm">{title}</span>
         <span className="flex items-center gap-3">
           {extra}
-          {open ? <Minus size={16} /> : <Plus size={16} />}
+          <span className="beu-chip grid size-8 place-items-center transition-transform group-hover:scale-105">
+            {open ? <Minus size={14} /> : <Plus size={14} />}
+          </span>
         </span>
       </button>
-      {open && <div className="mt-3 text-sm text-muted-foreground">{children}</div>}
+      {open && (
+        <div id={panelId} className="mt-4 text-sm leading-relaxed text-muted-foreground">
+          {children}
+        </div>
+      )}
     </div>
   );
 }
