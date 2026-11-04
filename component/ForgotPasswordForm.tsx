@@ -43,7 +43,7 @@ export default function ForgotPasswordForm() {
         <button
           type="submit"
           disabled={pending}
-          className="mt-2 h-11 w-full rounded-full bg-[#8499D9] text-sm font-semibold text-white transition-colors hover:bg-[#6F86CF] disabled:cursor-not-allowed disabled:opacity-70"
+          className="mt-2 h-11 w-full rounded-full bg-accent text-sm font-semibold text-on-accent transition-colors hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-70"
         >
           {pending ? 'Sending...' : 'Send Reset Link'}
         </button>
@@ -51,7 +51,7 @@ export default function ForgotPasswordForm() {
 
       <p className="mt-6 text-center text-sm text-muted-foreground">
         Remembered it?{' '}
-        <Link href="/login" className="font-semibold text-[#7B8FD6] hover:underline">
+        <Link href="/login" className="font-semibold text-accent hover:underline">
           Log In
         </Link>
       </p>

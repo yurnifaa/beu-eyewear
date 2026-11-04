@@ -39,19 +39,19 @@ export default function HeaderSearch() {
 
   return (
     <div ref={containerRef} onKeyDown={handleKeyDown} className="relative">
-      <button aria-label="Search" aria-expanded={open} type="button" onClick={() => setOpen((o) => !o)} className="cursor-pointer">
-        <Search size={20} />
+      <button aria-label="Search" aria-expanded={open} type="button" onClick={() => setOpen((o) => !o)} className="beu-icon-btn">
+        <Search size={20} strokeWidth={1.75} />
       </button>
       {open && (
         <form
           role="search"
           onSubmit={handleSubmit}
-          className="absolute right-0 top-full z-20 mt-3 w-[min(90vw,20rem)] rounded-xl border border-border bg-background p-2 shadow-lg"
+          className="absolute right-0 top-full z-20 mt-3 w-[min(90vw,20rem)] rounded-2xl border border-border bg-background p-2 shadow-lg"
         >
           <label htmlFor="header-search-input" className="sr-only">
             Search products
           </label>
-          <div className="flex items-center gap-2 rounded-lg border border-border px-3 py-2">
+          <div className="flex items-center gap-2 rounded-full border border-border px-4 py-2">
             <Search size={16} className="shrink-0 text-muted-foreground" aria-hidden="true" />
             <input
               ref={inputRef}

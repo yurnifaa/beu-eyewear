@@ -26,7 +26,7 @@ export default function IconField({
   return (
     <div>
       <label
-        className={`flex h-12 items-center gap-3 rounded-xl bg-[#F4F5FB] px-4 text-[#8E93A8] focus-within:ring-2 focus-within:ring-[#7B8FD6] dark:bg-muted ${
+        className={`flex h-12 items-center gap-3 rounded-xl bg-card px-4 text-muted-foreground focus-within:ring-2 focus-within:ring-accent ${
           message ? 'ring-2 ring-red-400' : ''
         }`}
       >
@@ -42,7 +42,7 @@ export default function IconField({
           required
           aria-invalid={message ? true : undefined}
           aria-describedby={message ? `${id}-error` : undefined}
-          className="h-full w-full bg-transparent text-sm text-foreground outline-none placeholder:text-[#8E93A8]"
+          className="h-full w-full bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
         />
       </label>
       {message && (

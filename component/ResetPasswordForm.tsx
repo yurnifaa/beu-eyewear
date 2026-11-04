@@ -51,7 +51,7 @@ export default function ResetPasswordForm({ token }: { token: string }) {
         <button
           type="submit"
           disabled={pending}
-          className="mt-2 h-11 w-full rounded-full bg-[#8499D9] text-sm font-semibold text-white transition-colors hover:bg-[#6F86CF] disabled:cursor-not-allowed disabled:opacity-70"
+          className="mt-2 h-11 w-full rounded-full bg-accent text-sm font-semibold text-on-accent transition-colors hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-70"
         >
           {pending ? 'Saving...' : 'Reset Password'}
         </button>

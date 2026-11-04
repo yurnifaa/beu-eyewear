@@ -38,14 +38,14 @@ export default function ProductCard({
   const isFeatured = rating !== undefined;
 
   return (
-    <Link href={href} className={`block w-40 shrink-0 snap-start md:w-full ${className}`}>
+    <Link href={href} className={`group block w-40 shrink-0 snap-start md:w-full ${className}`}>
       <div className="relative">
         <ProductImage
           imageUrl={imageUrl}
           alt={name}
           sizes="(min-width: 768px) 25vw, 160px"
           objectFit={isFeatured ? 'contain' : 'cover'}
-          className={`${isFeatured ? 'aspect-square w-full rounded-md bg-white' : 'aspect-3/4 w-full rounded-xl'} ${soldOut ? 'opacity-60' : ''}`}
+          className={`${isFeatured ? 'aspect-square w-full rounded-2xl bg-white' : 'aspect-3/4 w-full rounded-2xl'} transition-transform duration-200 group-hover:-translate-y-1 ${soldOut ? 'opacity-60' : ''}`}
         />
         {soldOut && (
           <span className="absolute bottom-2 left-2 rounded-full bg-foreground px-2.5 py-1 text-xs font-semibold text-background">
@@ -53,21 +53,21 @@ export default function ProductCard({
           </span>
         )}
         {!soldOut && compareAtPrice && (
-          <span className="absolute bottom-2 left-2 rounded-full bg-[#5A6DBE] px-2.5 py-1 text-xs font-semibold text-white">
+          <span className="absolute bottom-2 left-2 rounded-full bg-accent px-2.5 py-1 text-xs font-semibold text-on-accent">
             Sale
           </span>
         )}
         {slug && <WishlistButton slug={slug} name={name} variant="icon" className="absolute right-2 top-2" />}
       </div>
       {isFeatured ? (
-        <div className="relative mt-2 min-h-14 pr-12">
+        <div className="relative mt-2 min-h-16 pr-12">
           <div className="flex items-center gap-1 text-[10px] leading-none">
             <Star size={12} className="fill-amber-500 text-amber-500" aria-hidden="true" />
-            <span className="font-medium text-amber-700">{rating.toFixed(1)}</span>
+            <span className="font-medium text-foreground">{rating.toFixed(1)}</span>
             {reviewCount !== undefined && <span className="text-muted-foreground">({reviewCount})</span>}
           </div>
-          <p className="mt-1 truncate text-xs font-medium text-foreground">{name}</p>
-          <p className="mt-1 text-[10px] text-muted-foreground">
+          <p className="mt-1 line-clamp-2 font-display text-xs font-bold uppercase leading-snug tracking-tight text-foreground">{name}</p>
+          <p className="mt-1 text-xs text-muted-foreground">
             {compareAtPrice && <span className="mr-1 line-through opacity-70">{compareAtPrice}</span>}
             {price}
           </p>

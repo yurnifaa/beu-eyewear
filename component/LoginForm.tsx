@@ -65,7 +65,7 @@ export default function LoginForm({ next, onNavigate, onGuest, headingAs: Headin
         </div>
 
         <div className="mt-2 text-right">
-          <Link href="/forgot-password" onClick={onNavigate} className="text-[11px] font-medium text-[#7B8FD6] hover:underline">
+          <Link href="/forgot-password" onClick={onNavigate} className="text-[11px] font-medium text-accent hover:underline">
             Forgot password?
           </Link>
         </div>
@@ -77,7 +77,7 @@ export default function LoginForm({ next, onNavigate, onGuest, headingAs: Headin
         <button
           type="submit"
           disabled={pending}
-          className="mt-2 h-11 w-full rounded-full bg-[#8499D9] text-sm font-semibold text-white transition-colors hover:bg-[#6F86CF] disabled:cursor-not-allowed disabled:opacity-70"
+          className="mt-2 h-11 w-full rounded-full bg-accent text-sm font-semibold text-on-accent transition-colors hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-70"
         >
           {pending ? 'Logging in...' : 'Log In'}
         </button>
@@ -86,14 +86,14 @@ export default function LoginForm({ next, onNavigate, onGuest, headingAs: Headin
           <button
             type="button"
             onClick={onGuest}
-            className="mt-3 h-11 w-full rounded-full bg-[#F0EFEA] text-sm font-semibold text-foreground transition-colors hover:bg-[#E6E5DE] dark:bg-muted dark:hover:bg-muted/70"
+            className="mt-3 h-11 w-full rounded-full bg-card text-sm font-semibold text-foreground transition-colors hover:bg-accent/15"
           >
             Continue as Guest
           </button>
         ) : (
           <Link
             href="/home"
-            className="mt-3 flex h-11 w-full items-center justify-center rounded-full bg-[#F0EFEA] text-sm font-semibold text-foreground transition-colors hover:bg-[#E6E5DE] dark:bg-muted dark:hover:bg-muted/70"
+            className="mt-3 flex h-11 w-full items-center justify-center rounded-full bg-card text-sm font-semibold text-foreground transition-colors hover:bg-accent/15"
           >
             Continue as Guest
           </Link>
@@ -105,7 +105,7 @@ export default function LoginForm({ next, onNavigate, onGuest, headingAs: Headin
         <Link
           href={next ? `/register?next=${encodeURIComponent(next)}` : '/register'}
           onClick={onNavigate}
-          className="font-semibold text-[#7B8FD6] hover:underline"
+          className="font-semibold text-accent hover:underline"
         >
           Sign Up
         </Link>

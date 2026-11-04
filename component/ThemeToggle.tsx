@@ -70,7 +70,7 @@ export default function ThemeToggle() {
     <Classic
       toggled={isDark}
       onClick={handleClick}
-      className="inline-flex items-center justify-center text-[20px] leading-none"
+      className="beu-icon-btn text-[20px] leading-none"
     />
   );
 }

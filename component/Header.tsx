@@ -15,67 +15,59 @@ export default async function Header() {
   const user = await getCurrentUser();
 
   return (
-    <header className="sticky top-0 z-50 grid grid-cols-[1fr_auto_1fr] items-center border-b border-border bg-background px-6 py-3 shadow-sm">
-      <div className="flex items-center">
-        <nav className="hidden items-center gap-7 md:flex">
-          <Link href="/listing" className="cursor-pointer text-[15px] hover:underline hover:underline-offset-4">
-            Shop
-          </Link>
-          <Link href="/search" className="cursor-pointer text-[15px] hover:underline hover:underline-offset-4">
-            Explore
-          </Link>
-        </nav>
-        <MobileMenu links={[
-          { href: "/home", label: "Home" },
-          { href: "/listing", label: "Shop" },
-          { href: "/search", label: "Explore" },
-        ]} />
-        <HeaderNav />
-      </div>
+    <header className="sticky top-0 z-50 border-b border-border bg-background/85 backdrop-blur-md">
+      <div className="mx-auto grid max-w-[1440px] grid-cols-[1fr_auto_1fr] items-center gap-3 px-3 py-2 md:px-8">
+        <div className="flex items-center">
+          <MobileMenu links={[
+            { href: "/home", label: "Home" },
+            { href: "/listing", label: "Shop" },
+            { href: "/search", label: "Explore" },
+          ]} />
+          <HeaderNav />
+        </div>
 
-      <Link href="/home" aria-label="BeU home" className="cursor-pointer">
-        <Image
-          src="/Logo-Dark-Mark.png"
-          alt="BeU"
-          width={380}
-          height={380}
-          priority
-          className="h-12 w-12 dark:hidden"
-        />
-        <Image
-          src="/Logo-Light-Mark.png"
-          alt="BeU"
-          width={380}
-          height={380}
-          priority
-          className="hidden h-12 w-12 dark:block"
-        />
-      </Link>
-
-      <div className="flex items-center justify-end gap-4">
-        <HeaderSearch />
-        {user?.role === "ADMIN" && (
-          <Link href="/admin" aria-label="Admin" className="cursor-pointer">
-            <LayoutDashboard size={20} strokeWidth={1.5} />
-          </Link>
-        )}
-        {user ? (
-          <Link href="/account" aria-label="Account" className="cursor-pointer">
-            <User size={20} strokeWidth={1.5} />
-          </Link>
-        ) : (
-          <LoginModalTrigger />
-        )}
-        <Link href="/account/wishlist" aria-label="Wishlist" className="relative hidden cursor-pointer md:block">
-          <Heart size={20} strokeWidth={1.5} />
-          <WishlistBadge />
+        <Link href="/home" aria-label="BeU home" className="flex items-center justify-center">
+          <Image
+            src="/Logo-Dark-Mark.png"
+            alt="BeU"
+            width={380}
+            height={380}
+            priority
+            className="h-12 w-12 dark:hidden"
+          />
+          <Image
+            src="/Logo-Light-Mark.png"
+            alt="BeU"
+            width={380}
+            height={380}
+            priority
+            className="hidden h-12 w-12 dark:block"
+          />
         </Link>
-        <div className="flex items-center gap-3">
-          <Link href="/cart" aria-label="Cart" className="relative cursor-pointer">
-            <ShoppingBag size={20} strokeWidth={1.5} />
+
+        <div className="flex items-center justify-end gap-0.5 md:gap-1">
+          <HeaderSearch />
+          {user?.role === "ADMIN" && (
+            <Link href="/admin" aria-label="Admin" className="beu-icon-btn">
+              <LayoutDashboard size={20} strokeWidth={1.75} />
+            </Link>
+          )}
+          {user ? (
+            <Link href="/account" aria-label="Account" className="beu-icon-btn">
+              <User size={20} strokeWidth={1.75} />
+            </Link>
+          ) : (
+            <LoginModalTrigger />
+          )}
+          <Link href="/account/wishlist" aria-label="Wishlist" className="beu-icon-btn relative hidden md:inline-flex">
+            <Heart size={20} strokeWidth={1.75} />
+            <WishlistBadge />
+          </Link>
+          <Link href="/cart" aria-label="Cart" className="beu-icon-btn relative">
+            <ShoppingBag size={20} strokeWidth={1.75} />
             <CartBadge />
           </Link>
-          <span aria-hidden="true" className="hidden h-5 w-px bg-border md:block" />
+          <span aria-hidden="true" className="mx-1 hidden h-5 w-px bg-border md:block" />
           <ThemeToggle />
         </div>
       </div>

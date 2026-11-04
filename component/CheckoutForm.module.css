@@ -10,12 +10,12 @@
 
 .placeOrder,
 .placeOrder:disabled {
-  background-color: #2f4582;
-  color: #fff;
+  background-color: var(--brand-700);
+  color: var(--on-brand);
 }
 
 .placeOrder:hover:not(:disabled) {
-  background-color: #293a70;
+  background-color: var(--brand-800);
 }
 
 @media (min-width: 768px) {
