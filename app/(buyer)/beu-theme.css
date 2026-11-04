@@ -224,6 +224,41 @@
     }
   }
 
+  /* Hover feedback for cards, tickets and category circles. Transform + opacity only: the
+     "shadow" is its own layer (.beu-lift-shadow) that fades in rather than an animated
+     box-shadow. All of it keys off the nearest .group ancestor. */
+  .beu-theme .beu-lift {
+    transition: transform 200ms ease-out;
+  }
+
+  .beu-theme .beu-lift-shadow {
+    opacity: 0;
+    box-shadow: 0 18px 26px -14px rgba(10, 26, 47, 0.38);
+    transition: opacity 200ms ease-out;
+    pointer-events: none;
+  }
+
+  .beu-theme .beu-zoom {
+    transition: transform 300ms ease-out;
+  }
+
+  @media (hover: hover) {
+    .beu-theme .group:is(:hover, :focus-visible) .beu-lift-shadow {
+      opacity: 1;
+    }
+  }
+
+  /* Reduced motion keeps the shadow fade and drops the travel and the zoom. */
+  @media (hover: hover) and (prefers-reduced-motion: no-preference) {
+    .beu-theme .group:is(:hover, :focus-visible) .beu-lift {
+      transform: translate(var(--lift-x, 0), var(--lift-y, -4px));
+    }
+
+    .beu-theme .group:is(:hover, :focus-visible) .beu-zoom {
+      transform: scale(1.04);
+    }
+  }
+
   /* Round icon button used in the header (search, account, cart...). */
   .beu-theme .beu-icon-btn {
     display: inline-flex;
@@ -238,5 +273,16 @@
 
   .beu-theme .beu-icon-btn:hover {
     background: color-mix(in srgb, var(--accent) 15%, transparent);
+  }
+}
+
+/* Press-down for storefront buttons. Deliberately outside @layer so it beats the utility
+   hover:scale-105 / hover:-translate-y-0.5 that buttonClassName applies while the pointer is
+   still over the button. Those elements already transition transform, scale and translate.
+   Reduced motion: no travel, the colour state change still shows. */
+@media (prefers-reduced-motion: no-preference) {
+  .beu-theme .beu-press:not(:disabled):active {
+    scale: 0.97;
+    translate: 0 0;
   }
 }

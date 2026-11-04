@@ -1,4 +1,5 @@
 import { Star } from "lucide-react";
+import { RevealItem } from "@/component/Reveal";
 import type { ProductReview } from "@/lib/catalog/types";
 
 const TILTS = ["-rotate-2", "rotate-1", "rotate-2"];
@@ -7,9 +8,11 @@ export default function ReviewsSection({ reviews }: { reviews: ProductReview[] }
   return (
     <div className="mt-8 flex snap-x snap-mandatory gap-5 overflow-x-auto px-2 py-4 md:grid md:grid-cols-3 md:gap-6 md:overflow-visible">
       {reviews.map((review, index) => (
+        // The item carries the layout and the reveal; the tilt stays on the figure so the two
+        // transforms never fight.
+        <RevealItem key={review.id} className="w-72 shrink-0 snap-start md:w-full">
         <figure
-          key={review.id}
-          className={`flex w-72 shrink-0 snap-start flex-col gap-3 rounded-2xl border-2 border-ink bg-white p-5 shadow-[5px_5px_0_var(--ink)] md:w-full ${TILTS[index % TILTS.length]}`}
+          className={`flex h-full flex-col gap-3 rounded-2xl border-2 border-ink bg-white p-5 shadow-[5px_5px_0_var(--ink)] ${TILTS[index % TILTS.length]}`}
         >
           <div className="flex gap-0.5" role="img" aria-label={`${review.rating} out of 5 stars`}>
             {Array.from({ length: 5 }).map((_, i) => (
@@ -37,6 +40,7 @@ export default function ReviewsSection({ reviews }: { reviews: ProductReview[] }
             </span>
           </figcaption>
         </figure>
+        </RevealItem>
       ))}
     </div>
   );

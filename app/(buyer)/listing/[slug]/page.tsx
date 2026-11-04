@@ -7,7 +7,7 @@ import Breadcrumb from '@/component/Breadcrumb';
 import ProductImage from '@/component/ProductImage';
 import ProductCard from '@/component/ProductCard';
 import ProductRow from '@/component/ProductRow';
-import Reveal from '@/component/Reveal';
+import Reveal, { RevealItem } from '@/component/Reveal';
 import SectionLabel from '@/component/SectionLabel';
 import {
   getBundleComponents,
@@ -230,8 +230,10 @@ export default async function Page(props: PageProps<'/listing/[slug]'>) {
       </Reveal>
 
       {relatedProducts.length > 0 && (
-        <Reveal className="px-6 py-14">
-          <SectionLabel>You Might Also Like</SectionLabel>
+        <Reveal stagger className="px-6 py-14">
+          <RevealItem>
+            <SectionLabel>You Might Also Like</SectionLabel>
+          </RevealItem>
           <ProductRow className="mt-8">
             {relatedProducts.map((related) => (
               <ProductCard

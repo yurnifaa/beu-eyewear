@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Star } from 'lucide-react';
 import ProductImage from '@/component/ProductImage';
+import { RevealItem } from '@/component/Reveal';
 import WishlistButton from '@/component/WishlistButton';
 
 export interface ProductCardProps {
@@ -38,14 +39,18 @@ export default function ProductCard({
   const isFeatured = rating !== undefined;
 
   return (
-    <Link href={href} className={`group block w-40 shrink-0 snap-start md:w-full ${className}`}>
-      <div className="relative">
+    <RevealItem className={`w-40 shrink-0 snap-start md:w-full ${className}`}>
+    <Link href={href} className="group block">
+      {/* Frame, badges and wishlist button lift together; the shadow layer fades in under them. */}
+      <div className="beu-lift relative">
+        <span aria-hidden="true" className="beu-lift-shadow absolute inset-0 rounded-2xl" />
         <ProductImage
           imageUrl={imageUrl}
           alt={name}
           sizes="(min-width: 768px) 25vw, 160px"
           objectFit={isFeatured ? 'contain' : 'cover'}
-          className={`${isFeatured ? 'aspect-square w-full rounded-2xl bg-white' : 'aspect-3/4 w-full rounded-2xl'} transition-transform duration-200 group-hover:-translate-y-1 ${soldOut ? 'opacity-60' : ''}`}
+          imageClassName="beu-zoom"
+          className={`${isFeatured ? 'aspect-square w-full rounded-2xl bg-white' : 'aspect-3/4 w-full rounded-2xl'} ${soldOut ? 'opacity-60' : ''}`}
         />
         {soldOut && (
           <span className="absolute bottom-2 left-2 rounded-full bg-foreground px-2.5 py-1 text-xs font-semibold text-background">
@@ -98,5 +103,6 @@ export default function ProductCard({
         </>
       )}
     </Link>
+    </RevealItem>
   );
 }

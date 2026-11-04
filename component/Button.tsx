@@ -29,7 +29,7 @@ export function buttonClassName({
   size?: ButtonSize;
   className?: string;
 } = {}) {
-  return `inline-flex items-center justify-center gap-2 rounded-(--radius-control) font-semibold transition duration-150 ease-out hover:-translate-y-0.5 hover:scale-105 hover:shadow-md disabled:translate-y-0 disabled:scale-100 disabled:shadow-none disabled:cursor-not-allowed disabled:opacity-60 ${VARIANT_STYLES[variant]} ${SIZE_STYLES[size]} ${className}`;
+  return `beu-press inline-flex items-center justify-center gap-2 rounded-(--radius-control) font-semibold transition duration-150 ease-out hover:-translate-y-0.5 hover:scale-105 hover:shadow-md disabled:translate-y-0 disabled:scale-100 disabled:shadow-none disabled:cursor-not-allowed disabled:opacity-60 ${VARIANT_STYLES[variant]} ${SIZE_STYLES[size]} ${className}`;
 }
 
 export default function Button({

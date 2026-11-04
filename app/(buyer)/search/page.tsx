@@ -4,7 +4,7 @@ import Breadcrumb from '@/component/Breadcrumb';
 import { buttonClassName } from '@/component/Button';
 import ProductCard from '@/component/ProductCard';
 import ProductRow from '@/component/ProductRow';
-import Reveal from '@/component/Reveal';
+import Reveal, { RevealItem } from '@/component/Reveal';
 import SectionLabel from '@/component/SectionLabel';
 import { getCategories, searchProducts } from '@/lib/catalog/queries';
 import { formatPrice } from '@/lib/format';
@@ -71,10 +71,12 @@ export default async function SearchPage(props: PageProps<'/search'>) {
           </Link>
         </Reveal>
       ) : (
-        <Reveal className="px-6 py-8">
-          <SectionLabel>
-            {results.length} result{results.length === 1 ? '' : 's'} for &ldquo;{query}&rdquo;
-          </SectionLabel>
+        <Reveal stagger className="px-6 py-8">
+          <RevealItem>
+            <SectionLabel>
+              {results.length} result{results.length === 1 ? '' : 's'} for &ldquo;{query}&rdquo;
+            </SectionLabel>
+          </RevealItem>
           <ProductRow className="mt-8">
             {results.map((product) => (
               <ProductCard

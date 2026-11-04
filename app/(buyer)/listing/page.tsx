@@ -7,7 +7,7 @@ import FilterDropdown, { type FilterDropdownOption } from '@/component/FilterDro
 import ProductImage from '@/component/ProductImage';
 import ProductCard from '@/component/ProductCard';
 import ProductRow from '@/component/ProductRow';
-import Reveal from '@/component/Reveal';
+import Reveal, { RevealItem } from '@/component/Reveal';
 import { getCategories, getCategoryBySlug, getFilterOptions, getProducts, getSubcategories } from '@/lib/catalog/queries';
 import type { FilterOption } from '@/lib/catalog/types';
 import { formatPrice } from '@/lib/format';
@@ -103,10 +103,11 @@ export default async function Page(props: PageProps<'/listing'>) {
         <Reveal className="px-6 py-14">
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3">
             {categories.map((category) => (
+              <div key={category.slug} className="group relative">
+              <span aria-hidden="true" className="beu-lift-shadow absolute inset-0 rounded-2xl" />
               <Link
-                key={category.slug}
                 href={`/listing?category=${category.slug}`}
-                className="group rounded-2xl border border-border p-6 transition duration-150 ease-out hover:-translate-y-0.5 hover:shadow-md"
+                className="beu-lift relative block rounded-2xl border border-border bg-background p-6"
               >
                 <ProductImage
                 imageUrl={category.imageUrl}
@@ -121,6 +122,7 @@ export default async function Page(props: PageProps<'/listing'>) {
                   <ChevronRight size={14} />
                 </span>
               </Link>
+              </div>
             ))}
           </div>
         </Reveal>
@@ -217,7 +219,7 @@ export default async function Page(props: PageProps<'/listing'>) {
       </Reveal>
 
       {hasFilters ? (
-        <Reveal className="px-6 py-8">
+        <Reveal stagger className="px-6 py-8">
           {results.items.length === 0 ? (
             <p className="py-14 text-center text-sm text-muted-foreground">No products match these filters.</p>
           ) : (
@@ -240,8 +242,10 @@ export default async function Page(props: PageProps<'/listing'>) {
         </Reveal>
       ) : (
         subcategoryRows.map(({ subcat, products }) => (
-          <Reveal key={subcat.slug} className="px-6 py-8">
-            <SubcategoryHeading>{subcat.name}</SubcategoryHeading>
+          <Reveal stagger key={subcat.slug} className="px-6 py-8">
+            <RevealItem>
+              <SubcategoryHeading>{subcat.name}</SubcategoryHeading>
+            </RevealItem>
             <ProductRow className="mt-4">
               {products.map((product) => (
                 <ProductCard

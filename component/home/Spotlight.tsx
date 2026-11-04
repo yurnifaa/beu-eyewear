@@ -1,7 +1,7 @@
-import Image from "next/image";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import PixelGlyph from "@/component/beu/PixelGlyph";
+import Reveal, { ParallaxImage } from "@/component/Reveal";
 import type { CatalogProduct } from "@/lib/catalog/types";
 import { formatPrice } from "@/lib/format";
 
@@ -53,13 +53,17 @@ export default function Spotlight({ product }: { product: CatalogProduct }) {
         </div>
 
         <div className="relative mt-8">
-          <h2
-            id="spotlight-title"
-            className="relative flex flex-col font-display text-[clamp(2.75rem,11vw,10.5rem)] font-black uppercase leading-[0.9] tracking-[-0.07em] text-ink"
-          >
-            <span>{lineOne}</span>
-            {lineTwo && <span className="self-end">{lineTwo}</span>}
-          </h2>
+          {/* Reveal only wraps siblings of the photo, never an ancestor: a transform above the
+              image would break its multiply blend. */}
+          <Reveal>
+            <h2
+              id="spotlight-title"
+              className="relative flex flex-col font-display text-[clamp(2.75rem,11vw,10.5rem)] font-black uppercase leading-[0.9] tracking-[-0.07em] text-ink"
+            >
+              <span>{lineOne}</span>
+              {lineTwo && <span className="self-end">{lineTwo}</span>}
+            </h2>
+          </Reveal>
 
           <PixelGlyph name="ball" size={96} className="absolute right-0 top-1 z-[2] hidden text-ink md:block" />
           <PixelGlyph name="cross" size={60} className="absolute left-0 top-[55%] z-[2] hidden text-ink md:block" />
@@ -70,7 +74,8 @@ export default function Spotlight({ product }: { product: CatalogProduct }) {
           <div className="relative mx-auto -mt-[min(9vw,6rem)] aspect-[3/2] w-[min(760px,92%)] sm:aspect-[2/1]">
             <div aria-hidden="true" className="absolute bottom-[24%] left-1/2 h-8 w-3/5 -translate-x-1/2 rounded-full bg-ink/30 blur-2xl" />
             {product.imageUrl ? (
-              <Image
+              <ParallaxImage
+                range={[-20, 20]}
                 src={product.imageUrl}
                 alt={product.name}
                 fill
@@ -84,7 +89,7 @@ export default function Spotlight({ product }: { product: CatalogProduct }) {
             )}
           </div>
 
-          <div className="relative z-[4] mt-10 flex flex-wrap items-end justify-between gap-8">
+          <Reveal className="relative z-[4] mt-10 flex flex-wrap items-end justify-between gap-8">
             <div className="max-w-[430px]">
               <span className="inline-block bg-ink px-2.5 py-1 text-[10px] uppercase tracking-[0.16em] text-white">
                 Frame overview
@@ -108,7 +113,7 @@ export default function Spotlight({ product }: { product: CatalogProduct }) {
               </span>
               <ArrowUpRight size={48} strokeWidth={2.6} aria-hidden="true" className="shrink-0" />
             </Link>
-          </div>
+          </Reveal>
         </div>
       </div>
     </section>

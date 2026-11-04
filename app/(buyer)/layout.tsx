@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import Header from '@/component/Header';
 import Footer from '@/component/Footer';
 import Ticker from '@/component/Ticker';
+import { MotionProvider } from '@/component/Reveal';
 import GlyphSprite from '@/component/beu/GlyphSprite';
 import { storefrontFontVariables } from './fonts';
 import './beu-theme.css';
@@ -15,7 +16,9 @@ export default function BuyerLayout({ children }: { children: ReactNode }) {
       <GlyphSprite />
       <Ticker />
       <Header />
-      <main className="flex-1">{children}</main>
+      <MotionProvider>
+        <main className="flex-1">{children}</main>
+      </MotionProvider>
       <Footer />
     </div>
   );

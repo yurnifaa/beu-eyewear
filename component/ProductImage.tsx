@@ -8,6 +8,8 @@ export interface ProductImageProps {
   className?: string;
   // What the browser should assume about the rendered width, e.g. "(min-width: 1024px) 25vw, 50vw".
   sizes: string;
+  // Extra classes for the <img> itself, e.g. a hover zoom that stays clipped by the frame.
+  imageClassName?: string;
   objectFit?: 'cover' | 'contain';
   placeholderVariant?: PlaceholderImageVariant;
 }
@@ -18,6 +20,7 @@ export default function ProductImage({
   alt,
   className = '',
   sizes,
+  imageClassName = '',
   objectFit = 'cover',
   placeholderVariant = 'plain',
 }: ProductImageProps) {
@@ -27,7 +30,7 @@ export default function ProductImage({
 
   return (
     <div className={`relative overflow-hidden border border-border bg-card ${className}`}>
-      <Image src={imageUrl} alt={alt} fill sizes={sizes} className={`object-${objectFit}`} />
+      <Image src={imageUrl} alt={alt} fill sizes={sizes} className={`object-${objectFit} ${imageClassName}`} />
     </div>
   );
 }

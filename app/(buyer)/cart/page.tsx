@@ -2,7 +2,7 @@ import Breadcrumb from '@/component/Breadcrumb';
 import CartSection from '@/component/CartSection';
 import ProductCard from '@/component/ProductCard';
 import ProductRow from '@/component/ProductRow';
-import Reveal from '@/component/Reveal';
+import Reveal, { RevealItem } from '@/component/Reveal';
 import { getFeaturedProducts } from '@/lib/catalog/queries';
 import { formatPrice } from '@/lib/format';
 
@@ -24,8 +24,10 @@ export default async function Page() {
         <CartSection />
       </Reveal>
 
-      <Reveal className="px-6 pb-14">
-        <p className="text-sm font-bold uppercase tracking-wide">You May Also Like</p>
+      <Reveal stagger className="px-6 pb-14">
+        <RevealItem>
+          <p className="text-sm font-bold uppercase tracking-wide">You May Also Like</p>
+        </RevealItem>
         <ProductRow className="mt-8">
           {featuredProducts.map((product) => (
             <ProductCard
