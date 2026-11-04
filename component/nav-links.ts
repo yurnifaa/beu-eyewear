@@ -2,7 +2,6 @@
 // Edit hrefs here if your catalog uses different categories.
 export const NAV_LINKS = [
   { href: "/listing", label: "Shop" },
-  { href: "/home#drop", label: "New in" },
   { href: "/search?q=sunglasses", label: "Sunglasses" },
   { href: "/listing?category=collections", label: "Collections" },
   { href: "/about", label: "About" },

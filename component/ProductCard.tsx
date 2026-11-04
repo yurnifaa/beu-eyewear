@@ -107,14 +107,14 @@ export default function ProductCard({
         </div>
       ) : (
         <>
-      <div className="mt-3 flex items-center justify-between">
-        <p className="text-sm font-bold">{name}</p>
-        <p className="text-sm">
+      <div className="mt-3 flex flex-col gap-1 md:flex-row md:items-start md:justify-between md:gap-3">
+        <p className="line-clamp-2 font-display text-xs font-bold uppercase leading-snug tracking-tight md:text-sm">{name}</p>
+        <p className="text-xs font-medium md:shrink-0 md:text-sm">
           {compareAtPrice && <span className="mr-1.5 text-xs text-muted-foreground line-through">{compareAtPrice}</span>}
           {price}
         </p>
       </div>
-      {description && <p className="mt-1 text-xs text-muted-foreground">{description}</p>}
+      {description && <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{description}</p>}
         </>
       )}
     </Link>

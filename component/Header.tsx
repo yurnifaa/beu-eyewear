@@ -18,7 +18,9 @@ export default async function Header() {
     // The wrapper is see-through and click-through; only the pill takes clicks.
     // Its height is --beu-header-h so the home hero can slide up behind it.
     <header className="pointer-events-none sticky top-0 z-50 px-3 py-3 md:px-14 md:py-4">
-      <div className="beu-header-pill pointer-events-auto mx-auto flex h-14 max-w-[1328px] items-center justify-between gap-4 rounded-full pl-2 pr-2 md:h-16 md:pl-6 md:pr-3">
+      {/* From xl the pill is a three-column grid, so the nav sits on its true centre; below that
+          the side groups are too wide for it, and flex spacing is used instead. */}
+      <div className="beu-header-pill pointer-events-auto mx-auto flex h-14 max-w-[1328px] items-center justify-between gap-2 rounded-full pl-2 pr-2 md:h-16 md:gap-4 md:pl-6 md:pr-3 xl:grid xl:grid-cols-[1fr_auto_1fr] xl:pr-6">
         <div className="flex items-center gap-1">
           <MobileMenu links={NAV_LINKS} />
           <Link href="/home" aria-label="BeU Eyewear home" className="flex items-center">
@@ -28,7 +30,8 @@ export default async function Header() {
 
         <HeaderNav />
 
-        <div className="flex items-center gap-0.5 md:gap-1.5">
+        {/* xl:-mr-3 undoes the symmetric padding so the cart pill stays concentric with the curve. */}
+        <div className="flex items-center justify-end gap-0.5 md:gap-1.5 xl:-mr-3">
           <HeaderSearch />
           {user?.role === "ADMIN" && (
             <Link href="/admin" aria-label="Admin" className="beu-icon-btn">

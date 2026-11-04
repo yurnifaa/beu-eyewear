@@ -172,6 +172,64 @@
     backdrop-filter: blur(14px);
   }
 
+  /* ---------- shop pages (listing hero, chips, filter bar) ---------- */
+
+  .beu-theme .beu-band-bg {
+    background:
+      radial-gradient(ellipse 60% 70% at 50% 46%, #ffffff 0%, rgba(255, 255, 255, 0) 72%),
+      linear-gradient(180deg, #c7e4ff 0%, #9fd0ff 62%, #eaf5ff 100%);
+  }
+
+  .beu-theme .beu-band-grid {
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.5) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.5) 1px, transparent 1px);
+    background-size: 72px 72px;
+    -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 70%, #000 100%);
+    mask-image: linear-gradient(180deg, transparent 0%, #000 70%, #000 100%);
+  }
+
+  .beu-theme .beu-band-dots {
+    background-image: radial-gradient(rgba(10, 26, 47, 0.2) 1.1px, transparent 1.6px);
+    background-size: 7px 7px;
+    -webkit-mask-image: radial-gradient(ellipse 60% 75% at 50% 50%, transparent 50%, #000 100%);
+    mask-image: radial-gradient(ellipse 60% 75% at 50% 50%, transparent 50%, #000 100%);
+  }
+
+  /* Glass pill: category chips, filter triggers, page numbers. */
+  .beu-theme .beu-chip {
+    background: rgba(255, 255, 255, 0.72);
+    border: 1px solid rgba(255, 255, 255, 0.95);
+    border-radius: 999px;
+    box-shadow:
+      0 4px 14px rgba(40, 100, 180, 0.14),
+      inset 0 1px 0 #ffffff;
+    color: var(--foreground);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    transition: transform 0.15s ease, background-color 0.15s ease;
+  }
+
+  .beu-theme .beu-chip:hover {
+    transform: translateY(-1px);
+  }
+
+  .beu-theme .beu-chip[data-active="true"] {
+    background: var(--ink);
+    border-color: var(--ink);
+    box-shadow: 0 6px 16px rgba(10, 26, 47, 0.3);
+    color: #ffffff;
+  }
+
+  /* The filter bar that overlaps the bottom of the hero band. */
+  .beu-theme .beu-bar {
+    background: rgba(255, 255, 255, 0.82);
+    border: 1px solid #c9dcf0;
+    box-shadow: 0 14px 36px rgba(40, 100, 180, 0.16);
+    -webkit-backdrop-filter: blur(14px);
+    backdrop-filter: blur(14px);
+  }
+
   /* ---------- motion ---------- */
 
   .beu-theme .beu-marquee {
@@ -191,7 +249,6 @@
     }
   }
 
-  /* Round icon button used in the header (search, account, cart...). */
   /* Floating nav pill. --beu-header-h = pill height + vertical padding, used by
      the home hero to slide up behind the header. */
   .beu-theme {
@@ -204,16 +261,20 @@
     }
   }
 
+  /* The Sky panel glass (80% white, not the hero's 66%): the pill carries mono labels and slides over
+     every kind of content, including the Ink punk band, where a thinner fill turned grey and let
+     the band's lettering ghost through. */
   .beu-theme .beu-header-pill {
-    background: rgba(255, 255, 255, 0.66);
+    background: rgba(255, 255, 255, 0.8);
     border: 1px solid rgba(255, 255, 255, 0.95);
     box-shadow:
-      0 10px 30px rgba(40, 100, 180, 0.18),
+      0 14px 40px rgba(40, 100, 180, 0.2),
       inset 0 1px 0 #ffffff;
-    -webkit-backdrop-filter: blur(14px);
-    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(16px);
+    backdrop-filter: blur(16px);
   }
 
+  /* Round icon button used in the header (search, account, cart...). */
   .beu-theme .beu-icon-btn {
     display: inline-flex;
     width: 2.5rem;

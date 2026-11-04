@@ -2,7 +2,7 @@
    colour. */
 .logo {
   display: block;
-  height: 2.25rem;
+  height: 2rem;
   aspect-ratio: 1800 / 616;
   background-color: var(--foreground);
   -webkit-mask: url(/Hero-Logo-Script.png) center / 100% 100% no-repeat;

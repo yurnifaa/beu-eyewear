@@ -205,7 +205,7 @@ A cold, saturated-light palette: an ice-blue family for atmosphere, one mid-satu
 - **Ice Soft** (`#c7e4ff`) and **Ice Mist** (`#eaf5ff`): hero sky gradient top, ticket body, input fields, footer gradient top.
 
 ### Neutral
-- **Ink** (`#0a1a2f`): foreground text in light mode, the ticker, the punk band, ticket outlines and hard shadows, and the "ink" secondary CTA.
+- **Ink** (`#0a1a2f`): foreground text, the punk band, ticket outlines and hard shadows, and the "ink" secondary CTA.
 - **Paper** (`#ffffff`): page background, product image plates, glass highlights.
 - **Frost** (`#f3f9ff`): muted surfaces (`--muted`).
 - **Rime Border** (`#c9dcf0`): borders and dividers (`--border`).
@@ -311,8 +311,9 @@ Round means "touch me", square means "read me". Interactive controls are full pi
 - **Error:** red ring and a 12px red message beneath, wired with `aria-describedby`.
 
 ### Navigation
-- **Header:** sticky, 85% background blur, 1px bottom border, a three-column grid of nav (left), logo mark (centre) and icon buttons (right) in a 1440px container. Mobile collapses the nav into a menu.
-- **Ticker:** 40px Ink strip above the header with a looping marquee of uppercase 12px lines separated by Ice sparks.
+- **Header:** a floating glass pill, sticky at the top inside a see-through, click-through wrapper (12px side gutters on mobile, 56px from `md`, 1440px container, pill capped at 1328px). It is 56px tall on mobile and 64px from `md`, which sets `--beu-header-h` (5rem / 6rem) so the home hero slides up behind it. The fill is the Sky panel glass (80% white, 16px blur), not the hero's 66%: the pill carries mono labels and passes over every kind of content, including the Ink punk band. From `xl` it is a three-column grid: script wordmark (left), nav (on the pill's true centre), icon buttons and the cart pill (right). From `lg` to `xl` the same three groups are spaced with flex, because the side groups are too wide to centre the nav. Below `lg` the nav collapses into a menu button and a drawer.
+- **Nav links:** Label style (DM Mono 500, 0.18em, uppercase) in 40px pill targets. Hover washes the pill with 15% Signal Blue; the current page is a flat Ice selection pill with Ink text. The mobile drawer uses the same two states.
+- **Cart pill:** the small Primary button (Midnight Navy, deepening to Ink on hover with the 2px lift and 105% scale, pressing to Ink Deep at 97%), 44px tall, CTA text at 12px and 0.14em: "Cart (n)". It is the only filled control in the header.
 - **Footer:** gradient from Ice Mist to dusk blue; three-column panel, a row of twelve 40px glyphs, an oversized chrome wordmark cropped at the baseline, and an Ink copyright bar.
 
 ### Ice Sky components (signature)

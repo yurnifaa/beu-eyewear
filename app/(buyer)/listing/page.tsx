@@ -1,13 +1,15 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { ChevronRight } from 'lucide-react';
-import Breadcrumb from '@/component/Breadcrumb';
-import { buttonClassName } from '@/component/Button';
 import FilterDropdown, { type FilterDropdownOption } from '@/component/FilterDropdown';
-import ProductImage from '@/component/ProductImage';
 import ProductCard from '@/component/ProductCard';
 import ProductRow from '@/component/ProductRow';
 import Reveal, { RevealItem } from '@/component/Reveal';
+import CategoryChips from '@/component/listing/CategoryChips';
+import CategoryTile from '@/component/listing/CategoryTile';
+import ListingHero from '@/component/listing/ListingHero';
+import Pagination from '@/component/listing/Pagination';
+import SubcategoryHeading from '@/component/listing/SubcategoryHeading';
+import PixelGlyph from '@/component/beu/PixelGlyph';
 import { getCategories, getCategoryBySlug, getFilterOptions, getProducts, getSubcategories } from '@/lib/catalog/queries';
 import type { FilterOption } from '@/lib/catalog/types';
 import { formatPrice } from '@/lib/format';
@@ -49,15 +51,6 @@ function facetOptions(
   ];
 }
 
-function SubcategoryHeading({ children }: { children: string }) {
-  return (
-    <div className="flex items-center gap-1 text-sm font-semibold">
-      <span>{children}</span>
-      <ChevronRight size={16} />
-    </div>
-  );
-}
-
 export default async function Page(props: PageProps<'/listing'>) {
   const sp = await props.searchParams;
   const categorySlug = first(sp.category);
@@ -94,35 +87,26 @@ export default async function Page(props: PageProps<'/listing'>) {
   if (!categorySlug) {
     return (
       <>
-        <Reveal mode="mount" className="px-6 pt-6 text-center">
-          <Breadcrumb items={[{ label: 'Home', href: '/home' }, { label: 'Shop' }]} />
-          <h1 className="mt-8 text-3xl font-bold uppercase tracking-tight md:text-4xl">Shop</h1>
-          <p className="mt-2 text-sm text-muted-foreground">Browse the full BeU lineup by collection.</p>
-        </Reveal>
+        <ListingHero
+          crumbs={[{ label: 'Home', href: '/home' }, { label: 'Shop' }]}
+          title="Shop"
+          description="Browse the full BeU lineup by collection."
+          meta={`${categories.length} collections`}
+        >
+          <CategoryChips categories={categories} />
+        </ListingHero>
 
-        <Reveal className="px-6 py-14">
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3">
-            {categories.map((category) => (
-              <div key={category.slug} className="group relative">
-              <span aria-hidden="true" className="beu-lift-shadow absolute inset-0 rounded-2xl" />
-              <Link
-                href={`/listing?category=${category.slug}`}
-                className="beu-lift relative block rounded-2xl border border-border bg-background p-6"
-              >
-                <ProductImage
+        <Reveal className="px-6 py-14 md:px-14 md:py-20">
+          <div className="mx-auto grid max-w-[1328px] grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {categories.map((category, i) => (
+              <CategoryTile
+                key={category.slug}
+                slug={category.slug}
+                name={category.name}
+                description={category.description}
                 imageUrl={category.imageUrl}
-                alt={category.name}
-                sizes="(min-width: 768px) 33vw, 100vw"
-                className="aspect-video w-full rounded-xl"
+                index={i + 1}
               />
-                <p className="mt-4 text-lg font-bold uppercase tracking-wide">{category.name}</p>
-                <p className="mt-1 text-sm text-muted-foreground">{category.description}</p>
-                <span className="mt-3 inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-wide">
-                  Shop Now
-                  <ChevronRight size={14} />
-                </span>
-              </Link>
-              </div>
             ))}
           </div>
         </Reveal>
@@ -170,124 +154,120 @@ export default async function Page(props: PageProps<'/listing'>) {
   );
   const subcategoryRows = subcategoryRowResults.filter((row) => row.products.length > 0);
 
+  const renderCard = (product: (typeof results.items)[number]) => (
+    <ProductCard
+      key={product.slug}
+      slug={product.slug}
+      name={product.name}
+      price={formatPrice(product.price)}
+      compareAtPrice={product.compareAtPrice ? formatPrice(product.compareAtPrice) : undefined}
+      description={product.shortDescription || product.description}
+      href={`/listing/${product.slug}`}
+      imageUrl={product.imageUrl}
+      stockQuantity={product.stockQuantity}
+    />
+  );
+
+  // Subcategory rows are previews; the paginated list shows when filtering, or
+  // when the category has no subcategory rows to preview.
+  const showsResults = hasFilters || subcategoryRows.length === 0;
+  const clearHref = `/listing?category=${activeCategory.slug}`;
+  const pageHref = (n: number) => withParams(current, { page: n > 1 ? String(n) : undefined });
+
   return (
     <>
-      <Reveal mode="mount" className="px-6 pt-6 text-center">
-        <Breadcrumb items={[{ label: 'Home', href: '/home' }, { label: activeCategory.name }]} />
-        <h1 className="mt-8 text-3xl font-bold uppercase tracking-tight md:text-4xl">{activeCategory.name}</h1>
-        <p className="mt-2 text-sm text-muted-foreground">{activeCategory.description}</p>
-      </Reveal>
+      <ListingHero
+        crumbs={[{ label: 'Home', href: '/home' }, { label: 'Shop', href: '/listing' }, { label: activeCategory.name }]}
+        title={activeCategory.name}
+        description={activeCategory.description}
+        meta={`${results.total} ${results.total === 1 ? 'piece' : 'pieces'}`}
+      >
+        <CategoryChips categories={categories} activeSlug={activeCategory.slug} />
+      </ListingHero>
 
-      <Reveal className="flex gap-3 overflow-x-auto px-6 py-6 md:justify-center">
-        {categories.map((category) => (
-          <Link
-            key={category.slug}
-            href={`/listing?category=${category.slug}`}
-            className={buttonClassName({
-              variant: category.slug === activeCategory.slug ? 'primary' : 'secondary',
-              size: 'sm',
-              className: 'shrink-0',
-            })}
-          >
-            {category.name}
-          </Link>
-        ))}
-      </Reveal>
-
-      <Reveal className="flex flex-col gap-4 px-6 py-2 md:flex-row md:items-center md:justify-between">
-        <div className="flex flex-wrap items-center gap-2">
-          <FilterDropdown label="Lens Option" activeLabel={lens ? `Lens Option: ${lens}` : undefined} options={lensOptions} />
-          <FilterDropdown
-            label="Frame Material"
-            activeLabel={material ? `Frame Material: ${material}` : undefined}
-            options={materialOptions}
-          />
-          <FilterDropdown label="Frame Shape" activeLabel={shape ? `Frame Shape: ${shape}` : undefined} options={shapeOptions} />
-          {filterOptions.color.length > 0 && (
+      {/* Filter bar overlaps the bottom edge of the hero band. */}
+      <div className="relative z-10 -mt-7 px-6 md:px-14">
+        <Reveal mode="mount" className="beu-bar mx-auto flex max-w-[1328px] flex-wrap items-center justify-between gap-2 rounded-3xl p-3 md:rounded-full md:px-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <FilterDropdown label="Lens Option" activeLabel={lens ? `Lens Option: ${lens}` : undefined} options={lensOptions} />
             <FilterDropdown
-              label="Color"
-              activeLabel={color ? `Color: ${filterOptions.color.find((option) => option.value === color)?.label ?? color}` : undefined}
-              options={colorOptions}
+              label="Frame Material"
+              activeLabel={material ? `Frame Material: ${material}` : undefined}
+              options={materialOptions}
             />
-          )}
-        </div>
-        <FilterDropdown
-          label="Sort"
-          activeLabel={sort ? sortOptions.find((option) => option.active)?.label : undefined}
-          options={sortOptions}
-        />
-      </Reveal>
+            <FilterDropdown label="Frame Shape" activeLabel={shape ? `Frame Shape: ${shape}` : undefined} options={shapeOptions} />
+            {filterOptions.color.length > 0 && (
+              <FilterDropdown
+                label="Color"
+                activeLabel={color ? `Color: ${filterOptions.color.find((option) => option.value === color)?.label ?? color}` : undefined}
+                options={colorOptions}
+              />
+            )}
+            {hasFilters && (
+              <Link href={clearHref} className="px-2 text-xs uppercase tracking-[0.12em] underline underline-offset-4 transition-opacity hover:opacity-70">
+                Clear all
+              </Link>
+            )}
+          </div>
+          <FilterDropdown
+            label="Sort"
+            align="right"
+            activeLabel={sort ? sortOptions.find((option) => option.active)?.label : undefined}
+            options={sortOptions}
+          />
+        </Reveal>
+      </div>
 
       {hasFilters ? (
-        <Reveal stagger className="px-6 py-8">
-          {results.items.length === 0 ? (
-            <p className="py-14 text-center text-sm text-muted-foreground">No products match these filters.</p>
-          ) : (
-            <ProductRow>
-              {results.items.map((product) => (
-                <ProductCard
-                  key={product.slug}
-                  slug={product.slug}
-                  name={product.name}
-                  price={formatPrice(product.price)}
-                  compareAtPrice={product.compareAtPrice ? formatPrice(product.compareAtPrice) : undefined}
-                  description={product.shortDescription || product.description}
-                  href={`/listing/${product.slug}`}
-                  imageUrl={product.imageUrl}
-                  stockQuantity={product.stockQuantity}
-                />
-              ))}
-            </ProductRow>
-          )}
+        <Reveal stagger className="px-6 py-12 md:px-14 md:py-16">
+          <div className="mx-auto max-w-[1328px]">
+            {results.items.length === 0 ? (
+              <div className="flex flex-col items-center gap-4 py-16 text-center">
+                <PixelGlyph name="skull" size={56} className="text-foreground" />
+                <p className="font-display text-xl font-black uppercase tracking-[-0.03em] md:text-2xl">Nothing here. Yet.</p>
+                <p className="max-w-sm text-sm text-muted-foreground">No products match these filters. Loosen one up and try again.</p>
+                <Link href={clearHref} className="beu-chip inline-flex h-10 items-center px-5 text-xs uppercase tracking-[0.12em]">
+                  Clear filters
+                </Link>
+              </div>
+            ) : (
+              <ProductRow>{results.items.map(renderCard)}</ProductRow>
+            )}
+          </div>
         </Reveal>
       ) : (
-        subcategoryRows.map(({ subcat, products }) => (
-          <Reveal stagger key={subcat.slug} className="px-6 py-8">
-            <RevealItem>
-              <SubcategoryHeading>{subcat.name}</SubcategoryHeading>
-            </RevealItem>
-            <ProductRow className="mt-4">
-              {products.map((product) => (
-                <ProductCard
-                  key={product.slug}
-                  slug={product.slug}
-                  name={product.name}
-                  price={formatPrice(product.price)}
-                  compareAtPrice={product.compareAtPrice ? formatPrice(product.compareAtPrice) : undefined}
-                  description={product.shortDescription || product.description}
-                  href={`/listing/${product.slug}`}
-                  imageUrl={product.imageUrl}
-                  stockQuantity={product.stockQuantity}
+        subcategoryRows.map(({ subcat, products }, i) => (
+          <Reveal stagger key={subcat.slug} className="px-6 pb-4 pt-12 md:px-14 md:pt-16">
+            <div className="mx-auto max-w-[1328px]">
+              <RevealItem>
+                <SubcategoryHeading
+                  name={subcat.name}
+                  href={`/listing?category=${activeCategory.slug}&sub=${subcat.slug}`}
+                  index={i + 1}
+                  total={subcategoryRows.length}
                 />
-              ))}
-            </ProductRow>
+              </RevealItem>
+              <ProductRow className="mt-6">{products.map(renderCard)}</ProductRow>
+            </div>
           </Reveal>
         ))
       )}
 
-      {hasFilters && results.totalPages > 1 && (
-        <Reveal className="flex items-center justify-center gap-3 px-6 py-14">
-          {Array.from({ length: results.totalPages }).map((_, i) => {
-            const n = i + 1;
-            return n === results.page ? (
-              <span
-                key={n}
-                className="flex h-8 w-8 items-center justify-center rounded-md bg-foreground text-sm font-semibold text-background"
-              >
-                {n}
-              </span>
-            ) : (
-              <Link
-                key={n}
-                href={withParams(current, { page: n > 1 ? String(n) : undefined })}
-                className={buttonClassName({ variant: 'ghost', size: 'sm', className: 'h-8 w-8 px-0' })}
-              >
-                {n}
-              </Link>
-            );
-          })}
+      {showsResults && !hasFilters && results.items.length > 0 && (
+        <Reveal stagger className="px-6 py-12 md:px-14 md:py-16">
+          <div className="mx-auto max-w-[1328px]">
+            <ProductRow>{results.items.map(renderCard)}</ProductRow>
+          </div>
         </Reveal>
       )}
+
+      {showsResults && results.totalPages > 1 && (
+        <Reveal className="px-6 py-14 md:px-14">
+          <Pagination page={results.page} totalPages={results.totalPages} hrefFor={pageHref} />
+        </Reveal>
+      )}
+
+      <div className="h-10 md:h-16" />
     </>
   );
 }
