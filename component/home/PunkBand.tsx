@@ -6,12 +6,12 @@ type Piece =
   | { kind: "script"; text: string };
 
 const PIECES: Piece[] = [
-  { kind: "glyph", name: "skull", size: 56, tone: "ice" },
-  { kind: "word", text: "No rules" },
+  { kind: "glyph", name: "spark", size: 56, tone: "ice" },
+  { kind: "word", text: "Made to be seen" },
   { kind: "glyph", name: "cross", size: 48, tone: "white" },
-  { kind: "word", text: "Just frames" },
+  { kind: "word", text: "Case & cloth included" },
   { kind: "glyph", name: "bolt", size: 52, tone: "ice" },
-  { kind: "word", text: "Be seen" },
+  { kind: "word", text: "7-day returns" },
   { kind: "glyph", name: "star5", size: 52, tone: "white" },
   { kind: "script", text: "be you." },
   { kind: "glyph", name: "burst", size: 56, tone: "ice" },
@@ -33,7 +33,7 @@ function Group({ hidden }: { hidden?: boolean }) {
         }
         if (piece.kind === "script") {
           return (
-            <span key={index} className="font-accent text-[54px] leading-none">
+            <span key={index} className="font-accent text-5xl leading-none">
               {piece.text}
             </span>
           );

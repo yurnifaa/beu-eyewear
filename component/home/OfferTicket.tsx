@@ -32,11 +32,11 @@ export default function OfferTicket({
   actionLabel: string;
 }) {
   return (
-    // The hard shadow is a fixed block behind the ticket; on hover the ticket slides away from
-    // it, so the offset grows from 5px to 8px with transform alone.
+    // The soft shadow is its own layer behind the ticket: it fades in on hover while the ticket
+    // lifts off it, so only transform and opacity animate.
     <RevealItem className="group relative h-full">
-      <span aria-hidden="true" className="absolute inset-0 translate-x-[5px] translate-y-[5px] rounded-2xl bg-ink" />
-      <article className="beu-lift relative flex h-full min-h-45 overflow-hidden rounded-2xl border-2 border-ink bg-ice-mist [--lift-x:-3px] [--lift-y:-3px]">
+      <span aria-hidden="true" className="beu-lift-shadow absolute inset-0 rounded-2xl" />
+      <article className="beu-lift relative flex h-full min-h-45 overflow-hidden rounded-2xl border-2 border-ink bg-ice-mist">
         <div
           className={`relative flex w-14 shrink-0 select-none items-center justify-center after:absolute after:inset-y-3 after:right-0 after:border-r-2 after:border-dashed after:border-current after:opacity-40 after:content-[''] sm:w-16 ${STUB_TONES[tone]}`}
         >
@@ -46,7 +46,7 @@ export default function OfferTicket({
         </div>
         <div className="flex min-w-0 flex-1 flex-col justify-between gap-4 p-4 pl-6 sm:p-5 sm:pl-7">
           <div>
-            <p className="mb-1 text-[11px] font-bold uppercase tracking-wider text-accent">{eyebrow}</p>
+            <p className="mb-1 text-xs font-bold uppercase tracking-wider text-accent">{eyebrow}</p>
             <h3 className="font-display text-base font-bold uppercase leading-snug tracking-tight text-foreground">{title}</h3>
             <div className="mt-1.5 text-sm text-muted-foreground">{detail}</div>
           </div>

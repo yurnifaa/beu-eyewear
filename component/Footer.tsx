@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import PixelGlyph, { type GlyphName } from "@/component/beu/PixelGlyph";
+import FooterWordmark from "@/component/FooterWordmark";
 import { getStoreSettings } from "@/lib/catalog/queries";
 
 function InstagramIcon() {
@@ -51,8 +52,12 @@ const shopLinks = [
   { label: "Bundle Offers", href: "/listing?category=collections&sub=bundles" },
 ];
 
-// TODO: i-map sa actual (support) pages kapag meron na.
-const aboutLinks = ["Our Story", "Warrants & Returns", "Store Locator", "Contact Us"];
+const aboutLinks = [
+  { label: "Our Story", href: "/about" },
+  { label: "Warranty & Returns", href: "/policies/shipping-returns" },
+  { label: "FAQ", href: "/faq" },
+  { label: "Contact Us", href: "/contact" },
+];
 
 const linkClassName =
   "cursor-pointer text-foreground/80 transition-colors hover:text-accent hover:underline hover:underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-4";
@@ -60,7 +65,7 @@ const linkClassName =
 const socialClassName =
   "flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-ink text-ink transition-colors hover:bg-ink hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 dark:border-ice dark:text-ice dark:hover:bg-ice dark:hover:text-ink";
 
-const headingClassName = "text-[11px] font-medium uppercase tracking-[0.2em] text-muted-foreground";
+const headingClassName = "text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground";
 
 const GLYPH_ROW: GlyphName[] = [
   "spark", "spark-o", "burst", "orbit", "ball", "shoot",
@@ -123,9 +128,9 @@ export default async function Footer() {
           <nav aria-label="About BeU">
             <h2 className={headingClassName}>About BeU</h2>
             <ul className="mt-5 flex flex-col gap-3 text-sm">
-              {aboutLinks.map((label) => (
+              {aboutLinks.map(({ label, href }) => (
                 <li key={label}>
-                  <Link href="/home" className={linkClassName}>
+                  <Link href={href} className={linkClassName}>
                     {label}
                   </Link>
                 </li>
@@ -140,14 +145,12 @@ export default async function Footer() {
           ))}
         </div>
 
-        <div aria-hidden="true" className="mt-6 h-[clamp(7rem,24vw,20rem)] overflow-hidden text-center">
-          <div className="beu-chrome-text font-display text-[clamp(8rem,34vw,30rem)] font-black leading-[0.85] tracking-[-0.05em]">
-            BeU
-          </div>
+        <div className="mt-8 pb-10">
+          <FooterWordmark />
         </div>
       </div>
 
-      <div className="-mx-4 flex flex-wrap items-center justify-between gap-4 bg-ink px-4 py-4 text-[11px] uppercase tracking-[0.14em] text-ice-mist md:-mx-14 md:px-14">
+      <div className="-mx-4 flex flex-wrap items-center justify-between gap-4 bg-ink px-4 py-4 text-xs uppercase tracking-[0.14em] text-ice-mist md:-mx-14 md:px-14">
         <span>© {new Date().getFullYear()} BeU Eyewear</span>
         <span className="flex items-center gap-2">
           <PixelGlyph name="spark" size={12} className="text-ice" />

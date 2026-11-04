@@ -1,7 +1,7 @@
 import { Package, Home, Clock } from 'lucide-react';
 
 const ICONS = [Package, Home, Clock];
-const DEFAULT_LABELS = ['Free Eyewear Kit Included', '7-Day Free Returns', 'Up To 5-Year Warranty'];
+const DEFAULT_LABELS = ['Free Case & Cloth With Every Pair', '7-Day Free Returns', '1-Year Warranty, 5 On Smart Glasses'];
 
 // Labels come from the store_settings sheet tab (benefit_1..3); the defaults apply if it is empty.
 export default function BenefitsBar({ labels = DEFAULT_LABELS }: { labels?: string[] }) {

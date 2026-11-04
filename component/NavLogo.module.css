@@ -1,0 +1,17 @@
+/* The nav logo: the BeU script (public/Hero-Logo-Script.png) as a mask over the theme's foreground
+   colour. --foreground is ink in light mode and ice-white in dark mode, so the logo follows the
+   theme toggle with no extra rule. */
+.logo {
+  display: block;
+  height: 2.25rem;
+  aspect-ratio: 1800 / 616;
+  background-color: var(--foreground);
+  -webkit-mask: url(/Hero-Logo-Script.png) center / 100% 100% no-repeat;
+  mask: url(/Hero-Logo-Script.png) center / 100% 100% no-repeat;
+}
+
+@media (min-width: 768px) {
+  .logo {
+    height: 2.5rem;
+  }
+}

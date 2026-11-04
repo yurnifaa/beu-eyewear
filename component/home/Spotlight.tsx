@@ -14,11 +14,16 @@ function splitName(name: string): [string, string] {
 }
 
 const LEFT_WORDS = ["Reflective", "Chrome", "Be seen", "Frame"];
-const RIGHT_WORDS = ["Post-Y2K", "Ice-blue", "No. 01", "Glare"];
+const RIGHT_WORDS = ["Post-Y2K", "Ice-blue", "Be you", "Glare"];
 
 // One frame, shown huge: the real product photo over ghost type.
 export default function Spotlight({ product }: { product: CatalogProduct }) {
   const [lineOne, lineTwo] = splitName(product.name);
+  // A single long word can't wrap, so cap the title size by the longest word: about 0.9em per
+  // character in Unbounded Black, against the width the title actually has (viewport minus the
+  // section padding, capped at the 1328px container). Short names keep the full fluid size.
+  const longestWord = Math.max(1, ...product.name.split(/\s+/).map((word) => word.length));
+  const titleSize = `min(clamp(2.75rem, 11vw, 10.5rem), calc(min(100vw - var(--spot-pad), 1328px) / ${(longestWord * 0.9).toFixed(1)}))`;
   const specs = [
     product.frameMaterial,
     product.lensOption,
@@ -35,7 +40,7 @@ export default function Spotlight({ product }: { product: CatalogProduct }) {
         <div
           key={side}
           aria-hidden="true"
-          className={`absolute bottom-10 top-10 hidden items-center justify-between text-[11px] uppercase tracking-[0.5em] text-ink/50 [writing-mode:vertical-rl] xl:flex ${side}`}
+          className={`absolute bottom-10 top-10 hidden items-center justify-between text-xs uppercase tracking-[0.5em] text-ink/50 [writing-mode:vertical-rl] xl:flex ${side}`}
         >
           {words.map((word) => (
             <span key={word}>{word}</span>
@@ -47,9 +52,9 @@ export default function Spotlight({ product }: { product: CatalogProduct }) {
         <div className="flex items-center justify-between text-xs uppercase tracking-[0.18em]">
           <span className="flex items-center gap-2.5">
             <PixelGlyph name="spark" size={16} className="text-ink" />
-            Spotlight — frame no. 01
+            Spotlight frame
           </span>
-          <span className="hidden text-ink/60 sm:inline">[ {product.reviewCount > 0 && product.rating ? `${product.rating.toFixed(1)} ★` : "new"} ]</span>
+          <span className="hidden text-ink/75 sm:inline">[ {product.reviewCount > 0 && product.rating ? `${product.rating.toFixed(1)} ★` : "new"} ]</span>
         </div>
 
         <div className="relative mt-8">
@@ -58,7 +63,8 @@ export default function Spotlight({ product }: { product: CatalogProduct }) {
           <Reveal>
             <h2
               id="spotlight-title"
-              className="relative flex flex-col font-display text-[clamp(2.75rem,11vw,10.5rem)] font-black uppercase leading-[0.9] tracking-[-0.07em] text-ink"
+              style={{ fontSize: titleSize }}
+              className="relative flex flex-col break-words font-display font-black uppercase leading-[0.9] tracking-[-0.07em] text-ink [--spot-pad:3.5rem] md:[--spot-pad:7.5rem]"
             >
               <span>{lineOne}</span>
               {lineTwo && <span className="self-end">{lineTwo}</span>}
@@ -91,12 +97,12 @@ export default function Spotlight({ product }: { product: CatalogProduct }) {
 
           <Reveal className="relative z-[4] mt-10 flex flex-wrap items-end justify-between gap-8">
             <div className="max-w-[430px]">
-              <span className="inline-block bg-ink px-2.5 py-1 text-[10px] uppercase tracking-[0.16em] text-white">
-                Frame overview
+              <span className="inline-block bg-ink px-2.5 py-1 text-xs uppercase tracking-[0.16em] text-white">
+                Featured frame
               </span>
               <p className="mt-3.5 font-display text-2xl font-bold uppercase tracking-[-0.03em]">
                 {product.compareAtPrice && (
-                  <span className="mr-2 text-base font-normal text-ink/50 line-through">{formatPrice(product.compareAtPrice)}</span>
+                  <span className="mr-2 text-base font-normal text-ink/70 line-through">{formatPrice(product.compareAtPrice)}</span>
                 )}
                 {formatPrice(product.price)}
               </p>
@@ -104,7 +110,7 @@ export default function Spotlight({ product }: { product: CatalogProduct }) {
                 <p className="mt-3 text-xs leading-relaxed text-ink/80">{product.shortDescription}</p>
               )}
               {specs.length > 0 && (
-                <p className="mt-2 text-xs uppercase tracking-[0.1em] text-ink/60">{specs.join(" · ")}</p>
+                <p className="mt-2 text-xs uppercase tracking-[0.1em] text-ink/75">{specs.join(" · ")}</p>
               )}
             </div>
             <Link href={`/listing/${product.slug}`} className="group flex items-center gap-4 text-ink">

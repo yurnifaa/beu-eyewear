@@ -14,8 +14,7 @@ export default function WishlistButton({ slug, name, variant = 'icon', className
   const { isWishlisted, toggle } = useWishlist(slug);
 
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    // ProductCard nests this inside a <Link> — stop the click from also
-    // triggering navigation to the product page.
+    // Never navigate or submit, wherever the button is placed (a card, a link, a form).
     event.preventDefault();
     event.stopPropagation();
     toggle();
@@ -41,9 +40,9 @@ export default function WishlistButton({ slug, name, variant = 'icon', className
       onClick={handleClick}
       aria-pressed={isWishlisted}
       aria-label={isWishlisted ? `Remove ${name} from wishlist` : `Add ${name} to wishlist`}
-      className={`flex h-8 w-8 items-center justify-center rounded-full bg-background/80 backdrop-blur ${className}`}
+      className={`flex h-10 w-10 items-center justify-center rounded-full bg-background/80 backdrop-blur ${className}`}
     >
-      <Heart size={16} className={isWishlisted ? 'fill-current text-foreground' : ''} />
+      <Heart size={18}className={isWishlisted ? 'fill-current text-foreground' : ''} />
     </button>
   );
 }

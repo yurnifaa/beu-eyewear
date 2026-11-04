@@ -157,6 +157,17 @@ export async function getFeaturedProducts(limit = 4): Promise<CatalogProduct[]> 
   return [...featured, ...filler].slice(0, limit);
 }
 
+// Lowest price among eyewear (frames and smart frames), for the "from" price on the home page.
+// Accessories and bundles are left out so a lens cloth never sets the anchor. Undefined when the
+// catalog has no priced eyewear, so the page can simply omit the price.
+export async function getStartingPrice(): Promise<number | undefined> {
+  const { products } = await load();
+  const prices = products
+    .filter((product) => (product.productType === 'FRAME' || product.productType === 'SMART_FRAME') && product.price > 0)
+    .map((product) => product.price);
+  return prices.length > 0 ? Math.min(...prices) : undefined;
+}
+
 export async function searchProducts(query: string): Promise<CatalogProduct[]> {
   const tokens = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
   if (tokens.length === 0) return [];

@@ -12,7 +12,7 @@ export default function ReviewsSection({ reviews }: { reviews: ProductReview[] }
         // transforms never fight.
         <RevealItem key={review.id} className="w-72 shrink-0 snap-start md:w-full">
         <figure
-          className={`flex h-full flex-col gap-3 rounded-2xl border-2 border-ink bg-white p-5 shadow-[5px_5px_0_var(--ink)] ${TILTS[index % TILTS.length]}`}
+          className={`flex h-full flex-col gap-3 rounded-2xl border-2 border-ink bg-background p-5 shadow-[0_18px_26px_-14px_rgba(10,26,47,0.38)] ${TILTS[index % TILTS.length]}`}
         >
           <div className="flex gap-0.5" role="img" aria-label={`${review.rating} out of 5 stars`}>
             {Array.from({ length: 5 }).map((_, i) => (
@@ -29,12 +29,12 @@ export default function ReviewsSection({ reviews }: { reviews: ProductReview[] }
             <span className="font-accent text-xl">&rdquo;</span>
           </blockquote>
           <figcaption className="mt-auto flex items-center gap-3 border-t border-border pt-3">
-            <span className="flex size-8 items-center justify-center rounded-full bg-ice text-[10px] font-bold text-ink">
+            <span className="flex size-8 items-center justify-center rounded-full bg-ice text-xs font-bold text-ink">
               {review.authorInitials}
             </span>
             <span className="leading-tight">
               <span className="block text-xs font-semibold">{review.authorName}</span>
-              <span className="block text-[10px] uppercase tracking-wider text-muted-foreground">
+              <span className="block text-xs uppercase tracking-wider text-muted-foreground">
                 {review.isVerifiedPurchase ? "Verified Buyer" : "Customer"}
               </span>
             </span>

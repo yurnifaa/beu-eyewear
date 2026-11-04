@@ -1,7 +1,7 @@
 import BenefitsBar from '@/component/BenefitsBar';
 import ProductCard from '@/component/ProductCard';
 import ProductRow from '@/component/ProductRow';
-import Reveal, { RevealItem } from '@/component/Reveal';
+import Reveal from '@/component/Reveal';
 import SectionLabel from '@/component/SectionLabel';
 import CategoryRow from '@/component/home/CategoryRow';
 import HomeHero from '@/component/home/HomeHero';
@@ -82,14 +82,12 @@ export default async function Page() {
       {spotlight && <Spotlight product={spotlight} />}
 
       {/* The drop: featured products */}
-      <Reveal stagger className="px-6 py-16 md:px-14">
-        <div className="mx-auto max-w-[1328px]">
-          <RevealItem>
-            <SectionLabel>Featured Products</SectionLabel>
-            <p className="mt-3 text-center font-display text-4xl font-black uppercase tracking-[-0.05em] md:text-6xl">
-              Drop <span className="font-accent text-5xl normal-case md:text-7xl">01</span>
-            </p>
-          </RevealItem>
+      <Reveal className="px-6 py-16 md:px-14">
+        <div id="drop" className="mx-auto max-w-[1328px] scroll-mt-28">
+          <SectionLabel>Featured Products</SectionLabel>
+          <p className="mt-3 text-center font-display text-4xl font-black uppercase tracking-[-0.05em] md:text-6xl">
+            Drop <span className="font-accent text-5xl normal-case md:text-7xl">01</span>
+          </p>
           <ProductRow className="mt-8">
             {dropProducts.map((product) => (
               <ProductCard
@@ -114,10 +112,8 @@ export default async function Page() {
       </Reveal>
 
       {/* Category */}
-      <Reveal stagger className="px-6 py-12 md:px-14">
-        <RevealItem>
-          <SectionLabel>Category</SectionLabel>
-        </RevealItem>
+      <Reveal className="px-6 py-12 md:px-14">
+        <SectionLabel>Category</SectionLabel>
         <CategoryRow categories={categories.map(({ slug, name, imageUrl }) => ({ slug, name, imageUrl }))} />
       </Reveal>
 
@@ -125,10 +121,8 @@ export default async function Page() {
       <BenefitsBar labels={settings.benefits} />
 
       {/* Offers */}
-      <Reveal stagger className="px-6 py-16 md:px-14">
-        <RevealItem>
-          <SectionLabel>Offers &amp; Bundles</SectionLabel>
-        </RevealItem>
+      <Reveal className="px-6 py-16 md:px-14">
+        <SectionLabel>Offers &amp; Bundles</SectionLabel>
         <div className="mx-auto mt-8 grid max-w-6xl grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           {bundles.map((bundle, index) => (
             <OfferTicket
@@ -170,10 +164,8 @@ export default async function Page() {
 
       {/* Reviews */}
       {reviews.length > 0 && (
-        <Reveal stagger className="bg-ice-mist px-6 py-16 md:px-14">
-          <RevealItem>
-            <SectionLabel>What Our Customer Says</SectionLabel>
-          </RevealItem>
+        <Reveal className="bg-ice-mist px-6 py-16 md:px-14">
+          <SectionLabel>What Our Customer Says</SectionLabel>
           <ReviewsSection reviews={reviews} />
         </Reveal>
       )}

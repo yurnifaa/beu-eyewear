@@ -1,13 +1,14 @@
-import Image from "next/image";
 import Link from "next/link";
-import { User, Heart, ShoppingBag, LayoutDashboard } from "lucide-react";
+import { User, Heart, LayoutDashboard } from "lucide-react";
 import MobileMenu from "@/component/MobileMenu";
-import CartBadge from "@/component/CartBadge";
+import NavLogo from "@/component/NavLogo";
+import CartPill from "@/component/CartPill";
 import HeaderSearch from "@/component/HeaderSearch";
 import HeaderNav from "@/component/HeaderNav";
 import LoginModalTrigger from "@/component/LoginModalTrigger";
 import ThemeToggle from "@/component/ThemeToggle";
 import WishlistBadge from "@/component/WishlistBadge";
+import { NAV_LINKS } from "@/component/nav-links";
 import { getCurrentUser } from "@/lib/auth/session";
 
 export default async function Header() {
@@ -15,37 +16,20 @@ export default async function Header() {
   const user = await getCurrentUser();
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border bg-background/85 backdrop-blur-md">
-      <div className="mx-auto grid max-w-[1440px] grid-cols-[1fr_auto_1fr] items-center gap-3 px-3 py-2 md:px-8">
-        <div className="flex items-center">
-          <MobileMenu links={[
-            { href: "/home", label: "Home" },
-            { href: "/listing", label: "Shop" },
-            { href: "/search", label: "Explore" },
-          ]} />
-          <HeaderNav />
+    // The wrapper is see-through and click-through; only the pill takes clicks.
+    // Its height is --beu-header-h so the home hero can slide up behind it.
+    <header className="pointer-events-none sticky top-0 z-50 px-3 py-3 md:px-14 md:py-4">
+      <div className="beu-header-pill pointer-events-auto mx-auto flex h-14 max-w-[1328px] items-center justify-between gap-4 rounded-full pl-2 pr-2 md:h-16 md:pl-6 md:pr-3">
+        <div className="flex items-center gap-1">
+          <MobileMenu links={NAV_LINKS} />
+          <Link href="/home" aria-label="BeU Eyewear home" className="flex items-center">
+            <NavLogo />
+          </Link>
         </div>
 
-        <Link href="/home" aria-label="BeU home" className="flex items-center justify-center">
-          <Image
-            src="/Logo-Dark-Mark.png"
-            alt="BeU"
-            width={380}
-            height={380}
-            priority
-            className="h-12 w-12 dark:hidden"
-          />
-          <Image
-            src="/Logo-Light-Mark.png"
-            alt="BeU"
-            width={380}
-            height={380}
-            priority
-            className="hidden h-12 w-12 dark:block"
-          />
-        </Link>
+        <HeaderNav />
 
-        <div className="flex items-center justify-end gap-0.5 md:gap-1">
+        <div className="flex items-center gap-0.5 md:gap-1.5">
           <HeaderSearch />
           {user?.role === "ADMIN" && (
             <Link href="/admin" aria-label="Admin" className="beu-icon-btn">
@@ -63,12 +47,10 @@ export default async function Header() {
             <Heart size={20} strokeWidth={1.75} />
             <WishlistBadge />
           </Link>
-          <Link href="/cart" aria-label="Cart" className="beu-icon-btn relative">
-            <ShoppingBag size={20} strokeWidth={1.75} />
-            <CartBadge />
-          </Link>
-          <span aria-hidden="true" className="mx-1 hidden h-5 w-px bg-border md:block" />
-          <ThemeToggle />
+          <span className="hidden sm:block">
+            <ThemeToggle />
+          </span>
+          <CartPill />
         </div>
       </div>
     </header>

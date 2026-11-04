@@ -19,7 +19,7 @@ export default function MobileMenu({ links }: {
   }, [pathname]);
 
   useEffect(() => {
-    const desktop = window.matchMedia("(min-width: 768px)");
+    const desktop = window.matchMedia("(min-width: 1024px)");
     const closeOnDesktop = () => {
       if (desktop.matches) dialogRef.current?.close();
     };
@@ -42,7 +42,7 @@ export default function MobileMenu({ links }: {
         aria-expanded={open}
         aria-controls={dialogId}
         aria-haspopup="dialog"
-        className="beu-icon-btn focus-visible:outline-2 focus-visible:outline-offset-2 md:hidden"
+        className="beu-icon-btn focus-visible:outline-2 focus-visible:outline-offset-2 lg:hidden"
         onClick={() => {
           dialogRef.current?.showModal();
           setOpen(true);
@@ -74,10 +74,11 @@ export default function MobileMenu({ links }: {
           </div>
           <nav aria-label="Mobile navigation" className="mt-4 flex flex-col gap-2">
             {links.map(({ href, label }) => {
-              const active = pathname === href || pathname.startsWith(`${href}/`);
+              const plain = !href.includes("?") && !href.includes("#");
+              const active = plain && (pathname === href || pathname.startsWith(`${href}/`));
               return (
                 <Link
-                  key={href}
+                  key={label}
                   href={href}
                   aria-current={active ? "page" : undefined}
                   onClick={() => dialogRef.current?.close()}

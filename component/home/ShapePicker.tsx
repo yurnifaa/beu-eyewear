@@ -36,7 +36,7 @@ export default function ShapePicker({ shapes }: { shapes: ShapeOption[] }) {
         <div className="flex items-center justify-between text-xs uppercase tracking-[0.18em]">
           <h2 id="shape-picker-title" className="flex items-center gap-2.5 font-body text-xs font-normal tracking-[0.18em]">
             <PixelGlyph name="spark" size={14} className="text-accent" />
-            Pick your shape
+            Shop by frame shape
           </h2>
           <span className="text-muted-foreground">
             [ {String(active + 1).padStart(2, "0")} / {String(shapes.length).padStart(2, "0")} ]
@@ -60,7 +60,7 @@ export default function ShapePicker({ shapes }: { shapes: ShapeOption[] }) {
                   onClick={() => setActive(index)}
                   className="group flex cursor-pointer flex-col items-center gap-5 text-muted-foreground transition-colors hover:text-foreground"
                 >
-                  <svg viewBox="0 0 240 100" aria-hidden="true" className="w-full text-chrome/70 transition-colors group-hover:text-chrome">
+                  <svg viewBox="0 0 240 100" aria-hidden="true" className="w-full text-muted-foreground/80 transition-colors group-hover:text-foreground">
                     <use href={`#${shape.glyph}`} />
                   </svg>
                   <span className="font-display text-sm font-medium uppercase tracking-wide md:text-lg">{shape.label}</span>
@@ -77,33 +77,33 @@ export default function ShapePicker({ shapes }: { shapes: ShapeOption[] }) {
                   viewBox="0 0 240 100"
                   role="img"
                   aria-label={`${shape.label} frame`}
-                  className="relative w-[104%] text-chrome drop-shadow-[0_22px_22px_rgba(30,80,160,0.35)]"
+                  className="relative w-[104%] text-muted-foreground drop-shadow-[0_22px_22px_rgba(30,80,160,0.35)]"
                 >
                   <use href={`#${shape.glyph}`} />
                 </svg>
                 <p className="relative font-display text-3xl font-bold uppercase tracking-[-0.02em] md:text-5xl" aria-live="polite">
                   {current.label}
                 </p>
-                <div className="relative flex items-center gap-3">
+                <div className="relative flex w-full items-center justify-center gap-3">
                   <button
                     type="button"
                     aria-label="Previous shape"
                     onClick={() => setActive(wrap(active - 1))}
-                    className="beu-gloss flex size-12 cursor-pointer items-center justify-center rounded-full"
+                    className="beu-press flex size-12 cursor-pointer items-center justify-center rounded-full border-2 border-ink bg-background text-ink transition-transform hover:-translate-y-0.5"
                   >
                     <ArrowLeft size={20} aria-hidden="true" />
                   </button>
                   <Link
                     href={`/listing?shape=${encodeURIComponent(current.value)}`}
-                    className="inline-flex h-12 items-center rounded-full bg-ink px-7 text-xs uppercase tracking-[0.14em] text-white transition-transform hover:-translate-y-0.5"
+                    className="inline-flex min-h-12 min-w-0 items-center justify-center rounded-full bg-ink px-6 py-2 text-center text-xs uppercase leading-snug tracking-[0.14em] text-balance text-white transition-transform hover:-translate-y-0.5"
                   >
-                    Shop {current.label}
+                    Shop {current.label} frames
                   </Link>
                   <button
                     type="button"
                     aria-label="Next shape"
                     onClick={() => setActive(wrap(active + 1))}
-                    className="beu-gloss flex size-12 cursor-pointer items-center justify-center rounded-full"
+                    className="beu-press flex size-12 cursor-pointer items-center justify-center rounded-full border-2 border-ink bg-background text-ink transition-transform hover:-translate-y-0.5"
                   >
                     <ArrowRight size={20} aria-hidden="true" />
                   </button>
