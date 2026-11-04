@@ -22,7 +22,7 @@ export default async function VerifyEmailPage(props: PageProps<'/verify-email'>)
             </p>
             <Link
               href="/account/profile"
-              className="mt-6 flex h-11 w-full items-center justify-center rounded-full bg-[#8499D9] text-sm font-semibold text-white transition-colors hover:bg-[#6F86CF]"
+              className="mt-6 flex h-11 w-full items-center justify-center rounded-full bg-accent text-sm font-semibold text-on-accent transition-colors hover:bg-accent-hover"
             >
               Go to your profile
             </Link>

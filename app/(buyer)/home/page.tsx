@@ -1,16 +1,19 @@
-import Link from 'next/link';
-import Image from 'next/image';
-import { Star, ArrowRight } from 'lucide-react';
 import BenefitsBar from '@/component/BenefitsBar';
-import { buttonClassName } from '@/component/Button';
 import ProductCard from '@/component/ProductCard';
-import ProductImage from '@/component/ProductImage';
 import ProductRow from '@/component/ProductRow';
 import Reveal from '@/component/Reveal';
 import SectionLabel from '@/component/SectionLabel';
+import CategoryRow from '@/component/home/CategoryRow';
+import HomeHero from '@/component/home/HomeHero';
+import OfferTicket from '@/component/home/OfferTicket';
+import PunkBand from '@/component/home/PunkBand';
+import ReviewsSection from '@/component/home/ReviewsSection';
+import ShapePicker, { type ShapeOption } from '@/component/home/ShapePicker';
+import Spotlight from '@/component/home/Spotlight';
 import {
   getCategories,
   getFeaturedProducts,
+  getFilterOptions,
   getFeaturedReviews,
   getOffers,
   getProducts,
@@ -29,77 +32,31 @@ const categoryRank = (slug: string) => {
   return i === -1 ? CATEGORY_ORDER.length : i;
 };
 
-function OfferTicket({
-  stubLabel,
-  stubColor,
-  eyebrow,
-  title,
-  detail,
-  href,
-  actionLabel,
-}: {
-  stubLabel: string;
-  stubColor: string;
-  eyebrow: string;
-  title: string;
-  detail: React.ReactNode;
-  href?: string;
-  actionLabel: string;
-}) {
-  return (
-    <article className="relative flex min-h-45 overflow-hidden rounded-lg border border-border bg-[#FAF9F5] shadow-sm transition-shadow hover:shadow-md dark:bg-card">
-      <div
-        className="relative flex w-14 shrink-0 select-none items-center justify-center text-white after:absolute after:inset-y-3 after:right-0 after:border-r-2 after:border-dashed after:border-white/40 after:content-[''] sm:w-16"
-        style={{
-          backgroundColor: stubColor,
-        }}
-      >
-        <span aria-hidden="true" className="absolute -right-2 top-2 h-4 w-4 rounded-full bg-[#FAF9F5] dark:bg-card" />
-        <span aria-hidden="true" className="absolute -right-2 bottom-2 h-4 w-4 rounded-full bg-[#FAF9F5] dark:bg-card" />
-        <span className="rotate-180 text-xs font-semibold uppercase tracking-widest opacity-90 [writing-mode:vertical-lr]">
-          {stubLabel}
-        </span>
-      </div>
-      <div className="flex min-w-0 flex-1 flex-col justify-between gap-4 p-4 pl-6 sm:p-5 sm:pl-7">
-        <div>
-          <p className="mb-1 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">{eyebrow}</p>
-          <h3 className="font-serif text-lg font-bold leading-snug text-foreground">{title}</h3>
-          <div className="mt-1 text-sm text-muted-foreground">{detail}</div>
-        </div>
-        <div className="flex justify-end">
-          {href && (
-            <Link
-              href={href}
-              className={buttonClassName({
-                variant: 'secondary',
-                className: 'border-[#5A6DBE] bg-[#5A6DBE] px-3 py-2 text-white hover:border-[#5A6DBE] hover:bg-white hover:text-[#5A6DBE] dark:hover:bg-[#161928] dark:hover:text-white',
-              })}
-            >
-              {actionLabel}
-              <ArrowRight size={14} aria-hidden="true" />
-            </Link>
-          )}
-        </div>
-      </div>
-    </article>
-  );
-}
-
-const TILTS = ['-rotate-2', 'rotate-1', 'rotate-2'];
+// Eyewear-shape drawings in the glyph sprite (component/beu/GlyphSprite.tsx), keyed by the
+// frame_shape values in the sheet. Shapes the sheet adds later fall back to the spare drawings.
+const SHAPE_GLYPHS: Record<string, string> = {
+  round: 'g-round',
+  rectangle: 'g-rect',
+  square: 'g-shield',
+  'cat-eye': 'g-butterfly',
+  aviator: 'g-wrap',
+};
+const SPARE_GLYPHS = ['g-wrap', 'g-shield', 'g-round', 'g-butterfly', 'g-rect'];
 
 export default async function Page() {
   // Everything below is read from the catalog sheet (featured flags, ratings, live offers,
-  // featured reviews, category order, benefits-bar text).
-  const [allCategories, featuredProducts, bundleResults, studentPickResults, offers, reviews, settings] = await Promise.all([
-    getCategories(),
-    getFeaturedProducts(4),
-    getProducts({ category: 'collections', sub: 'bundles' }),
-    getProducts({ category: 'collections', sub: 'student-picks' }),
-    getOffers(),
-    getFeaturedReviews(3),
-    getStoreSettings(),
-  ]);
-  // Figma shows Collections in the category row, so we no longer filter it out.
+  // featured reviews, category order, frame shapes, benefits-bar text).
+  const [allCategories, featuredProducts, bundleResults, studentPickResults, offers, reviews, settings, filterOptions] =
+    await Promise.all([
+      getCategories(),
+      getFeaturedProducts(5),
+      getProducts({ category: 'collections', sub: 'bundles' }),
+      getProducts({ category: 'collections', sub: 'student-picks' }),
+      getOffers(),
+      getFeaturedReviews(3),
+      getStoreSettings(),
+      getFilterOptions(),
+    ]);
   const categories = [...allCategories].sort((a, b) => categoryRank(a.slug) - categoryRank(b.slug));
   const bundles = bundleResults.items;
   const studentPick = studentPickResults.items[0];
@@ -109,81 +66,69 @@ export default async function Page() {
   const offerStub = (offer: { kind: 'PERCENT' | 'FIXED_AMOUNT'; value: number; badge: string }) =>
     offer.kind === 'PERCENT' ? `${offer.value}% Off` : offer.badge;
 
-  return (
-    <>
-      {/* Hero */}
-      <Reveal mode="mount" className="px-6 py-8 md:py-10">
-        <div className="relative aspect-[2.7/1] w-full overflow-hidden rounded-sm bg-[#F8F8F8]">
-          <Image
-            src="/hero-glasses.png"
-            alt="Silver BeU eyeglasses"
-            fill
-            priority
-            sizes="(max-width: 768px) 100vw, calc(100vw - 3rem)"
-            className="object-contain"
-          />
-        </div>
-      </Reveal>
+  const [spotlight, ...dropProducts] = featuredProducts;
+  const shapes: ShapeOption[] = filterOptions.shape.map((option, index) => ({
+    value: option.value,
+    label: option.label,
+    glyph: SHAPE_GLYPHS[option.value.toLowerCase()] ?? SPARE_GLYPHS[index % SPARE_GLYPHS.length],
+  }));
 
-      {/* Featured products */}
-      <Reveal className="px-6 py-10">
-        <SectionLabel>Featured Products</SectionLabel>
-        <ProductRow className="mt-6">
-          {featuredProducts.map((product) => (
-            <ProductCard
-              key={product.slug}
-              slug={product.slug}
-              name={product.name}
-              price={formatPrice(product.price)}
-              compareAtPrice={product.compareAtPrice ? formatPrice(product.compareAtPrice) : undefined}
-              imageUrl={product.imageUrl}
-              href={`/listing/${product.slug}`}
-              rating={product.rating ?? 0}
-              reviewCount={product.reviewCount}
-              stockQuantity={product.stockQuantity}
-              colorSwatches={product.variants
-                .filter((variant) => variant.hex && variant.color !== 'Standard')
-                .slice(0, 3)
-                .map((variant) => ({ label: variant.color, color: variant.hex as string }))}
-            />
-          ))}
-        </ProductRow>
+  return (
+    // The home page stays light in both modes; the header and footer still follow the toggle.
+    <div className="beu-light">
+      <HomeHero />
+      <PunkBand />
+      <ShapePicker shapes={shapes} />
+      {spotlight && <Spotlight product={spotlight} />}
+
+      {/* The drop: featured products */}
+      <Reveal className="px-6 py-16 md:px-14">
+        <div className="mx-auto max-w-[1328px]">
+          <SectionLabel>Featured Products</SectionLabel>
+          <p className="mt-3 text-center font-display text-4xl font-black uppercase tracking-[-0.05em] md:text-6xl">
+            Drop <span className="font-accent text-5xl normal-case md:text-7xl">01</span>
+          </p>
+          <ProductRow className="mt-8">
+            {dropProducts.map((product) => (
+              <ProductCard
+                key={product.slug}
+                slug={product.slug}
+                name={product.name}
+                price={formatPrice(product.price)}
+                compareAtPrice={product.compareAtPrice ? formatPrice(product.compareAtPrice) : undefined}
+                imageUrl={product.imageUrl}
+                href={`/listing/${product.slug}`}
+                rating={product.rating ?? 0}
+                reviewCount={product.reviewCount}
+                stockQuantity={product.stockQuantity}
+                colorSwatches={product.variants
+                  .filter((variant) => variant.hex && variant.color !== 'Standard')
+                  .slice(0, 3)
+                  .map((variant) => ({ label: variant.color, color: variant.hex as string }))}
+              />
+            ))}
+          </ProductRow>
+        </div>
       </Reveal>
 
       {/* Category */}
-      <Reveal className="px-6 py-10">
+      <Reveal className="px-6 py-12 md:px-14">
         <SectionLabel>Category</SectionLabel>
-        <div className="mt-6 flex flex-wrap justify-center gap-x-6 gap-y-8 md:flex-nowrap md:gap-x-10 lg:gap-x-14">
-          {categories.map((category) => (
-            <Link
-              key={category.slug}
-              href={`/listing?category=${category.slug}`}
-              className="flex basis-1/3 flex-col items-center gap-4 md:w-32 md:basis-auto"
-            >
-              <ProductImage
-                imageUrl={category.imageUrl}
-                alt={category.name}
-                sizes="112px"
-                className="h-24 w-24 rounded-full md:h-28 md:w-28"
-              />
-              <span className="text-sm text-foreground md:text-base">{category.name.replace(/^BeU\s+/i, '')}</span>
-            </Link>
-          ))}
-        </div>
+        <CategoryRow categories={categories.map(({ slug, name, imageUrl }) => ({ slug, name, imageUrl }))} />
       </Reveal>
 
       {/* Trust badges */}
       <BenefitsBar labels={settings.benefits} />
 
       {/* Offers */}
-      <Reveal className="px-6 py-10">
+      <Reveal className="px-6 py-16 md:px-14">
         <SectionLabel>Offers &amp; Bundles</SectionLabel>
-        <div className="mx-auto mt-6 grid max-w-6xl grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
+        <div className="mx-auto mt-8 grid max-w-6xl grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           {bundles.map((bundle, index) => (
             <OfferTicket
               key={bundle.slug}
               stubLabel={index % 2 === 0 ? 'Bundle' : 'Premium'}
-              stubColor={index % 2 === 0 ? '#5A6DBE' : '#3B4E99'}
+              tone={index % 2 === 0 ? 'accent' : 'ink'}
               eyebrow="Special Bundle"
               title={bundle.name}
               detail={<>Starting at <strong className="text-foreground">{formatPrice(bundle.price)}</strong></>}
@@ -195,7 +140,7 @@ export default async function Page() {
             <OfferTicket
               key={offer.id}
               stubLabel={offerStub(offer)}
-              stubColor="#4F6BB5"
+              tone="chrome"
               eyebrow="Limited Offer"
               title={offer.name}
               detail={offer.description}
@@ -206,7 +151,7 @@ export default async function Page() {
           {studentOffer && (
             <OfferTicket
               stubLabel={offerStub(studentOffer)}
-              stubColor="#2F7A5A"
+              tone="ice"
               eyebrow="Student Exclusive"
               title={studentOffer.name}
               detail={studentOffer.description}
@@ -219,42 +164,11 @@ export default async function Page() {
 
       {/* Reviews */}
       {reviews.length > 0 && (
-        <Reveal className="bg-muted px-6 py-12">
+        <Reveal className="bg-ice-mist px-6 py-16 md:px-14">
           <SectionLabel>What Our Customer Says</SectionLabel>
-          <div className="mt-8 flex gap-4 overflow-x-auto snap-x snap-mandatory px-2 py-4 md:grid md:grid-cols-3 md:gap-5 md:overflow-visible">
-            {reviews.map((review, index) => (
-              <figure
-                key={review.id}
-                className={`flex w-72 shrink-0 snap-start flex-col gap-3 rounded-md bg-background p-4 shadow-sm md:w-full ${TILTS[index % TILTS.length]}`}
-              >
-                <div className="flex gap-0.5" role="img" aria-label={`${review.rating} out of 5 stars`}>
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <Star
-                      key={i}
-                      size={14}
-                      className={i < review.rating ? 'fill-amber-400 text-amber-400' : 'text-amber-400'}
-                    />
-                  ))}
-                </div>
-                <blockquote className="text-xs italic leading-relaxed text-muted-foreground">
-                  &ldquo;{review.body}&rdquo;
-                </blockquote>
-                <figcaption className="mt-auto flex items-center gap-2 border-t border-border pt-3">
-                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-card text-[9px] font-semibold text-foreground">
-                    {review.authorInitials}
-                  </span>
-                  <span className="leading-tight">
-                    <span className="block text-xs font-semibold">{review.authorName}</span>
-                    <span className="block text-[9px] text-muted-foreground">
-                      {review.isVerifiedPurchase ? 'Verified Buyer' : 'Customer'}
-                    </span>
-                  </span>
-                </figcaption>
-              </figure>
-            ))}
-          </div>
+          <ReviewsSection reviews={reviews} />
         </Reveal>
       )}
-    </>
+    </div>
   );
 }

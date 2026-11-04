@@ -21,7 +21,7 @@ export default async function ResetPasswordPage(props: PageProps<'/reset-passwor
             </p>
             <Link
               href="/forgot-password"
-              className="mt-6 flex h-11 w-full items-center justify-center rounded-full bg-[#8499D9] text-sm font-semibold text-white transition-colors hover:bg-[#6F86CF]"
+              className="mt-6 flex h-11 w-full items-center justify-center rounded-full bg-accent text-sm font-semibold text-on-accent transition-colors hover:bg-accent-hover"
             >
               Request a new link
             </Link>
