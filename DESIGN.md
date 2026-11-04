@@ -298,7 +298,7 @@ Round means "touch me", square means "read me". Interactive controls are full pi
 - **Swatches:** 10px colour dots with a 10% black border.
 
 ### Cards / Containers
-- **Product card:** a 16px image plate (`aspect-3/4` cover for standard, square white contain for featured). The image zooms to 104% on hover; the plate, badges and wishlist button lift 4px together. Text sits below with no card chrome. Featured cards add a star rating and an uppercase Unbounded name.
+- **Product card:** a 16px image plate (`aspect-3/4` for standard, square white for featured). The photo is always contained, never cropped (frames are wide), and multiplied into the plate so a white photo background disappears. The image zooms to 104% on hover; the plate, badges and wishlist button lift 4px together. Text sits below with no card chrome. Featured cards add a star rating and an uppercase Unbounded name.
 - **Offer ticket:** Ice Mist body, 2px Ink outline, 16px radius, coloured vertical stub (accent, ink, ice, chrome) with rotated uppercase label, two notches, dashed perforation and a solid Ink offset shadow.
 - **Footer panel:** 32px radius white card at 80% opacity, 1px white border, blue diffuse shadow.
 - **Internal padding:** 16-20px for tickets and cards, 28-40px for the footer panel.

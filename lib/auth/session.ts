@@ -6,7 +6,10 @@ import { cookies } from 'next/headers';
 import { notFound, redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 
-const COOKIE_NAME = 'beu_session';
+// Cookies are scoped by host, not port, so on localhost the storefront (:3000) and
+// the admin app (:3001) would share one cookie. Giving admin its own name keeps an
+// admin sign-in from replacing a customer session in the same browser.
+const COOKIE_NAME = process.env.APP_MODE === 'admin' ? 'beu_admin_session' : 'beu_session';
 const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 
 export interface CurrentUser {
@@ -89,9 +92,13 @@ export async function requireUser(next?: string): Promise<CurrentUser> {
 
 // Admin pages and every admin Server Action must call this: actions are public
 // POST endpoints, so the layout check alone doesn't protect them. Signed-out
-// visitors go to sign-in; signed-in customers get a 404 so /admin isn't advertised.
+// visitors go to the admin sign-in; signed-in customers get a 404 so the admin
+// area isn't advertised.
 export async function requireAdmin(): Promise<CurrentUser> {
-  const user = await requireUser('/admin');
+  const user = await getCurrentUser();
+  if (!user) {
+    redirect('/admin/login');
+  }
   if (user.role !== 'ADMIN') {
     notFound();
   }

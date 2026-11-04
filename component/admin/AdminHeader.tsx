@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ChevronRight, LogOut, Menu } from 'lucide-react';
-import { logout } from '@/lib/auth/actions';
+import { adminLogout } from '@/lib/auth/admin-actions';
 
 const ADMIN_ROLE_LABEL = 'Store Administrator';
 
@@ -112,7 +112,7 @@ export default function AdminHeader({ adminName, onMobileMenuToggle }: AdminHead
                 <p className="text-sm font-semibold text-foreground">{adminName}</p>
                 <p className="text-xs text-muted-foreground">{ADMIN_ROLE_LABEL}</p>
               </div>
-              <form action={logout}>
+              <form action={adminLogout}>
                 <button
                   type="submit"
                   className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-red-600 hover:bg-muted"

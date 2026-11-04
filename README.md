@@ -66,3 +66,20 @@ app/
 - Buyer-facing routes have no URL prefix (e.g. `/cart`, `/listing/123`)
 - Admin routes are prefixed with `/admin` (e.g. `/admin/products`)
 - `(buyer)` and `(admin)` are organizational only and never appear in the URL
+
+**Running locally**
+
+The storefront and the admin panel run as two separate servers from this one codebase, on different ports:
+
+- **`localhost:3000` is the customer storefront only.** `/admin` returns 404 here.
+- **`localhost:3001` is the admin panel only** (`localhost:3001/admin`). Storefront pages such as `/home` or `/login` return 404 here, and `/` redirects to `/admin`.
+
+| Command | What it starts | URL |
+| --- | --- | --- |
+| `npm run dev` | both servers together | :3000 and :3001 |
+| `npm run dev:store` | the storefront alone | http://localhost:3000 |
+| `npm run dev:admin` | the admin panel alone | http://localhost:3001/admin |
+
+`dev:store` and `dev:admin` each start only one server, so use them when you only need one side. `APP_MODE` (set by these scripts) decides which routes a server answers; `proxy.ts` returns 404 for the rest.
+
+Admin signs in at `/admin/login` and uses its own session cookie (`beu_admin_session`), so it doesn't replace a customer session on :3000.

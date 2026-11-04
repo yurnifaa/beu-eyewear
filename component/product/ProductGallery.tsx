@@ -21,6 +21,9 @@ export default function ProductGallery({ images, alt }: { images: string[]; alt:
           imageUrl={images[index]}
           alt={alt}
           sizes="(min-width: 1024px) 40vw, 100vw"
+          // Product photos are wide: show the whole frame, and let a white photo background melt into the stage.
+          objectFit="contain"
+          imageClassName="mix-blend-multiply"
           className="h-full w-full !border-0 !bg-transparent"
         />
         {count > 1 && (
@@ -53,7 +56,14 @@ export default function ProductGallery({ images, alt }: { images: string[]; alt:
               count > 0 && i === index ? 'ring-accent' : 'ring-transparent hover:ring-accent/40'
             } disabled:cursor-default`}
           >
-            <ProductImage imageUrl={url} alt="" sizes="72px" className="size-16 rounded-[0.875rem] md:size-[4.5rem]" />
+            <ProductImage
+              imageUrl={url}
+              alt=""
+              sizes="72px"
+              objectFit="contain"
+              imageClassName="mix-blend-multiply"
+              className="size-16 rounded-[0.875rem] md:size-[4.5rem]"
+            />
           </button>
         ))}
       </div>

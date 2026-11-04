@@ -56,9 +56,9 @@ export default function ProductCard({
           imageUrl={imageUrl}
           alt={name}
           sizes="(min-width: 768px) 25vw, 160px"
-          objectFit={isFeatured ? 'contain' : 'cover'}
+          objectFit="contain"
           placeholderVariant="brand"
-          imageClassName="beu-zoom"
+          imageClassName="beu-zoom mix-blend-multiply"
           className={`${isFeatured ? 'aspect-square w-full rounded-2xl bg-white' : 'aspect-3/4 w-full rounded-2xl'} ${soldOut ? 'opacity-60' : ''}`}
         />
         {soldOut && (

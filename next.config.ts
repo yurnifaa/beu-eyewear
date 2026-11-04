@@ -1,6 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // The admin app runs next to the storefront from this same folder (see proxy.ts).
+  // `next dev` locks its output folder, so it needs its own.
+  distDir: process.env.APP_MODE === 'admin' ? '.next-admin' : '.next',
   images: {
     // Product photos uploaded from the admin live in Vercel Blob.
     remotePatterns: [{ protocol: 'https', hostname: '*.public.blob.vercel-storage.com' }],

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { User, Heart, LayoutDashboard } from "lucide-react";
+import { User, Heart } from "lucide-react";
 import MobileMenu from "@/component/MobileMenu";
 import NavLogo from "@/component/NavLogo";
 import CartPill from "@/component/CartPill";
@@ -33,11 +33,6 @@ export default async function Header() {
         {/* xl:-mr-3 undoes the symmetric padding so the cart pill stays concentric with the curve. */}
         <div className="flex items-center justify-end gap-0.5 md:gap-1.5 xl:-mr-3">
           <HeaderSearch />
-          {user?.role === "ADMIN" && (
-            <Link href="/admin" aria-label="Admin" className="beu-icon-btn">
-              <LayoutDashboard size={20} strokeWidth={1.75} />
-            </Link>
-          )}
           {user ? (
             <Link href="/account" aria-label="Account" className="beu-icon-btn">
               <User size={20} strokeWidth={1.75} />
