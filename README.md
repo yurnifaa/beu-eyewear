@@ -1,14 +1,10 @@
-# BeU (by BeUs)
-
-BeU is an eyewear ecommerce brand under BeUs, where “Be” + “Us” represents the business and its community. “BeU” means “Be You,” with a tagline direction built around “Be You” and “Be Your...”
-
-BeU is a gender-inclusive brand primarily designed for women aged 16-30. It serves fashion-driven buyers, heavy screen users, outdoor-active individuals, and tech-forward early adopters interested in smart or meta glasses, with an accessible luxury position for upper-middle-income customers.
-
-Its core offerings include sunglasses, anti-radiation glasses, smart or meta glasses, and photochromic lenses. Every purchase includes a complimentary case and microfiber cloth, with a 7-day free return policy, a 1-year warranty on standard eyewear, and a 5-year warranty on smart or meta glasses. This repository contains the BeU ecommerce web app, built with Next.js.
+<h1 align=center>BeU Eyewear - E-Commerce Platform</h1>
+<p align=center>A gender-inclusive eyewear platform offering accessible luxury frames, from anti-radiation and photochromic daily drivers to next-gen smart and meta glasses.</p>
+<h2 align="center"> <a target="_blank" href="https://beu-eyewear.vercel.app/home" rel="nofollow">🔗Click Me!</a></h2>
 
 ## Team Members
 
-![ABUNDO, Jonalene Ryza B.](https://img.shields.io/badge/ABUNDO%2C_Jonalene_Ryza_B.-red?style=for-the-badge) ![ALISWAG, Karylle Vinces J.](https://img.shields.io/badge/ALISWAG%2C_Karylle_Vinces_J.-pink?style=for-the-badge) ![CAYACAP, Faith Aleczes S.](https://img.shields.io/badge/CAYACAP%2C_Faith_Aleczes_S.-yellow?style=for-the-badge) ![DEL ROSARIO, Juana Mari A.](https://img.shields.io/badge/DEL_ROSARIO%2C_Juana_Mari_A.-B22222?style=for-the-badge) ![MAGAAN, Frieda Marie V.](https://img.shields.io/badge/MAGAAN%2C_Frieda_Marie_V.-00008B?style=for-the-badge) ![MULLENO, Jeshaiah Mae A.](https://img.shields.io/badge/MULLENO%2C_Jeshaiah_Mae_A.-blue?style=for-the-badge)
+![ABUNDO, Jonalene Ryza B.](https://img.shields.io/badge/ABUNDO%2C_Jonalene_Ryza_B.-blue?style=for-the-badge) ![ALISWAG, Karylle Vinces J.](https://img.shields.io/badge/ALISWAG%2C_Karylle_Vinces_J.-blue?style=for-the-badge) ![CAYACAP, Faith Aleczes S.](https://img.shields.io/badge/CAYACAP%2C_Faith_Aleczes_S.-blue?style=for-the-badge) ![DEL ROSARIO, Juana Mari A.](https://img.shields.io/badge/DEL_ROSARIO%2C_Juana_Mari_A.-blue?style=for-the-badge) ![MAGAAN, Frieda Marie V.](https://img.shields.io/badge/MAGAAN%2C_Frieda_Marie_V.-blue?style=for-the-badge) ![MULLENO, Jeshaiah Mae A.](https://img.shields.io/badge/MULLENO%2C_Jeshaiah_Mae_A.-blue?style=for-the-badge)
 
 ## Project structure
 
