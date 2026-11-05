@@ -32,7 +32,7 @@ export default function TextField({ id, label, errors, type = 'text', floatingLa
             placeholder=" "
             aria-invalid={hasError || undefined}
             aria-describedby={hasError ? `${id}-error` : undefined}
-            className={`peer h-14 w-full rounded-2xl border bg-background px-4 pt-6 pb-2 text-base text-foreground outline-none focus:ring-1 ${hasError ? 'border-red-500 focus:ring-red-500' : 'border-border focus:border-foreground focus:ring-foreground'}`}
+            className={`peer h-14 w-full rounded-2xl border bg-background/70 px-4 pt-6 pb-2 text-base text-foreground outline-none focus:ring-2 ${hasError ? 'border-red-500 focus:ring-red-500/30' : 'border-border focus:border-accent focus:ring-accent/30'}`}
           />
           <label
             htmlFor={id}

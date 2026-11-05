@@ -4,10 +4,11 @@ import { useActionState, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowRight, Clock, CreditCard, Wallet, Lock, CheckCircle2 } from 'lucide-react';
+import Panel from '@/component/account/Panel';
+import PixelGlyph from '@/component/beu/PixelGlyph';
 import { placeOrder } from '@/app/(buyer)/check-out/actions';
 import AccordionSection from '@/component/AccordionSection';
 import AddressFieldsInputs from '@/component/AddressFields';
-import { buttonClassName } from '@/component/Button';
 import { FieldLabel } from '@/component/FormField';
 import ProductImage from '@/component/ProductImage';
 import { lineKey, removeCartLines, useCartLines } from '@/lib/cart';
@@ -20,9 +21,15 @@ import type { ShippingMethodDetail } from '@/lib/catalog/types';
 import type { SavedAddressRecord } from '@/lib/checkout/saved-address';
 import type { PlaceOrderState } from '@/lib/checkout/types';
 import { formatPrice } from '@/lib/format';
-import styles from './CheckoutForm.module.css';
 
 const initialState: PlaceOrderState = {};
+
+const inkButton =
+  'inline-flex h-14 w-full items-center justify-center gap-2 rounded-full bg-ink text-xs uppercase tracking-[0.16em] text-white transition hover:-translate-y-0.5 disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60';
+
+// Selected option cards (shipping and payment) share one look.
+const optionClass = (selected: boolean) =>
+  `rounded-2xl border-2 transition ${selected ? 'border-foreground bg-accent/10 shadow-[0_10px_24px_rgba(40,100,180,0.15)]' : 'border-border bg-background/60 hover:border-foreground/40'}`;
 
 // What the buyer is told on the payment step. Card numbers and GCash logins are entered on
 // the payment provider's own page after the order is placed, never in this form.
@@ -111,17 +118,24 @@ export default function CheckoutForm({ defaultName, savedAddresses, selectedKeys
   const canSubmit = ready && items.length > 0 && !pending;
 
   if (placedMessage) {
-    return <p className="py-14 text-center text-sm text-muted-foreground">{placedMessage}</p>;
+    return (
+      <div className="flex flex-col items-center gap-4 rounded-3xl border border-border bg-background/80 px-6 py-16 text-center backdrop-blur">
+        <PixelGlyph name="spark" size={48} className="text-accent" />
+        <p className="text-sm text-muted-foreground">{placedMessage}</p>
+      </div>
+    );
   }
 
   if (ready && items.length === 0) {
     return (
-      <div className="py-14 text-center">
-        <p className="text-sm text-muted-foreground">
+      <div className="flex flex-col items-center gap-4 rounded-3xl border-2 border-dashed border-border bg-background/60 px-6 py-16 text-center backdrop-blur">
+        <PixelGlyph name="cross" size={56} className="text-foreground" />
+        <h2 className="font-display text-xl font-black uppercase tracking-[-0.03em]">Nothing to check out</h2>
+        <p className="max-w-sm text-sm text-muted-foreground">
           {unavailableCount > 0 ? 'The items you selected are no longer available.' : 'You have nothing to check out yet.'}
         </p>
-        <Link href="/cart" className={buttonClassName({ variant: 'primary', className: 'mt-6 uppercase' })}>
-          Back to Cart
+        <Link href="/cart" className={`mt-2 px-8 ${inkButton} !h-12 !w-auto`}>
+          Back to cart
         </Link>
       </div>
     );
@@ -129,7 +143,7 @@ export default function CheckoutForm({ defaultName, savedAddresses, selectedKeys
 
   function renderErrorMessage() {
     return (
-      <p aria-live="polite" className="mt-4 min-h-5 text-sm text-red-500">
+      <p aria-live="polite" className="mt-4 min-h-5 text-center text-sm text-red-500">
         {generalError}
       </p>
     );
@@ -141,24 +155,21 @@ export default function CheckoutForm({ defaultName, savedAddresses, selectedKeys
         {!ready ? (
           <p className="text-sm text-muted-foreground">Loading your order…</p>
         ) : (
-          <div className="flex flex-col gap-4">
+          <ul className="flex list-none flex-col divide-y divide-border">
             {items.map((item) => (
-              <div
-                key={lineKey(item.slug, item.color)}
-                className="flex items-center gap-3 py-3"
-              >
-                <ProductImage imageUrl={item.imageUrl} alt={item.name} sizes="80px" objectFit="contain" className="h-20 w-20 shrink-0 rounded-lg" />
+              <li key={lineKey(item.slug, item.color)} className="flex items-center gap-4 py-4 first:pt-0">
+                <ProductImage imageUrl={item.imageUrl} alt={item.name} sizes="80px" objectFit="contain" className="beu-stage size-20 shrink-0 rounded-2xl" />
                 <div className="flex flex-1 items-start justify-between gap-2">
                   <div>
-                    <p className="text-sm font-bold">{item.name}</p>
-                    {item.color && <p className="text-xs text-muted-foreground">Color: {item.color}</p>}
+                    <p className="font-display text-sm font-black uppercase leading-tight tracking-[-0.01em]">{item.name}</p>
+                    {item.color && <p className="mt-1 text-xs text-muted-foreground">Color: {item.color}</p>}
                     <p className="text-xs text-muted-foreground">Qty: {item.quantity}</p>
                   </div>
-                  <p className="shrink-0 text-sm">{formatPrice(item.price * item.quantity)}</p>
+                  <p className="shrink-0 text-sm font-medium">{formatPrice(item.price * item.quantity)}</p>
                 </div>
-              </div>
+              </li>
             ))}
-          </div>
+          </ul>
         )}
 
         {unavailableCount > 0 && ready && (
@@ -168,7 +179,7 @@ export default function CheckoutForm({ defaultName, savedAddresses, selectedKeys
           </p>
         )}
 
-        <div className="mt-6 flex justify-between text-sm text-muted-foreground">
+        <div className="mt-2 flex justify-between border-t border-border pt-4 text-sm text-muted-foreground">
           <span>Item Qty</span>
           <span>{items.reduce((sum, item) => sum + item.quantity, 0)}</span>
         </div>
@@ -180,12 +191,12 @@ export default function CheckoutForm({ defaultName, savedAddresses, selectedKeys
           <span className="text-muted-foreground">Shipping</span>
           <span>{shippingFee === 0 ? 'Free' : formatPrice(shippingFee)}</span>
         </div>
-        <div className="mt-4 flex justify-between font-bold">
-          <span>Total</span>
-          <span>{formatPrice(total)}</span>
+        <div className="mt-4 flex items-baseline justify-between">
+          <span className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Total</span>
+          <span className="font-display text-2xl font-black tracking-[-0.03em]">{formatPrice(total)}</span>
         </div>
 
-        <div className="mt-4 flex flex-col gap-1.5">
+        <div className="mt-6 flex flex-col gap-1.5">
           <FieldLabel htmlFor="promo">Promo / Gift Card</FieldLabel>
           <div className="flex gap-2">
             <input
@@ -198,11 +209,11 @@ export default function CheckoutForm({ defaultName, savedAddresses, selectedKeys
                 if (e.key === 'Enter') e.preventDefault();
               }}
               placeholder="Enter code"
-              className="min-w-0 w-full rounded-sm border border-accent bg-accent/10 px-3 py-2 text-sm outline-none placeholder:text-muted-foreground focus:ring-1 focus:ring-accent"
+              className="h-12 w-full min-w-0 rounded-full border border-border bg-background/70 px-5 text-sm outline-none placeholder:text-muted-foreground focus:border-accent focus:ring-2 focus:ring-accent/30"
             />
             <button
               type="button"
-              className="shrink-0 rounded-sm border border-accent px-4 text-sm text-accent hover:bg-muted"
+              className="beu-chip h-12 shrink-0 px-6 text-xs uppercase tracking-[0.14em]"
             >
               Apply
             </button>
@@ -215,10 +226,10 @@ export default function CheckoutForm({ defaultName, savedAddresses, selectedKeys
             <button
               type="submit"
               disabled={!canSubmit}
-              className={buttonClassName({ variant: 'primary', className: `mt-4 w-full ${styles.placeOrder}` })}
+              className={`mt-4 ${inkButton}`}
             >
               {pending ? 'Preparing payment…' : 'Continue to payment'}
-              {!pending && <ArrowRight size={16} />}
+              {!pending && <ArrowRight size={16} aria-hidden="true" />}
             </button>
           </>
         )}
@@ -227,24 +238,20 @@ export default function CheckoutForm({ defaultName, savedAddresses, selectedKeys
   }
 
   return (
-    <form action={formAction} className={styles.layout}>
+    <form action={formAction} className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] lg:items-start lg:gap-10">
       <input type="hidden" name="lines" value={orderLines} />
       <input type="hidden" name="shippingMethod" value={shippingMethod} />
       <input type="hidden" name="paymentMethod" value={paymentMethod} />
 
-      <div className={styles.mobileSummary}>
+      <Panel className="py-2 md:py-3 lg:hidden">
         <AccordionSection title="Order Summary" defaultOpen>
           {renderOrderSummary(false)}
         </AccordionSection>
-      </div>
+      </Panel>
 
-      <div className="flex min-w-0 flex-col gap-14">
-        <div>
-          <div className="flex items-center gap-3">
-            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-foreground/15 text-sm">1</span>
-            <h2 className="text-base font-medium uppercase">Shipping Address</h2>
-          </div>
-          <div className="mt-6 flex flex-col gap-4 sm:ml-9">
+      <div className="flex min-w-0 flex-col gap-6">
+        <Panel title="Shipping address" index="01">
+          <div className="flex flex-col gap-4">
             {savedAddresses.length > 0 && (
               <div className="flex flex-col gap-1.5">
                 <FieldLabel htmlFor="savedAddress">Ship to</FieldLabel>
@@ -256,7 +263,7 @@ export default function CheckoutForm({ defaultName, savedAddresses, selectedKeys
                     setSelectedAddressId(e.target.value);
                     setSwitchedAt(state);
                   }}
-                  className="w-full rounded-lg bg-muted px-4 py-3 text-sm outline-none"
+                  className="h-12 w-full rounded-2xl border border-border bg-background/70 px-4 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-accent/30"
                 >
                   {savedAddresses.map((address) => (
                     <option key={address.id} value={address.id}>
@@ -266,7 +273,7 @@ export default function CheckoutForm({ defaultName, savedAddresses, selectedKeys
                   ))}
                   <option value={NEW_ADDRESS}>Enter a new address</option>
                 </select>
-                <Link href="/account/addresses" className="text-xs text-muted-foreground underline">
+                <Link href="/account/addresses" className="text-xs text-muted-foreground underline underline-offset-4">
                   Manage address book
                 </Link>
               </div>
@@ -281,55 +288,46 @@ export default function CheckoutForm({ defaultName, savedAddresses, selectedKeys
             />
 
             {canSaveAddress && (
-              <label className="flex cursor-pointer items-center gap-2 text-sm">
+              <label className="flex cursor-pointer items-center gap-3 text-sm">
                 <input
                   type="checkbox"
                   name="saveAddress"
                   defaultChecked={saveAddressChecked}
-                  className="h-4 w-4 accent-foreground"
+                  className="size-5 accent-accent"
                 />
                 Save this address for next time
               </label>
             )}
           </div>
-        </div>
+        </Panel>
 
-        <div>
-          <div className="flex items-center gap-3">
-            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-foreground/15 text-sm">2</span>
-            <h2 className="text-base font-medium uppercase">Shipping Method</h2>
-          </div>
-          <div className="mt-6 grid grid-cols-1 gap-4 sm:ml-9 sm:grid-cols-2">
+        <Panel title="Shipping method" index="02">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {SHIPPING_METHOD_IDS.map((id) => {
               const option = shippingOption(id);
               const selected = shippingMethod === id;
               return (
-                <label
-                  key={id}
-                  className={`flex cursor-pointer flex-col gap-1 rounded-sm border p-4 ${
-                    selected ? 'border-accent ring-1 ring-accent' : 'border-border'
-                  }`}
-                >
+                <label key={id} className={`flex cursor-pointer flex-col gap-1 p-5 ${optionClass(selected)}`}>
                   <div className="flex items-start justify-between gap-2">
-                    <span className="flex items-center gap-2 text-sm font-semibold">
+                    <span className="flex items-center gap-3 text-sm font-semibold">
                       {/* Display only: the chosen method is submitted via the hidden shippingMethod input. */}
                       <input
                         type="radio"
                         name="shipping-option"
                         checked={selected}
                         onChange={() => setShippingMethod(id)}
-                        className="h-4 w-4 accent-accent"
+                        className="size-4 accent-accent"
                       />
-                      {option.label}
+                      <span className="font-display text-sm font-black uppercase tracking-[-0.01em]">{option.label}</span>
                     </span>
-                    <span className="text-sm">{option.fee === 0 ? 'Free' : formatPrice(option.fee)}</span>
+                    <span className="text-sm font-medium">{option.fee === 0 ? 'Free' : formatPrice(option.fee)}</span>
                   </div>
-                  <p className="pl-6 text-xs text-muted-foreground">
-                    {option.minDays}–{option.maxDays} Business Days
+                  <p className="pl-7 text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+                    {option.minDays}–{option.maxDays} business days
                   </p>
                   {selected && (
-                    <p className="ml-6 mt-1 flex items-center gap-1 bg-muted px-2 py-1 text-xs text-muted-foreground">
-                      <Clock size={12} />
+                    <p className="ml-7 mt-2 flex w-fit items-center gap-1.5 rounded-full bg-background/80 px-3 py-1 text-xs text-muted-foreground">
+                      <Clock size={12} aria-hidden="true" />
                       {/* Depends on today's date, which can differ between server render and hydration. */}
                       <span suppressHydrationWarning>Arrives {deliveryEstimate(id, new Date(), option)}</span>
                     </p>
@@ -338,14 +336,10 @@ export default function CheckoutForm({ defaultName, savedAddresses, selectedKeys
               );
             })}
           </div>
-        </div>
+        </Panel>
 
-        <div>
-          <div className="flex items-center gap-3">
-            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-foreground/15 text-sm">3</span>
-            <h2 className="text-base font-medium uppercase">Payment Method</h2>
-          </div>
-          <div className="mt-6 flex max-w-sm gap-3 sm:ml-9">
+        <Panel title="Payment method" index="03">
+          <div className="grid max-w-md grid-cols-2 gap-3">
             {PAYMENT_METHOD_IDS.map((id) => {
               const selected = paymentMethod === id;
               const Icon = id === 'CARD' ? CreditCard : Wallet;
@@ -355,45 +349,36 @@ export default function CheckoutForm({ defaultName, savedAddresses, selectedKeys
                   type="button"
                   onClick={() => setPaymentMethod(id)}
                   aria-pressed={selected}
-                  className={`relative flex min-w-0 flex-1 flex-col items-center gap-2 rounded-sm border px-3 py-3 text-xs font-semibold uppercase ${
-                    selected ? 'border-accent ring-1 ring-accent' : 'border-border text-muted-foreground'
-                  }`}
+                  className={`relative flex min-w-0 flex-col items-center gap-2 px-3 py-4 text-[11px] font-semibold uppercase tracking-[0.1em] ${optionClass(selected)} ${selected ? '' : 'text-muted-foreground'}`}
                 >
                   <Icon size={24} aria-hidden="true" className="text-accent" />
                   {PAYMENT_METHOD_LABELS[id]}
-                  {selected && <CheckCircle2 size={18} aria-hidden="true" className="absolute -top-2 -right-2 rounded-full bg-background text-green-600" />}
+                  {selected && <CheckCircle2 size={18} aria-hidden="true" className="absolute -right-2 -top-2 rounded-full bg-background text-green-600" />}
                 </button>
               );
             })}
           </div>
 
-          <div className="mt-6 max-w-lg sm:ml-9">
+          <div className="mt-6 max-w-lg">
             <p className="text-sm text-muted-foreground">{PAYMENT_HELP[paymentMethod]}</p>
-            <p className="mt-3 flex items-center gap-1.5 text-xs text-muted-foreground">
-              <Lock size={12} aria-hidden="true" />
-              Payments are processed by {PAYMENT_PROVIDER_NAME}. We never see or store your card details.
-            </p>
           </div>
-        </div>
+          <p className="mt-6 flex items-center gap-2 rounded-2xl bg-accent/10 px-4 py-3 text-xs text-muted-foreground">
+            <Lock size={12} aria-hidden="true" className="shrink-0" />
+            Payments are processed by {PAYMENT_PROVIDER_NAME}. We never see or store your card details.
+          </p>
+        </Panel>
 
-        <div className={styles.mobileSubmit}>
+        <div className="lg:hidden">
           {renderErrorMessage()}
-          <button
-            type="submit"
-            disabled={!canSubmit}
-            className={buttonClassName({ variant: 'primary', className: `mt-2 w-full uppercase ${styles.placeOrder}` })}
-          >
+          <button type="submit" disabled={!canSubmit} className={`mt-2 ${inkButton}`}>
             {pending ? 'Preparing payment…' : 'Continue to payment'}
-            {!pending && <ArrowRight size={16} />}
+            {!pending && <ArrowRight size={16} aria-hidden="true" />}
           </button>
         </div>
       </div>
 
-      <div className={styles.desktopSummary}>
-        <div className="rounded-xl border border-border bg-background p-6 shadow-sm">
-          <h2 className="text-sm font-semibold">Order Summary</h2>
-          <div className="mt-4">{renderOrderSummary(true)}</div>
-        </div>
+      <div className="hidden min-w-0 lg:sticky lg:top-28 lg:block">
+        <Panel title="Order summary">{renderOrderSummary(true)}</Panel>
       </div>
     </form>
   );
