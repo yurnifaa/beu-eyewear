@@ -1,10 +1,6 @@
-# BeU (by BeUs)
-
-BeU is an eyewear ecommerce brand under BeUs, where “Be” + “Us” represents the business and its community. “BeU” means “Be You,” with a tagline direction built around “Be You” and “Be Your...”
-
-BeU is a gender-inclusive brand primarily designed for women aged 16-30. It serves fashion-driven buyers, heavy screen users, outdoor-active individuals, and tech-forward early adopters interested in smart or meta glasses, with an accessible luxury position for upper-middle-income customers.
-
-Its core offerings include sunglasses, anti-radiation glasses, smart or meta glasses, and photochromic lenses. Every purchase includes a complimentary case and microfiber cloth, with a 7-day free return policy, a 1-year warranty on standard eyewear, and a 5-year warranty on smart or meta glasses. This repository contains the BeU ecommerce web app, built with Next.js.
+<h1 align=center>BeU Eyewear - E-Commerce Platform</h1>
+<p align=center>A gender-inclusive eyewear platform offering accessible luxury frames—from anti-radiation and photochromic daily drivers to next-gen smart and meta glasses.</p>
+<h2 align="center"> <a target="_blank" href="https://beu-eyewear.vercel.app/home" rel="nofollow">🔗Click Me!</a></h2>
 
 ## Team Members
 
