@@ -26,8 +26,10 @@ export default function IconField({
   return (
     <div>
       <label
-        className={`flex h-12 items-center gap-3 rounded-xl bg-card px-4 text-muted-foreground focus-within:ring-2 focus-within:ring-accent ${
-          message ? 'ring-2 ring-red-400' : ''
+        className={`flex h-12 items-center gap-3 rounded-2xl border bg-background/70 px-4 text-muted-foreground transition focus-within:ring-2 ${
+          message
+            ? 'border-red-400 focus-within:ring-red-400/30'
+            : 'border-border focus-within:border-accent focus-within:ring-accent/30'
         }`}
       >
         {icon}

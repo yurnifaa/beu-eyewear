@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import ForgotPasswordForm from '@/component/ForgotPasswordForm';
+import AuthShell from '@/component/auth/AuthShell';
 import Reveal from '@/component/Reveal';
 import { getCurrentUser } from '@/lib/auth/session';
 
@@ -10,10 +11,10 @@ export default async function ForgotPasswordPage() {
   }
 
   return (
-    <Reveal mode="mount" className="mx-auto w-full max-w-md px-6 py-12">
-      <div className="rounded-2xl border border-border bg-white px-6 py-8 shadow-lg sm:px-10">
+    <AuthShell>
+      <Reveal mode="mount">
         <ForgotPasswordForm />
-      </div>
-    </Reveal>
+      </Reveal>
+    </AuthShell>
   );
 }

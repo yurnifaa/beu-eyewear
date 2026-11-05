@@ -3,7 +3,8 @@
 import { useActionState } from 'react';
 import Link from 'next/link';
 import { Mail } from 'lucide-react';
-import BrandWordmark from '@/component/BrandWordmark';
+import AuthHeading from '@/component/auth/AuthHeading';
+import { authPrimaryClass } from '@/component/auth/auth-classes';
 import IconField from '@/component/IconField';
 import { requestPasswordReset } from '@/lib/auth/account-actions';
 import type { FormState } from '@/lib/auth/types';
@@ -15,13 +16,12 @@ export default function ForgotPasswordForm() {
 
   return (
     <div>
-      <div className="text-center">
-        <BrandWordmark />
-        <h1 className="mt-6 text-base font-semibold">Forgot your password?</h1>
-        <p className="mt-1 text-[11px] text-muted-foreground">
-          Enter your email and we&apos;ll send you a link to choose a new one.
-        </p>
-      </div>
+      <AuthHeading
+        eyebrow="Locked out"
+        title="Forgot password?"
+        glyph="orbit"
+        description="Enter your email and we'll send you a link to choose a new one."
+      />
 
       <form action={formAction} className="mt-6 flex flex-col">
         <IconField
@@ -35,24 +35,20 @@ export default function ForgotPasswordForm() {
 
         <p
           aria-live="polite"
-          className={`mt-3 min-h-5 text-center text-xs ${state.error ? 'text-red-500' : 'text-green-600'}`}
+          className={`mt-3 min-h-5 text-center text-xs ${state.error ? 'text-red-500' : 'text-green-700'}`}
         >
           {state.error ?? state.success}
         </p>
 
-        <button
-          type="submit"
-          disabled={pending}
-          className="mt-2 h-11 w-full rounded-full bg-accent text-sm font-semibold text-on-accent transition-colors hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-70"
-        >
-          {pending ? 'Sending...' : 'Send Reset Link'}
+        <button type="submit" disabled={pending} className={`mt-2 ${authPrimaryClass}`}>
+          {pending ? 'Sending...' : 'Send reset link'}
         </button>
       </form>
 
-      <p className="mt-6 text-center text-sm text-muted-foreground">
+      <p className="mt-6 text-center text-xs text-muted-foreground">
         Remembered it?{' '}
-        <Link href="/login" className="font-semibold text-accent hover:underline">
-          Log In
+        <Link href="/login" className="font-semibold text-accent underline underline-offset-4">
+          Log in
         </Link>
       </p>
     </div>

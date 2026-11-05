@@ -2,7 +2,8 @@
 
 import { useActionState } from 'react';
 import { Lock } from 'lucide-react';
-import BrandWordmark from '@/component/BrandWordmark';
+import AuthHeading from '@/component/auth/AuthHeading';
+import { authPrimaryClass } from '@/component/auth/auth-classes';
 import IconField from '@/component/IconField';
 import { resetPassword } from '@/lib/auth/account-actions';
 import type { FormState } from '@/lib/auth/types';
@@ -14,11 +15,12 @@ export default function ResetPasswordForm({ token }: { token: string }) {
 
   return (
     <div>
-      <div className="text-center">
-        <BrandWordmark />
-        <h1 className="mt-6 text-base font-semibold">Choose a new password</h1>
-        <p className="mt-1 text-[11px] text-muted-foreground">You&apos;ll be signed out of all your devices.</p>
-      </div>
+      <AuthHeading
+        eyebrow="Almost there"
+        title="New password"
+        glyph="shoot"
+        description="Choose something at least 8 characters long. You'll be signed out of all your devices."
+      />
 
       <form action={formAction} className="mt-6 flex flex-col">
         <input type="hidden" name="token" value={token} />
@@ -48,12 +50,8 @@ export default function ResetPasswordForm({ token }: { token: string }) {
           {state.error}
         </p>
 
-        <button
-          type="submit"
-          disabled={pending}
-          className="mt-2 h-11 w-full rounded-full bg-accent text-sm font-semibold text-on-accent transition-colors hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-70"
-        >
-          {pending ? 'Saving...' : 'Reset Password'}
+        <button type="submit" disabled={pending} className={`mt-2 ${authPrimaryClass}`}>
+          {pending ? 'Saving...' : 'Reset password'}
         </button>
       </form>
     </div>

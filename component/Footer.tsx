@@ -53,9 +53,10 @@ const shopLinks = [
 
 const aboutLinks = [
   { label: "Our Story", href: "/about" },
-  { label: "Warranty & Returns", href: "/policies/shipping-returns" },
-  { label: "FAQ", href: "/faq" },
   { label: "Contact Us", href: "/contact" },
+  { label: "FAQ", href: "/faq" },
+  { label: "Shipping & Returns", href: "/policies/shipping-returns" },
+  { label: "Terms & Privacy", href: "/policies/terms-privacy" },
 ];
 
 const linkClassName =
@@ -64,7 +65,7 @@ const linkClassName =
 const socialClassName =
   "flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-ink text-ink transition-colors hover:bg-ink hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2";
 
-const headingClassName = "text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground";
+const headingClassName = "text-[11px] font-medium uppercase tracking-[0.2em] text-muted-foreground";
 
 const GLYPH_ROW: GlyphName[] = [
   "spark", "spark-o", "burst", "orbit", "ball", "shoot",
@@ -147,7 +148,7 @@ export default async function Footer() {
         </div>
       </div>
 
-      <div className="-mx-4 flex flex-wrap items-center justify-between gap-4 bg-ink px-4 py-4 text-xs uppercase tracking-[0.14em] text-ice-mist md:-mx-14 md:px-14">
+      <div className="-mx-4 flex flex-wrap items-center justify-between gap-4 bg-ink px-4 py-4 text-[11px] uppercase tracking-[0.14em] text-ice-mist md:-mx-14 md:px-14">
         <span>© {new Date().getFullYear()} BeU Eyewear</span>
         <span className="flex items-center gap-2">
           <PixelGlyph name="spark" size={12} className="text-ice" />

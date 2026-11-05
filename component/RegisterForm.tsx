@@ -3,7 +3,8 @@
 import { useActionState } from 'react';
 import Link from 'next/link';
 import { Lock, Mail, User } from 'lucide-react';
-import BrandWordmark from '@/component/BrandWordmark';
+import AuthHeading from '@/component/auth/AuthHeading';
+import { authPrimaryClass } from '@/component/auth/auth-classes';
 import IconField from '@/component/IconField';
 import { register } from '@/lib/auth/actions';
 import type { FormState } from '@/lib/auth/types';
@@ -15,11 +16,12 @@ export default function RegisterForm({ next }: { next?: string }) {
 
   return (
     <div>
-      <div className="text-center">
-        <BrandWordmark />
-        <h1 className="mt-6 text-base font-semibold">Create Account</h1>
-        <p className="mt-1 text-[11px] text-muted-foreground">Sign up to check out and track your orders.</p>
-      </div>
+      <AuthHeading
+        eyebrow="New here"
+        title="Create account"
+        glyph="star5"
+        description="Sign up to check out faster and track your orders."
+      />
 
       <form action={formAction} className="mt-6 flex flex-col">
         {next && <input type="hidden" name="next" value={next} />}
@@ -56,20 +58,16 @@ export default function RegisterForm({ next }: { next?: string }) {
           {state.error}
         </p>
 
-        <button
-          type="submit"
-          disabled={pending}
-          className="mt-2 h-11 w-full rounded-full bg-accent text-sm font-semibold text-on-accent transition-colors hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-70"
-        >
-          {pending ? 'Creating account...' : 'Create Account'}
+        <button type="submit" disabled={pending} className={`mt-2 ${authPrimaryClass}`}>
+          {pending ? 'Creating account...' : 'Create account'}
         </button>
       </form>
 
-      <p className="mt-6 text-center text-sm text-muted-foreground">
+      <p className="mt-6 text-center text-xs text-muted-foreground">
         Already have an account?{' '}
         <Link
           href={next ? `/login?next=${encodeURIComponent(next)}` : '/login'}
-          className="font-semibold text-accent hover:underline"
+          className="font-semibold text-accent underline underline-offset-4"
         >
           Sign In
         </Link>

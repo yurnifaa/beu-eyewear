@@ -3,7 +3,8 @@
 import { useActionState } from 'react';
 import Link from 'next/link';
 import { Lock, Mail } from 'lucide-react';
-import BrandWordmark from '@/component/BrandWordmark';
+import AuthHeading from '@/component/auth/AuthHeading';
+import { authPrimaryClass, authSecondaryClass } from '@/component/auth/auth-classes';
 import IconField from '@/component/IconField';
 import { login } from '@/lib/auth/actions';
 import type { FormState } from '@/lib/auth/types';
@@ -29,18 +30,19 @@ export default function LoginForm({ next, onNavigate, onGuest, headingAs: Headin
 
   return (
     <div>
-      <div className="text-center">
-        <BrandWordmark />
-        <Heading id="login-title" className="mt-6 text-base font-semibold">
-          Welcome Back
-        </Heading>
-        <p className="mt-1 text-[11px] text-muted-foreground">Please log in to your account.</p>
-        {notice && (
-          <p role="status" className="mt-3 text-xs text-green-600">
-            {notice}
-          </p>
-        )}
-      </div>
+      <AuthHeading
+        as={Heading}
+        id="login-title"
+        eyebrow="Welcome back"
+        title="Log in"
+        glyph="bolt"
+        description="Pick up where you left off: your orders, saved frames and addresses."
+      />
+      {notice && (
+        <p role="status" className="mt-5 rounded-2xl border border-green-500/30 bg-green-500/10 px-4 py-2.5 text-center text-xs text-green-700">
+          {notice}
+        </p>
+      )}
 
       <form action={formAction} className="mt-6 flex flex-col">
         {next && <input type="hidden" name="next" value={next} />}
@@ -65,7 +67,7 @@ export default function LoginForm({ next, onNavigate, onGuest, headingAs: Headin
         </div>
 
         <div className="mt-2 text-right">
-          <Link href="/forgot-password" onClick={onNavigate} className="text-[11px] font-medium text-accent hover:underline">
+          <Link href="/forgot-password" onClick={onNavigate} className="text-[11px] font-medium text-accent underline-offset-4 hover:underline">
             Forgot password?
           </Link>
         </div>
@@ -74,38 +76,34 @@ export default function LoginForm({ next, onNavigate, onGuest, headingAs: Headin
           {state.error}
         </p>
 
-        <button
-          type="submit"
-          disabled={pending}
-          className="mt-2 h-11 w-full rounded-full bg-accent text-sm font-semibold text-on-accent transition-colors hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-70"
-        >
-          {pending ? 'Logging in...' : 'Log In'}
+        <button type="submit" disabled={pending} className={`mt-2 ${authPrimaryClass}`}>
+          {pending ? 'Logging in...' : 'Log in'}
         </button>
 
         {onGuest ? (
           <button
             type="button"
             onClick={onGuest}
-            className="mt-3 h-11 w-full rounded-full bg-card text-sm font-semibold text-foreground transition-colors hover:bg-accent/15"
+            className={`mt-3 ${authSecondaryClass}`}
           >
             Continue as Guest
           </button>
         ) : (
           <Link
             href="/home"
-            className="mt-3 flex h-11 w-full items-center justify-center rounded-full bg-card text-sm font-semibold text-foreground transition-colors hover:bg-accent/15"
+            className={`mt-3 ${authSecondaryClass}`}
           >
             Continue as Guest
           </Link>
         )}
       </form>
 
-      <p className="mt-6 text-center text-sm text-muted-foreground">
+      <p className="mt-6 text-center text-xs text-muted-foreground">
         Don&apos;t have an account?{' '}
         <Link
           href={next ? `/register?next=${encodeURIComponent(next)}` : '/register'}
           onClick={onNavigate}
-          className="font-semibold text-accent hover:underline"
+          className="font-semibold text-accent underline underline-offset-4"
         >
           Sign Up
         </Link>

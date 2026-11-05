@@ -41,9 +41,9 @@ export default function LoginModal({ open, onClose, next }: LoginModalProps) {
         if (event.target === event.currentTarget) onClose();
       }}
       aria-labelledby="login-title"
-      className="m-auto w-[calc(100%-2rem)] max-w-md rounded-2xl bg-white p-0 text-foreground shadow-xl backdrop:bg-black/60"
+      className="m-auto w-[calc(100%-2rem)] max-w-md rounded-[2rem] border border-white bg-background p-0 text-foreground shadow-[0_24px_50px_rgba(40,100,180,0.25)] backdrop:bg-ink/60 backdrop:backdrop-blur-sm"
     >
-      <div className="px-6 py-8 sm:px-10">
+      <div className="px-7 py-8 sm:px-10">
         {/* Mounted only while open, so errors and fields reset every time. */}
         {open && <LoginForm next={next} onNavigate={onClose} onGuest={onClose} />}
       </div>
