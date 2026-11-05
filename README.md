@@ -91,3 +91,29 @@ The storefront and the admin panel run as two separate servers from this one cod
 `dev:store` and `dev:admin` each start only one server, so use them when you only need one side. `APP_MODE` (set by these scripts) decides which routes a server answers; `proxy.ts` returns 404 for the rest.
 
 Admin signs in at `/admin/login` and uses its own session cookie (`beu_admin_session`), so it doesn't replace a customer session on :3000.
+
+## Payments (PayRex)
+
+Card and GCash are paid on PayRex's hosted checkout page, so card numbers and GCash logins never touch this site. No SDK: `lib/payments/payrex.ts` calls the REST API with `fetch`. (The site's only mention of the provider's name for buyers is `PAYMENT_PROVIDER_NAME` in `lib/checkout/payment.ts`.)
+
+**How an order gets paid**
+
+1. Checkout saves the order as `UNPAID` (stock is held), then creates a PayRex Checkout Session for it and sends the buyer there. Our order id travels in the session's `metadata`.
+2. After paying, PayRex redirects to `/order-confirm/<id>` and calls our webhook, `POST /api/webhooks/payrex` (event `payment_intent.succeeded`), which verifies the signature, checks the amount matches the order and marks it `PAID`.
+3. If the webhook is late (or can't reach localhost), the order pages ask PayRex directly when the buyer comes back, so the order still flips to paid.
+4. A payment page lapses by itself after 24 hours, but that doesn't put the stock back. A daily cron (`vercel.json` > `/api/cron/expire-unpaid-orders`) cancels card/GCash orders still unpaid after 24 hours, closes their payment page and returns the stock. A buyer can retry any time before that with **Pay now** on their order.
+
+**Environment variables** (see `.env.example`)
+
+| Variable | Where it comes from |
+| --- | --- |
+| `PAYREX_SECRET_KEY` | PayRex dashboard > Developers > API Keys > View secret key. `sk_test_...` for testing, `sk_live_...` for real money. |
+| `PAYREX_WEBHOOK_SECRET` | The secret shown when you create the webhook below. |
+| `CRON_SECRET` | Any long random string. Set it in Vercel; Vercel Cron sends it with every cron call. |
+| `APP_URL` | The public address of the storefront (`http://localhost:3000` locally). |
+
+**Webhook setup** (PayRex dashboard > Developers > Webhooks): URL `https://<your-domain>/api/webhooks/payrex`, event `payment_intent.succeeded`. PayRex needs a public HTTPS address, so it can't call `localhost` directly; to test webhooks locally run a tunnel (ngrok or cloudflared) and register the tunnel URL as a test-mode webhook. Without one, payments are still picked up when the buyer returns to the site.
+
+**Testing** (test mode, no real money): card `4242 4242 4242 4242` with any future expiry and any 3-digit CVC. Other test cards (declines, 3-D Secure) are in PayRex's "Testing your integration" page.
+
+**Not handled yet:** refunds (do them in the PayRex dashboard; a paid order can't be cancelled in the app), and Maya or QR Ph. Going live needs PayRex account activation ("Activate your account" in the dashboard).

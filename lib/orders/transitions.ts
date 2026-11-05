@@ -3,6 +3,8 @@ import 'server-only';
 import type { Prisma } from '@prisma/client';
 import { returnOrderItemsToStock } from '@/lib/catalog/stock';
 import { formatOrderNumber } from '@/lib/format';
+import { closeCheckoutSession } from '@/lib/payments/payrex';
+import { syncOrderPayment } from '@/lib/payments/sync';
 import { prisma } from '@/lib/prisma';
 import {
   CANCELLABLE_STATUSES,
@@ -41,13 +43,23 @@ export async function advanceOrder(id: string): Promise<TransitionResult> {
   });
 }
 
-// No payment provider yet, so the admin records payment by hand.
+// Card and GCash payments are recorded automatically by lib/payments/sync.ts. This is the
+// admin's manual fallback, for money that arrived some other way.
 export async function markOrderPaid(id: string): Promise<TransitionResult> {
   const { count } = await prisma.order.updateMany({
     where: { id, paymentStatus: 'UNPAID', status: { not: 'CANCELLED' } },
     data: { paymentStatus: 'PAID', paidAt: new Date() },
   });
-  if (count === 1) return { ok: true, message: 'Order marked as paid.' };
+  if (count === 1) {
+    // Best effort: retire the payment page so the buyer can't pay a second time.
+    const order = await prisma.order.findUnique({ where: { id }, select: { checkoutSessionId: true } });
+    if (order?.checkoutSessionId) {
+      await closeCheckoutSession(order.checkoutSessionId).catch((error) =>
+        console.error('closing payment page after manual payment failed', error instanceof Error ? error.message : 'unknown error'),
+      );
+    }
+    return { ok: true, message: 'Order marked as paid.' };
+  }
 
   const order = await prisma.order.findUnique({ where: { id }, select: { status: true, paymentStatus: true } });
   if (!order) return NOT_FOUND;
@@ -56,10 +68,44 @@ export async function markOrderPaid(id: string): Promise<TransitionResult> {
   return CHANGED;
 }
 
+// An order with a payment page has to have that page closed before it is
+// cancelled, otherwise the buyer could still pay for an order whose stock has gone back
+// on the shelf. This talks to PayRex, so it runs before (not inside) the database
+// transaction. Returns a failure to hand back to the caller, or null when it's fine to go on.
+async function closePaymentPage(id: string, userId?: string): Promise<TransitionResult | null> {
+  const order = await prisma.order.findFirst({
+    where: { id, ...(userId && { userId }) },
+    select: { checkoutSessionId: true, status: true, paymentStatus: true },
+  });
+  // Only when the cancel itself can go ahead; otherwise the page would be closed for nothing.
+  if (!order?.checkoutSessionId || !canCancel(order)) return null;
+
+  let outcome;
+  try {
+    outcome = await closeCheckoutSession(order.checkoutSessionId);
+  } catch (error) {
+    console.error('closing payment page failed', error instanceof Error ? error.message : 'unknown error');
+    return { ok: false, error: "We couldn't reach the payment provider to close this order's payment page. Please try again in a moment." };
+  }
+
+  if (outcome === 'paid') {
+    // The webhook hasn't landed yet. Record the payment now so the order shows as paid.
+    await syncOrderPayment(id);
+    return { ok: false, error: "A payment for this order just went through, so it can't be cancelled." };
+  }
+  if (outcome === 'in-progress') {
+    return { ok: false, error: 'A payment for this order is still being processed. Please check back in a few minutes.' };
+  }
+  return null;
+}
+
 // userId scopes the cancel to its owner for the customer-side action; the admin
 // action leaves it out. The units go back into stock (with a RETURN movement) in the
 // same transaction as the status change, so a failure leaves the order untouched.
 export async function cancelOrder(id: string, scope: { userId?: string } = {}): Promise<TransitionResult> {
+  const blocked = await closePaymentPage(id, scope.userId);
+  if (blocked) return blocked;
+
   return prisma.$transaction(async (tx) => {
     const { count } = await tx.order.updateMany({
       where: {

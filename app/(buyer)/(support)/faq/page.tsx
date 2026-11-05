@@ -5,6 +5,7 @@ import Reveal from '@/component/Reveal';
 import FaqList, { type FaqItem } from '@/component/support/FaqList';
 import SupportHeader from '@/component/support/SupportHeader';
 import { getSupportInfo, rangeLabel } from '@/component/support/support-info';
+import { PAYMENT_PROVIDER_NAME } from '@/lib/checkout/payment';
 import { formatPrice } from '@/lib/format';
 
 export const metadata: Metadata = { title: 'FAQ' };
@@ -47,7 +48,11 @@ export default async function FaqPage() {
   const payments: FaqItem[] = [
     {
       q: 'Which payment methods can I use?',
-      a: 'You can pay by card, e-wallet or bank transfer. The options available are shown at checkout.',
+      a: `You can pay by Visa or Mastercard, or with GCash. Payment is handled securely by ${PAYMENT_PROVIDER_NAME}, so we never see or store your card details.`,
+    },
+    {
+      q: 'What happens if I don\'t finish paying?',
+      a: 'Your order is saved and your items are held for you. You can pay any time from the order page, using Pay now. If an order is still unpaid after 24 hours it is cancelled automatically and the items go back on sale.',
     },
     {
       q: 'Do I need an account to check out?',

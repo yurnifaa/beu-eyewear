@@ -9,6 +9,7 @@ import { MAX_SAVED_ADDRESSES } from '@/lib/checkout/address';
 import { calcTotals } from '@/lib/checkout/pricing';
 import type { PlaceOrderState } from '@/lib/checkout/types';
 import { formatOrderNumber } from '@/lib/format';
+import { openPaymentPage } from '@/lib/payments/checkout';
 import { prisma } from '@/lib/prisma';
 import { checkoutSchema } from '@/lib/validation/checkout';
 
@@ -171,5 +172,11 @@ export async function placeOrder(_prevState: PlaceOrderState, formData: FormData
   }
 
   revalidatePath('/account/orders');
-  return { orderId };
+
+  // The order is saved and its stock held; now open the payment page for it. If
+  // that fails the order stays (unpaid) and the buyer retries from their order page, so
+  // they never have to place it twice.
+  const payment = await openPaymentPage(orderId, user.id);
+  if (!payment.ok) return { orderId, paymentError: payment.error };
+  return { orderId, checkoutUrl: payment.checkoutUrl };
 }

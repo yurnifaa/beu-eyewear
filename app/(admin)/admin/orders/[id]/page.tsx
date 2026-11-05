@@ -5,7 +5,7 @@ import OrderActions from '@/component/admin/OrderActions';
 import { OrderStatusBadge, PaymentStatusBadge } from '@/component/admin/OrderStatusBadge';
 import OrderStatusSteps from '@/component/order/OrderStatusSteps';
 import ShippingInfoCard from '@/component/order/ShippingInfoCard';
-import { PAYMENT_METHOD_LABELS } from '@/lib/checkout/payment';
+import { PAYMENT_METHOD_LABELS, PAYMENT_PROVIDER_NAME } from '@/lib/checkout/payment';
 import { formatOrderNumber, formatPrice } from '@/lib/format';
 import { getAdminOrder } from '@/lib/orders/admin-queries';
 
@@ -130,8 +130,13 @@ export default async function AdminOrderDetailPage(props: PageProps<'/admin/orde
             <p className="text-sm font-semibold uppercase tracking-wide">Payment</p>
             <p className="mt-3 text-sm">{PAYMENT_METHOD_LABELS[order.paymentMethod]}</p>
             <p className="text-sm text-muted-foreground">
-              {order.paymentStatus === 'PAID' ? 'Paid (recorded by hand)' : 'Awaiting payment'}
+              {order.paymentStatus !== 'PAID'
+                ? 'Awaiting payment'
+                : order.paymentRef
+                  ? `Paid via ${PAYMENT_PROVIDER_NAME}`
+                  : 'Paid (recorded by hand)'}
             </p>
+            {order.paymentRef && <p className="mt-1 break-all font-mono text-xs text-muted-foreground">{order.paymentRef}</p>}
           </div>
 
           <div className="rounded-xl border border-border p-6">

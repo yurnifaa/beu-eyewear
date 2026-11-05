@@ -400,6 +400,12 @@ model Order {
   shipZip      String
   shipPhone    String
 
+  // Payment gateway (PayRex). checkoutSessionId is the hosted payment page for this order
+  // (the latest one, if the buyer retried); paymentRef is the gateway's payment id once paid. Both
+  // stay null for orders paid by hand or placed before the gateway was connected.
+  checkoutSessionId String?  @unique
+  paymentRef        String?
+
   createdAt   DateTime  @default(now())
   paidAt      DateTime?
   shippedAt   DateTime?
@@ -410,6 +416,8 @@ model Order {
   items OrderItem[]
 
   @@index([userId, createdAt])
+  // The unpaid-order cleanup looks up old orders by payment state.
+  @@index([paymentStatus, createdAt])
 }
 
 // Snapshots name/color/price and deliberately has no FK to Product: products

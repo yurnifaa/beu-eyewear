@@ -3,7 +3,7 @@
 import { useActionState, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowRight, Clock, CreditCard, Wallet, Landmark, CheckCircle2 } from 'lucide-react';
+import { ArrowRight, Clock, CreditCard, Wallet, Lock, CheckCircle2 } from 'lucide-react';
 import { placeOrder } from '@/app/(buyer)/check-out/actions';
 import AccordionSection from '@/component/AccordionSection';
 import AddressFieldsInputs from '@/component/AddressFields';
@@ -13,7 +13,7 @@ import ProductImage from '@/component/ProductImage';
 import { lineKey, removeCartLines, useCartLines } from '@/lib/cart';
 import { useResolvedCartItems } from '@/lib/cart-items';
 import { MAX_SAVED_ADDRESSES, type AddressFields } from '@/lib/checkout/address';
-import { PAYMENT_METHOD_IDS, PAYMENT_METHOD_LABELS, type PaymentMethodId } from '@/lib/checkout/payment';
+import { PAYMENT_METHOD_IDS, PAYMENT_METHOD_LABELS, PAYMENT_PROVIDER_NAME, type PaymentMethodId } from '@/lib/checkout/payment';
 import { calcTotals } from '@/lib/checkout/pricing';
 import { SHIPPING_METHOD_IDS, SHIPPING_METHODS, deliveryEstimate, type ShippingMethodId } from '@/lib/checkout/shipping';
 import type { ShippingMethodDetail } from '@/lib/catalog/types';
@@ -24,17 +24,12 @@ import styles from './CheckoutForm.module.css';
 
 const initialState: PlaceOrderState = {};
 
-// Card details are collected by the payment provider once PayMongo is wired
-// in. These inputs deliberately have no `name`, so the browser never submits
-// them to placeOrder.
-function CardField({ id, label }: { id: string; label: string }) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <FieldLabel htmlFor={id}>{label}</FieldLabel>
-      <input id={id} type="text" className="h-10 w-full border border-border bg-background px-3 text-sm outline-none focus:border-accent focus:ring-1 focus:ring-accent" />
-    </div>
-  );
-}
+// What the buyer is told on the payment step. Card numbers and GCash logins are entered on
+// the payment provider's own page after the order is placed, never in this form.
+const PAYMENT_HELP: Record<PaymentMethodId, string> = {
+  CARD: `Visa and Mastercard. You’ll enter your card details on ${PAYMENT_PROVIDER_NAME}’s secure payment page.`,
+  WALLET: 'You’ll be sent to GCash to approve the payment.',
+};
 
 interface CheckoutFormProps {
   defaultName: string;
@@ -57,7 +52,8 @@ export default function CheckoutForm({ defaultName, savedAddresses, selectedKeys
   const [shippingMethod, setShippingMethod] = useState<ShippingMethodId>('STANDARD');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethodId>('CARD');
   const [promoCode, setPromoCode] = useState('');
-  const [placed, setPlaced] = useState(false);
+  // Set once the order exists, while the browser leaves for the payment page.
+  const [placedMessage, setPlacedMessage] = useState<string | null>(null);
   const [selectedAddressId, setSelectedAddressId] = useState(
     savedAddresses.find((address) => address.isDefault)?.id ?? NEW_ADDRESS,
   );
@@ -78,9 +74,19 @@ export default function CheckoutForm({ defaultName, savedAddresses, selectedKeys
       if (result.orderId) {
         // Swap to the "placed" panel first so clearing the cart doesn't flash
         // an empty checkout before the navigation lands.
-        setPlaced(true);
+        setPlacedMessage(
+          result.checkoutUrl
+            ? 'Order placed — taking you to the secure payment page…'
+            : 'Order placed — taking you to your order…',
+        );
         removeCartLines(items.map((item) => lineKey(item.slug, item.color)));
-        router.push(`/order-confirm/${result.orderId}`);
+        if (result.checkoutUrl) {
+          // A full navigation: the payment page is the provider's, not ours.
+          window.location.assign(result.checkoutUrl);
+        } else {
+          // The payment page couldn't be opened. The order is saved; "Pay now" is on it.
+          router.push(`/account/orders/${result.orderId}?payment=failed`);
+        }
       }
       return result;
     },
@@ -104,8 +110,8 @@ export default function CheckoutForm({ defaultName, savedAddresses, selectedKeys
   const generalError = state.error ?? fieldErrors.lines?.[0];
   const canSubmit = ready && items.length > 0 && !pending;
 
-  if (placed) {
-    return <p className="py-14 text-center text-sm text-muted-foreground">Order placed — taking you to your confirmation…</p>;
+  if (placedMessage) {
+    return <p className="py-14 text-center text-sm text-muted-foreground">{placedMessage}</p>;
   }
 
   if (ready && items.length === 0) {
@@ -211,7 +217,7 @@ export default function CheckoutForm({ defaultName, savedAddresses, selectedKeys
               disabled={!canSubmit}
               className={buttonClassName({ variant: 'primary', className: `mt-4 w-full ${styles.placeOrder}` })}
             >
-              {pending ? 'Placing order…' : 'Place Order'}
+              {pending ? 'Preparing payment…' : 'Continue to payment'}
               {!pending && <ArrowRight size={16} />}
             </button>
           </>
@@ -342,7 +348,7 @@ export default function CheckoutForm({ defaultName, savedAddresses, selectedKeys
           <div className="mt-6 flex max-w-sm gap-3 sm:ml-9">
             {PAYMENT_METHOD_IDS.map((id) => {
               const selected = paymentMethod === id;
-              const Icon = id === 'CARD' ? CreditCard : id === 'WALLET' ? Wallet : Landmark;
+              const Icon = id === 'CARD' ? CreditCard : Wallet;
               return (
                 <button
                   key={id}
@@ -362,24 +368,12 @@ export default function CheckoutForm({ defaultName, savedAddresses, selectedKeys
           </div>
 
           <div className="mt-6 max-w-lg sm:ml-9">
-            {paymentMethod === 'CARD' ? (
-              <div className="flex flex-col gap-4">
-                <CardField id="card-number" label="Card Number" />
-                <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,0.3fr)] gap-3">
-                  <CardField id="expiry" label="Expiry Date" />
-                  <CardField id="cvv" label="CVV" />
-                </div>
-                <CardField id="card-name" label="Name on Card" />
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                You&apos;ll complete payment via {PAYMENT_METHOD_LABELS[paymentMethod]} at checkout.
-              </p>
-            )}
+            <p className="text-sm text-muted-foreground">{PAYMENT_HELP[paymentMethod]}</p>
+            <p className="mt-3 flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Lock size={12} aria-hidden="true" />
+              Payments are processed by {PAYMENT_PROVIDER_NAME}. We never see or store your card details.
+            </p>
           </div>
-          <p className="mt-4 text-xs text-muted-foreground sm:ml-9">
-            Payment isn&apos;t collected yet — your order will be saved as unpaid.
-          </p>
         </div>
 
         <div className={styles.mobileSubmit}>
@@ -389,7 +383,7 @@ export default function CheckoutForm({ defaultName, savedAddresses, selectedKeys
             disabled={!canSubmit}
             className={buttonClassName({ variant: 'primary', className: `mt-2 w-full uppercase ${styles.placeOrder}` })}
           >
-            {pending ? 'Placing order…' : 'Place Order'}
+            {pending ? 'Preparing payment…' : 'Continue to payment'}
             {!pending && <ArrowRight size={16} />}
           </button>
         </div>
