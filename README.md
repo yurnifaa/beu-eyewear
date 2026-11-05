@@ -110,6 +110,6 @@ Card and GCash are paid on PayRex's hosted checkout page, so card numbers and GC
 
 **Webhook setup** (PayRex dashboard > Developers > Webhooks): URL `https://<your-domain>/api/webhooks/payrex`, event `payment_intent.succeeded`. PayRex needs a public HTTPS address, so it can't call `localhost` directly; to test webhooks locally run a tunnel (ngrok or cloudflared) and register the tunnel URL as a test-mode webhook. Without one, payments are still picked up when the buyer returns to the site.
 
-**Testing** (test mode, no real money): card `4242 4242 4242 4242` with any future expiry and any 3-digit CVC. Other test cards (declines, 3-D Secure) are in PayRex's "Testing your integration" page.
+**Testing** (test mode, no real money): card `4242 4242 4242 4242` with any future expiry and any 3-digit CVC. All the test cards, how to test webhooks locally, and a webhook troubleshooting table are in [docs/payrex-testing.md](docs/payrex-testing.md).
 
 **Not handled yet:** refunds (do them in the PayRex dashboard; a paid order can't be cancelled in the app), and Maya or QR Ph. Going live needs PayRex account activation ("Activate your account" in the dashboard).
