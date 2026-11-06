@@ -80,6 +80,26 @@ body {
   to { transform: translateX(0); }
 }
 
+/* Home page: the scroll stops at each big part (HomeScrollSnap adds .beu-snap to <html> while it is
+   mounted). "mandatory" always settles on a section, and "always" stops a fast flick at every section
+   instead of skipping past. A section taller than the screen can still be scrolled through freely.
+   Every part needs a snap point (mandatory would skip anything between them), and the footer snaps by
+   its end so the bottom of the page stays reachable. To soften it: use "proximity" below, or drop the
+   scroll-snap-stop line. Switched off for reduced motion. */
+.beu-snap-section {
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  scroll-margin-top: var(--beu-header-h, 0px);
+}
+
+.beu-snap-end {
+  scroll-snap-align: end;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html.beu-snap { scroll-snap-type: y mandatory; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .benefits-track { width: 100%; animation: none; }
   .benefits-group { min-width: 0; width: 100%; flex-wrap: wrap; gap: 1.5rem; padding-inline: 1.5rem; }

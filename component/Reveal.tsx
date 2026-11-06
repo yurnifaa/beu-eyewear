@@ -87,23 +87,38 @@ interface ParallaxOptions {
   // Pixels of travel at scroll progress 0 and 1, e.g. [-20, 20]. Keep it small.
   range?: [number, number];
   offset?: UseScrollOptions['offset'];
+  // Direction of travel: vertical (default) or horizontal.
+  axis?: 'x' | 'y';
 }
 
-function useParallax<T extends HTMLElement>({ range = [-20, 20], offset = ['start end', 'end start'] }: ParallaxOptions) {
+function useParallax<T extends HTMLElement>({ range = [-20, 20], offset = ['start end', 'end start'], axis = 'y' }: ParallaxOptions) {
   const ref = useRef<T>(null);
   const reduce = useReducedMotion();
   const { scrollYProgress } = useScroll({ target: ref, offset });
-  const y = useTransform(scrollYProgress, [0, 1], range);
+  const travel = useTransform(scrollYProgress, [0, 1], range);
   // Scroll-linked motion isn't covered by MotionConfig, so reduced motion is handled here.
-  return { ref, style: reduce ? undefined : { y } };
+  return { ref, style: reduce ? undefined : axis === 'x' ? { x: travel } : { y: travel } };
 }
 
 export function Parallax({
   children,
   className = '',
+  as = 'div',
   ...options
-}: ParallaxOptions & { children: ReactNode; className?: string }) {
+}: ParallaxOptions & {
+  children: ReactNode;
+  className?: string;
+  // 'span' keeps the markup valid when the wrapper sits inside a heading or paragraph.
+  as?: 'div' | 'span';
+}) {
   const { ref, style } = useParallax<HTMLDivElement>(options);
+  if (as === 'span') {
+    return (
+      <motion.span ref={ref as unknown as Ref<HTMLSpanElement>} className={className} style={style}>
+        {children}
+      </motion.span>
+    );
+  }
   return (
     <motion.div ref={ref} className={className} style={style}>
       {children}

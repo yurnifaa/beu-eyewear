@@ -53,7 +53,7 @@ export default function PunkBand() {
   return (
     <div
       aria-hidden="true"
-      className="flex h-24 items-center overflow-hidden border-y-[3px] border-white bg-ink text-white"
+      className="beu-snap-section flex h-24 items-center overflow-hidden border-y-[3px] border-white bg-ink text-white"
     >
       <div className="beu-marquee whitespace-nowrap">
         <Group />

@@ -51,12 +51,13 @@ export default function AddToCartSection({ slug, name, variants, lowStockThresho
           </legend>
           <div className="mt-3 flex flex-wrap gap-2">
             {colored.map((variant) => (
-              <label key={variant.color} className="cursor-pointer">
+              <label key={variant.color} className={variant.available <= 0 ? 'cursor-not-allowed' : 'cursor-pointer'}>
                 <input
                   type="radio"
                   name="color"
                   value={variant.color}
                   checked={selectedColor === variant.color}
+                  disabled={variant.available <= 0}
                   onChange={() => {
                     setSelectedColor(variant.color);
                     setQuantity(1);
@@ -75,7 +76,7 @@ export default function AddToCartSection({ slug, name, variants, lowStockThresho
                       style={{ backgroundColor: variant.hex }}
                     />
                   )}
-                  {variant.color}
+                  <span className={variant.available <= 0 ? 'line-through' : undefined}>{variant.color}</span>
                   {variant.available <= 0 && <span className="normal-case opacity-70">(sold out)</span>}
                 </span>
               </label>
@@ -84,24 +85,34 @@ export default function AddToCartSection({ slug, name, variants, lowStockThresho
         </fieldset>
       )}
 
-      {soldOut ? (
-        <p className="inline-flex w-fit items-center gap-2 rounded-full bg-red-600/10 px-3 py-1.5 text-[11px] uppercase tracking-[0.14em] text-red-700">
-          <span aria-hidden="true" className="size-1.5 rounded-full bg-current" />
-          Out of stock
-        </p>
-      ) : (
-        available <= lowStockThreshold && (
+      <div aria-live="polite" className="w-fit">
+        {soldOut ? (
+          <p className="inline-flex w-fit items-center gap-2 rounded-full bg-red-600/10 px-3 py-1.5 text-[11px] uppercase tracking-[0.14em] text-red-700">
+            <span aria-hidden="true" className="size-1.5 rounded-full bg-current" />
+            Out of stock
+          </p>
+        ) : available <= lowStockThreshold ? (
           <p className="inline-flex w-fit items-center gap-2 rounded-full bg-amber-500/15 px-3 py-1.5 text-[11px] uppercase tracking-[0.14em] text-amber-800">
             <span aria-hidden="true" className="size-1.5 rounded-full bg-current" />
             Only {available} left
           </p>
-        )
-      )}
+        ) : (
+          <p className="inline-flex w-fit items-center gap-2 rounded-full bg-ice-mist px-3 py-1.5 text-[11px] uppercase tracking-[0.14em] text-foreground">
+            <span aria-hidden="true" className="size-1.5 rounded-full bg-accent" />
+            {available} in stock
+          </p>
+        )}
+      </div>
 
       <div>
         <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Quantity</p>
         <div className="mt-3">
-          <QuantityStepper value={quantity} onChange={(next) => setQuantity(Math.min(next, Math.max(1, Math.min(available, MAX_QUANTITY))))} />
+          <QuantityStepper
+            value={quantity}
+            max={Math.max(1, Math.min(available, MAX_QUANTITY))}
+            disabled={soldOut}
+            onChange={(next) => setQuantity(Math.min(next, Math.max(1, Math.min(available, MAX_QUANTITY))))}
+          />
         </div>
       </div>
 

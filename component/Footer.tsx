@@ -138,7 +138,7 @@ function MobileSection({
 export default async function Footer() {
   const phones = await supportPhones();
   return (
-    <footer className="beu-footer-bg relative overflow-hidden px-4 pt-6 text-foreground md:px-14 md:pt-16">
+    <footer className="beu-snap-end beu-footer-bg relative overflow-hidden px-4 pt-6 text-foreground md:px-14 md:pt-16">
       <div className="mx-auto max-w-[1328px]">
         <div className="rounded-[2rem] border border-white bg-background/80 px-5 pb-1 pt-5 shadow-[0_24px_50px_rgba(40,100,180,0.16)] md:grid md:grid-cols-[1.6fr_1fr_1fr] md:gap-10 md:p-10">
           {/* Phones: compact, collapsible and tap-friendly. md and up keeps the three-column layout below. */}

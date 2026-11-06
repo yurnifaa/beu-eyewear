@@ -4,6 +4,7 @@ import { useState, type CSSProperties } from "react";
 import Link from "next/link";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import PixelGlyph from "@/component/beu/PixelGlyph";
+import Reveal from "@/component/Reveal";
 
 export interface ShapeOption {
   /** Value used in /listing?shape=… */
@@ -32,7 +33,7 @@ export default function ShapePicker({ shapes }: { shapes: ShapeOption[] }) {
 
   return (
     <section aria-labelledby="shape-picker-title" className="bg-ice-mist px-6 py-20 md:px-14 md:py-24">
-      <div className="mx-auto max-w-[1328px]">
+      <Reveal className="mx-auto max-w-[1328px]">
         <div className="flex items-center justify-between text-xs uppercase tracking-[0.18em]">
           <h2 id="shape-picker-title" className="flex items-center gap-2.5 font-body text-xs font-normal tracking-[0.18em]">
             <PixelGlyph name="spark" size={14} className="text-accent" />
@@ -112,7 +113,7 @@ export default function ShapePicker({ shapes }: { shapes: ShapeOption[] }) {
             );
           })}
         </div>
-      </div>
+      </Reveal>
     </section>
   );
 }

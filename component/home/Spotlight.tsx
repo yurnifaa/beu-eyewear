@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import PixelGlyph from "@/component/beu/PixelGlyph";
-import Reveal, { ParallaxImage } from "@/component/Reveal";
+import Reveal, { Parallax, ParallaxImage } from "@/component/Reveal";
 import type { CatalogProduct } from "@/lib/catalog/types";
 import { formatPrice } from "@/lib/format";
 
@@ -31,7 +31,7 @@ export default function Spotlight({ product }: { product: CatalogProduct }) {
   ].filter(Boolean);
 
   return (
-    <section aria-labelledby="spotlight-title" className="beu-spot-bg relative overflow-hidden px-6 py-20 md:px-14 md:py-24">
+    <section aria-labelledby="spotlight-title" className="beu-snap-section beu-spot-bg relative overflow-hidden px-6 py-20 md:px-14 md:py-24">
       <div aria-hidden="true" className="beu-spot-dots absolute inset-0" />
       {[
         { words: LEFT_WORDS, side: "left-4 rotate-180" },
@@ -66,8 +66,16 @@ export default function Spotlight({ product }: { product: CatalogProduct }) {
               style={{ fontSize: titleSize }}
               className="relative flex flex-col break-words font-display font-black uppercase leading-[0.9] tracking-[-0.07em] text-ink [--spot-pad:3.5rem] md:[--spot-pad:7.5rem]"
             >
-              <span>{lineOne}</span>
-              {lineTwo && <span className="self-end">{lineTwo}</span>}
+              {/* The two lines drift toward each other and line up when the section is centred. The
+                  travel stays within the section's side padding, so no letter is clipped. */}
+              <Parallax as="span" axis="x" range={[-24, 24]}>
+                {lineOne}
+              </Parallax>
+              {lineTwo && (
+                <Parallax as="span" axis="x" range={[24, -24]} className="self-end">
+                  {lineTwo}
+                </Parallax>
+              )}
             </h2>
           </Reveal>
 

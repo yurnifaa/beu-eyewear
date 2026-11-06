@@ -36,6 +36,8 @@ function Row({
 }) {
   const key = itemKey(item);
   const selected = model.isSelected(key);
+  // Lets shoppers re-check what they picked (photos, specs, sizes) before paying.
+  const productHref = `/listing/${item.slug}`;
 
   return (
     <motion.li
@@ -61,10 +63,20 @@ function Row({
 
       <div className={`${s.thumb} ${s.aThumb}`}>
         <CartThumb item={item} sizes="88px" imageClassName="p-2.5" />
+        {/* Whole photo is a link; the name below is the one keyboard/screen-reader stop. */}
+        <Link href={productHref} aria-hidden="true" tabIndex={-1} className="absolute inset-0 z-10 rounded-full" />
       </div>
 
       <div className={s.aInfo}>
-        <p className="font-display text-sm font-bold uppercase leading-snug tracking-tight">{item.name}</p>
+        <p className="font-display text-sm font-bold uppercase leading-snug tracking-tight">
+          <Link
+            href={productHref}
+            aria-label={`View ${item.name}`}
+            className="underline-offset-4 hover:underline focus-visible:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+          >
+            {item.name}
+          </Link>
+        </p>
         {item.color && <p className="mt-0.5 text-xs text-muted-foreground">Color: {item.color}</p>}
       </div>
 
