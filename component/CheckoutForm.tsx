@@ -209,7 +209,7 @@ export default function CheckoutForm({ defaultName, savedAddresses, selectedKeys
                 if (e.key === 'Enter') e.preventDefault();
               }}
               placeholder="Enter code"
-              className="h-12 w-full min-w-0 rounded-full border border-border bg-background/70 px-5 text-sm outline-none placeholder:text-muted-foreground focus:border-accent focus:ring-2 focus:ring-accent/30"
+              className="h-12 w-full min-w-0 rounded-full border border-border bg-background/70 px-5 text-base md:text-sm outline-none placeholder:text-muted-foreground focus:border-accent focus:ring-2 focus:ring-accent/30"
             />
             <button
               type="button"
@@ -263,7 +263,7 @@ export default function CheckoutForm({ defaultName, savedAddresses, selectedKeys
                     setSelectedAddressId(e.target.value);
                     setSwitchedAt(state);
                   }}
-                  className="h-12 w-full rounded-2xl border border-border bg-background/70 px-4 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-accent/30"
+                  className="h-12 w-full rounded-2xl border border-border bg-background/70 px-4 text-base md:text-sm outline-none focus:border-accent focus:ring-2 focus:ring-accent/30"
                 >
                   {savedAddresses.map((address) => (
                     <option key={address.id} value={address.id}>

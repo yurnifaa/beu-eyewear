@@ -1,4 +1,6 @@
 import type { ReactNode } from 'react';
+import Link from 'next/link';
+import { X } from 'lucide-react';
 import PixelGlyph from '@/component/beu/PixelGlyph';
 
 // Full-height ice band (slides behind the floating header) with one frosted
@@ -16,7 +18,10 @@ export default function AuthShell({ children }: { children: ReactNode }) {
       <PixelGlyph name="spark-o" size={40} className="absolute bottom-[20%] right-[13%] z-[1] hidden text-white lg:block" />
 
       <div className="relative z-[2] w-full max-w-md px-4 pb-16 pt-[calc(var(--beu-header-h)+2rem)] sm:px-6">
-        <div className="rounded-[2rem] border border-white bg-background/85 p-7 shadow-[0_24px_50px_rgba(40,100,180,0.18)] backdrop-blur sm:p-10">
+        <div className="relative rounded-[2rem] border border-white bg-background/85 p-7 shadow-[0_24px_50px_rgba(40,100,180,0.18)] backdrop-blur sm:p-10">
+          <Link href="/home" aria-label="Close and go to home" className="beu-icon-btn absolute right-3 top-3 z-10 md:hidden">
+            <X size={20} strokeWidth={1.75} aria-hidden="true" />
+          </Link>
           {children}
         </div>
       </div>

@@ -1,4 +1,7 @@
-import React from 'react';
+'use client';
+
+import React, { useState } from 'react';
+import PasswordToggle from '@/component/PasswordToggle';
 
 export function FieldLabel({ htmlFor, children }: { htmlFor: string; children: React.ReactNode }) {
   return (
@@ -19,6 +22,17 @@ interface TextFieldProps
 
 export default function TextField({ id, label, errors, type = 'text', floatingLabel = false, ...props }: TextFieldProps) {
   const hasError = Boolean(errors?.length);
+  const isPassword = type === 'password';
+  const [showPassword, setShowPassword] = useState(false);
+  const inputType = isPassword && showPassword ? 'text' : type;
+  const toggle = isPassword ? (
+    <PasswordToggle
+      visible={showPassword}
+      onToggle={() => setShowPassword((v) => !v)}
+      className="absolute top-1/2 right-3 -translate-y-1/2"
+    />
+  ) : null;
+  const padRight = isPassword ? ' pr-12' : '';
 
   if (floatingLabel) {
     return (
@@ -28,11 +42,11 @@ export default function TextField({ id, label, errors, type = 'text', floatingLa
             {...props}
             id={id}
             name={id}
-            type={type}
+            type={inputType}
             placeholder=" "
             aria-invalid={hasError || undefined}
             aria-describedby={hasError ? `${id}-error` : undefined}
-            className={`peer h-14 w-full rounded-2xl border bg-background/70 px-4 pt-6 pb-2 text-base text-foreground outline-none focus:ring-2 ${hasError ? 'border-red-500 focus:ring-red-500/30' : 'border-border focus:border-accent focus:ring-accent/30'}`}
+            className={`peer h-14 w-full rounded-2xl border bg-background/70 px-4 pt-6 pb-2 text-base text-foreground outline-none focus:ring-2${padRight} ${hasError ? 'border-red-500 focus:ring-red-500/30' : 'border-border focus:border-accent focus:ring-accent/30'}`}
           />
           <label
             htmlFor={id}
@@ -40,6 +54,7 @@ export default function TextField({ id, label, errors, type = 'text', floatingLa
           >
             {label}
           </label>
+          {toggle}
         </div>
         {hasError && <p id={`${id}-error`} className="text-xs text-red-500">{errors![0]}</p>}
       </div>
@@ -49,17 +64,20 @@ export default function TextField({ id, label, errors, type = 'text', floatingLa
   return (
     <div className="flex flex-col gap-1.5">
       <FieldLabel htmlFor={id}>{label}</FieldLabel>
-      <input
-        id={id}
-        name={id}
-        type={type}
-        aria-invalid={hasError || undefined}
-        aria-describedby={hasError ? `${id}-error` : undefined}
-        className={`h-12 w-full rounded-2xl border bg-background/70 px-4 text-sm outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-accent focus:ring-2 focus:ring-accent/30 ${
-          hasError ? 'border-red-500 focus:border-red-500 focus:ring-red-500/30' : 'border-border'
-        }`}
-        {...props}
-      />
+      <div className="relative">
+        <input
+          id={id}
+          name={id}
+          type={inputType}
+          aria-invalid={hasError || undefined}
+          aria-describedby={hasError ? `${id}-error` : undefined}
+          className={`h-12 w-full rounded-2xl border bg-background/70 px-4 text-base md:text-sm outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-accent focus:ring-2 focus:ring-accent/30${padRight} ${
+            hasError ? 'border-red-500 focus:border-red-500 focus:ring-red-500/30' : 'border-border'
+          }`}
+          {...props}
+        />
+        {toggle}
+      </div>
       {hasError && (
         <p id={`${id}-error`} className="text-xs text-red-500">
           {errors![0]}

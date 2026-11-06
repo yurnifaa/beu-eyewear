@@ -37,7 +37,7 @@ export default function HeaderSearch() {
             type="search"
             name="q"
             placeholder="Search frames..."
-            className="w-full min-w-0 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+            className="w-full min-w-0 bg-transparent text-base md:text-sm outline-none placeholder:text-muted-foreground"
           />
         </div>
       </form>

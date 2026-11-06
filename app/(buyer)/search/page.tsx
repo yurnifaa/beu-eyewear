@@ -51,7 +51,7 @@ export default async function SearchPage(props: PageProps<'/search'>) {
             name="q"
             defaultValue={query}
             placeholder="Search frames, lenses, accessories..."
-            className="h-full w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+            className="h-full w-full bg-transparent text-base md:text-sm outline-none placeholder:text-muted-foreground"
           />
           <button
             type="submit"

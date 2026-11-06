@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import { X } from 'lucide-react';
 import LoginForm from '@/component/LoginForm';
 
 type LoginModalProps = {
@@ -43,6 +44,14 @@ export default function LoginModal({ open, onClose, next }: LoginModalProps) {
       aria-labelledby="login-title"
       className="m-auto w-[calc(100%-2rem)] max-w-md rounded-[2rem] border border-white bg-background p-0 text-foreground shadow-[0_24px_50px_rgba(40,100,180,0.25)] backdrop:bg-ink/60 backdrop:backdrop-blur-sm"
     >
+      <button
+        type="button"
+        onClick={onClose}
+        aria-label="Close log in"
+        className="beu-icon-btn absolute right-3 top-3 z-10 md:hidden"
+      >
+        <X size={20} strokeWidth={1.75} aria-hidden="true" />
+      </button>
       <div className="px-7 py-8 sm:px-10">
         {/* Mounted only while open, so errors and fields reset every time. */}
         {open && <LoginForm next={next} onNavigate={onClose} onGuest={onClose} />}
