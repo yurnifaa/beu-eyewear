@@ -35,14 +35,14 @@ export default function HomeHero() {
           <PixelGlyph name="spark-o" size={40} className="text-white" />
         </Parallax>
 
-        <div className="relative z-[2] w-full pt-[clamp(5.5rem,14vw,12rem)]">
+        <div className="relative z-[2] w-full pt-[calc(min(96vw,36rem)*0.34_-_0.5rem)] md:pt-[clamp(5.5rem,14vw,12rem)]">
           <Parallax range={[0, -24]} offset={HERO_OFFSET}>
             <Image
               src="/hero-glasses.png"
               alt="Silver BeU eyeglasses with faceted ice-blue lenses"
               width={837}
               height={374}
-              priority
+              preload
               sizes="(max-width: 768px) 92vw, 900px"
               className="mx-auto h-auto w-[min(900px,92vw)] -rotate-3 drop-shadow-[0_30px_30px_rgba(30,80,160,0.35)]"
             />

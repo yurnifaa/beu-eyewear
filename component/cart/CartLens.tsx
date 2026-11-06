@@ -1,7 +1,7 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { motion, useReducedMotion } from 'framer-motion';
+import { m, useReducedMotion } from 'framer-motion';
 import Breadcrumb from '@/component/Breadcrumb';
 import PixelGlyph from '@/component/beu/PixelGlyph';
 import SectionLabel from '@/component/SectionLabel';
@@ -30,10 +30,30 @@ function EmptyCart() {
   );
 }
 
+// The product lookup failed (a dropped connection, say) and nothing was saved from last time. Saying
+// "empty" here would be wrong, so offer another try.
+function CartLoadError({ onRetry }: { onRetry: () => void }) {
+  return (
+    <div role="alert" className="mx-auto max-w-lg py-14 text-center">
+      <h2 className="font-display text-2xl font-black uppercase tracking-tight">Couldn&apos;t load your cart</h2>
+      <p className="mx-auto mt-3 max-w-sm text-sm text-muted-foreground">
+        Your items are still saved. Check your connection and try again.
+      </p>
+      <button
+        type="button"
+        onClick={onRetry}
+        className="beu-gloss mt-7 inline-flex h-12 items-center rounded-full px-7 text-xs font-medium uppercase tracking-[0.14em]"
+      >
+        Try again
+      </button>
+    </div>
+  );
+}
+
 export default function CartLens({ recommendations }: { recommendations: ReactNode }) {
   const model = useCartModel();
   const reduce = useReducedMotion();
-  const empty = model.ready && model.items.length === 0;
+  const empty = model.ready && !model.error && model.items.length === 0;
 
   return (
     <div className="relative isolate overflow-clip">
@@ -49,7 +69,7 @@ export default function CartLens({ recommendations }: { recommendations: ReactNo
             <span className="sr-only">Shopping </span>Cart
           </h1>
           {model.ready && model.totalUnits > 0 && (
-            <motion.span
+            <m.span
               initial={reduce ? false : { opacity: 0, scale: 0.6 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.4, ease: EASE_OUT_EXPO }}
@@ -60,7 +80,7 @@ export default function CartLens({ recommendations }: { recommendations: ReactNo
               <span aria-hidden="true" className="font-display text-xl font-black tabular-nums">
                 {model.totalUnits}
               </span>
-            </motion.span>
+            </m.span>
           )}
           <p className="font-accent -rotate-2 text-3xl text-accent sm:text-4xl">
             {empty ? 'start here.' : 'almost yours.'}
@@ -73,6 +93,8 @@ export default function CartLens({ recommendations }: { recommendations: ReactNo
 
         {!model.ready ? (
           <CartSkeleton className="mt-8 max-w-4xl" rows={2} />
+        ) : model.error ? (
+          <CartLoadError onRetry={model.retry} />
         ) : empty ? (
           <EmptyCart />
         ) : (

@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { formValues, type ConfigFormState } from '@/lib/admin/config-form';
 import { requireAdmin } from '@/lib/auth/session';
+import { refreshCatalog } from '@/lib/catalog/cache';
 import { prisma } from '@/lib/prisma';
 
 const FILTER_KINDS = ['FRAME_MATERIAL', 'LENS_OPTION', 'FRAME_SHAPE', 'COLOR_FAMILY'] as const;
@@ -11,6 +12,7 @@ const FILTER_KINDS = ['FRAME_MATERIAL', 'LENS_OPTION', 'FRAME_SHAPE', 'COLOR_FAM
 function refresh() {
   revalidatePath('/admin/options');
   revalidatePath('/admin/products');
+  refreshCatalog();
 }
 
 const optionalNumber = (label: string, max: number) =>

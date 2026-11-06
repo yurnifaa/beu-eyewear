@@ -3,14 +3,16 @@
 import { Prisma } from '@prisma/client';
 import { revalidatePath } from 'next/cache';
 import { requireAdmin } from '@/lib/auth/session';
+import { refreshCatalog } from '@/lib/catalog/cache';
 import { categoryFields, categorySchema, subcategorySchema, type CategoryFormState } from '@/lib/admin/categories';
 import { prisma } from '@/lib/prisma';
 
-// The storefront reads categories straight from the database, so only admin pages need refreshing.
+// Admin pages refresh here; the storefront caches categories for up to a minute, so clear that too.
 function revalidateAdmin() {
   for (const path of ['/admin/categories', '/admin/products', '/admin/inventory', '/admin', '/admin/reports']) {
     revalidatePath(path);
   }
+  refreshCatalog();
 }
 
 function databaseError(error: unknown): CategoryFormState {

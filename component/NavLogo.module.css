@@ -1,12 +1,13 @@
-/* The nav logo: the BeU script (public/Hero-Logo-Script.png) as a mask over the theme's foreground
-   colour. */
+/* The nav logo: the BeU script (public/Hero-Logo-Script.svg) as a mask over the theme's foreground
+   colour. It is a traced vector (about 19 KB gzipped, was a 233 KB PNG), so it arrives with the CSS
+   instead of leaving the logo invisible on a slow connection. */
 .logo {
   display: block;
   height: 2rem;
   aspect-ratio: 1800 / 616;
   background-color: var(--foreground);
-  -webkit-mask: url(/Hero-Logo-Script.png) center / 100% 100% no-repeat;
-  mask: url(/Hero-Logo-Script.png) center / 100% 100% no-repeat;
+  -webkit-mask: url(/Hero-Logo-Script.svg) center / 100% 100% no-repeat;
+  mask: url(/Hero-Logo-Script.svg) center / 100% 100% no-repeat;
 }
 
 @media (min-width: 768px) {

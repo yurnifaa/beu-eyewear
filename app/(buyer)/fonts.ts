@@ -9,10 +9,11 @@ const unbounded = Unbounded({
   display: "swap",
 });
 
+// Only the italic is ever used (.font-accent in beu-theme.css forces it), so the upright file is skipped.
 const instrumentSerif = Instrument_Serif({
   subsets: ["latin"],
   weight: "400",
-  style: ["normal", "italic"],
+  style: ["italic"],
   variable: "--font-instrument",
   display: "swap",
 });

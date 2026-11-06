@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { formValues, type ConfigFormState } from '@/lib/admin/config-form';
 import { requireAdmin } from '@/lib/auth/session';
+import { refreshCatalog } from '@/lib/catalog/cache';
 import { prisma } from '@/lib/prisma';
 
 const offerSchema = z
@@ -36,6 +37,7 @@ function parse(formData: FormData) {
 
 function refresh() {
   revalidatePath('/admin/offers');
+  refreshCatalog();
 }
 
 export async function createOffer(_previous: ConfigFormState, formData: FormData): Promise<ConfigFormState> {

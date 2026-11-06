@@ -2,7 +2,7 @@
 
 import type { Ref } from 'react';
 import Link from 'next/link';
-import { AnimatePresence, motion, type Variants } from 'framer-motion';
+import { AnimatePresence, m, type Variants } from 'framer-motion';
 import { X } from 'lucide-react';
 import { formatPrice } from '@/lib/format';
 import type { ResolvedCartItem } from '@/lib/cart-items';
@@ -40,7 +40,7 @@ function Row({
   const productHref = `/listing/${item.slug}`;
 
   return (
-    <motion.li
+    <m.li
       ref={ref}
       layout="position"
       custom={index}
@@ -111,7 +111,7 @@ function Row({
           <X size={18} aria-hidden="true" />
         </button>
       </div>
-    </motion.li>
+    </m.li>
   );
 }
 

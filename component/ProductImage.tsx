@@ -12,6 +12,9 @@ export interface ProductImageProps {
   imageClassName?: string;
   objectFit?: 'cover' | 'contain';
   placeholderVariant?: PlaceholderImageVariant;
+  // For the photo the page is waiting on (the main photo on a product page): skip lazy loading and
+  // fetch it first. Leave off for everything below the fold.
+  eager?: boolean;
 }
 
 // A product photo when one has been uploaded, otherwise the neutral placeholder.
@@ -23,6 +26,7 @@ export default function ProductImage({
   imageClassName = '',
   objectFit = 'cover',
   placeholderVariant = 'plain',
+  eager = false,
 }: ProductImageProps) {
   if (!imageUrl) {
     return <PlaceholderImage variant={placeholderVariant} className={className} />;
@@ -30,7 +34,15 @@ export default function ProductImage({
 
   return (
     <div className={`relative overflow-hidden border border-border bg-card ${className}`}>
-      <Image src={imageUrl} alt={alt} fill sizes={sizes} className={`object-${objectFit} ${imageClassName}`} />
+      <Image
+        src={imageUrl}
+        alt={alt}
+        fill
+        sizes={sizes}
+        loading={eager ? 'eager' : undefined}
+        fetchPriority={eager ? 'high' : undefined}
+        className={`object-${objectFit} ${imageClassName}`}
+      />
     </div>
   );
 }

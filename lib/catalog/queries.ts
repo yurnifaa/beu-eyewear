@@ -1,9 +1,11 @@
 import 'server-only';
 
+import { unstable_cache } from 'next/cache';
 import { cache } from 'react';
 import type { Prisma, Review } from '@prisma/client';
 import { SHIPPING_METHODS, type ShippingMethodId } from '@/lib/checkout/shipping';
 import { prisma } from '@/lib/prisma';
+import { CATALOG_CACHE_TAG, CATALOG_REVALIDATE_SECONDS } from './cache';
 import { FRAME_MATERIALS, FRAME_SHAPES, LENS_OPTIONS } from './enums';
 import { buildStoreSettings } from './settings';
 import type {
@@ -54,9 +56,18 @@ function undef<T>(value: T | null): T | undefined {
   return value === null ? undefined : value;
 }
 
-export const getStoreSettings = cache(async (): Promise<StoreSettings> => {
-  return buildStoreSettings(await prisma.storeSetting.findMany());
-});
+// Short server cache for the read-only loaders the home and shop pages use. Results are plain JSON
+// (no Dates), so they survive the cache. lib/catalog/cache.ts says how it is refreshed. Loaders that
+// must stay live (a single product's stock, the cart's lookups, order data) are not wrapped.
+function cachedRead<Args extends unknown[], Result>(name: string, read: (...args: Args) => Promise<Result>) {
+  return unstable_cache(read, ['catalog', name], { revalidate: CATALOG_REVALIDATE_SECONDS, tags: [CATALOG_CACHE_TAG] });
+}
+
+export const getStoreSettings = cache(
+  cachedRead('settings', async (): Promise<StoreSettings> => {
+    return buildStoreSettings(await prisma.storeSetting.findMany());
+  }),
+);
 
 // Average and count come from the published reviews, so they can never disagree with the
 // reviews a shopper reads.
@@ -146,16 +157,18 @@ async function present(rows: ProductRow[]): Promise<CatalogProduct[]> {
 
 const CATEGORY_ORDER = [{ displayOrder: 'asc' }, { slug: 'asc' }] satisfies Prisma.CategoryOrderByWithRelationInput[];
 
-const loadCategories = cache(async (): Promise<Category[]> => {
-  const rows = await prisma.category.findMany({ where: { isActive: true }, orderBy: CATEGORY_ORDER });
-  return rows.map((row) => ({
-    slug: row.slug,
-    name: row.name,
-    description: row.description,
-    imageUrl: undef(row.imageUrl),
-    displayOrder: row.displayOrder,
-  }));
-});
+const loadCategories = cache(
+  cachedRead('categories', async (): Promise<Category[]> => {
+    const rows = await prisma.category.findMany({ where: { isActive: true }, orderBy: CATEGORY_ORDER });
+    return rows.map((row) => ({
+      slug: row.slug,
+      name: row.name,
+      description: row.description,
+      imageUrl: undef(row.imageUrl),
+      displayOrder: row.displayOrder,
+    }));
+  }),
+);
 
 export async function getCategories(): Promise<Category[]> {
   return loadCategories();
@@ -214,7 +227,7 @@ export interface ProductResults {
   totalPages: number;
 }
 
-export async function getProducts(filters: ProductFilters = {}): Promise<ProductResults> {
+async function readProducts(filters: ProductFilters): Promise<ProductResults> {
   const where: Prisma.ProductWhereInput = {
     ...VISIBLE,
     ...(filters.category && { categorySlug: filters.category }),
@@ -241,6 +254,12 @@ export async function getProducts(filters: ProductFilters = {}): Promise<Product
 
   const rows = await prisma.product.findMany({ where, include, orderBy: SHOP_ORDER, skip: (page - 1) * pageSize, take: pageSize });
   return { items: await present(rows), total, page, pageSize, totalPages };
+}
+
+const cachedProducts = cachedRead('products', readProducts);
+
+export async function getProducts(filters: ProductFilters = {}): Promise<ProductResults> {
+  return cachedProducts(filters);
 }
 
 export async function getProductBySlug(slug: string): Promise<CatalogProduct | undefined> {
@@ -280,7 +299,7 @@ export async function getRelatedProducts(product: CatalogProduct, limit = 4): Pr
 
 // Products flagged is_featured, in featured_rank order; topped up from the rest of the
 // catalog (one per category first) if fewer than `limit` are flagged.
-export async function getFeaturedProducts(limit = 4): Promise<CatalogProduct[]> {
+async function readFeaturedProducts(limit: number): Promise<CatalogProduct[]> {
   const featured = await prisma.product.findMany({
     where: { ...VISIBLE, isFeatured: true },
     include,
@@ -310,6 +329,12 @@ export async function getFeaturedProducts(limit = 4): Promise<CatalogProduct[]> 
   const fillerRows = filler.length > 0 ? await prisma.product.findMany({ where: { slug: { in: filler } }, include }) : [];
   const bySlug = new Map(fillerRows.map((row) => [row.slug, row]));
   return present([...featured, ...filler.map((slug) => bySlug.get(slug)).filter((row): row is ProductRow => Boolean(row))].slice(0, limit));
+}
+
+const cachedFeaturedProducts = cachedRead('featured-products', readFeaturedProducts);
+
+export async function getFeaturedProducts(limit = 4): Promise<CatalogProduct[]> {
+  return cachedFeaturedProducts(limit);
 }
 
 // Lowest price among eyewear (frames and smart frames), for the "from" price on the home page.
@@ -383,13 +408,17 @@ export async function getProductReviews(slug: string, limit = 20): Promise<Produ
 }
 
 // Reviews flagged for the home page, in their home display order.
-export async function getFeaturedReviews(limit = 3): Promise<ProductReview[]> {
+const cachedFeaturedReviews = cachedRead('featured-reviews', async (limit: number): Promise<ProductReview[]> => {
   const rows = await prisma.review.findMany({
     where: { status: 'PUBLISHED', featuredOrder: { not: null }, product: { is: VISIBLE } },
     orderBy: [{ featuredOrder: 'asc' }, { id: 'asc' }],
     take: limit,
   });
   return rows.map(toReview);
+});
+
+export async function getFeaturedReviews(limit = 3): Promise<ProductReview[]> {
+  return cachedFeaturedReviews(limit);
 }
 
 // ---- Bundles, offers, filters and product page content -----------------------------------
@@ -408,7 +437,7 @@ export async function getBundleComponents(slug: string): Promise<BundleComponent
   }));
 }
 
-export async function getOffers(): Promise<Offer[]> {
+const getOffersCached = cachedRead('offers', async (): Promise<Offer[]> => {
   const rows = await prisma.offer.findMany({
     where: { isActive: true, OR: [{ endsAt: null }, { endsAt: { gt: new Date() } }] },
     orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
@@ -424,6 +453,10 @@ export async function getOffers(): Promise<Offer[]> {
     requiresCode: row.requiresCode,
     endsAt: row.endsAt?.toISOString(),
   }));
+});
+
+export async function getOffers(): Promise<Offer[]> {
+  return getOffersCached();
 }
 
 export interface CatalogFilters {
@@ -433,7 +466,7 @@ export interface CatalogFilters {
   color: FilterOption[];
 }
 
-export async function getFilterOptions(): Promise<CatalogFilters> {
+const getFilterOptionsCached = cachedRead('filter-options', async (): Promise<CatalogFilters> => {
   const rows = await prisma.filterOption.findMany({ where: { isActive: true }, orderBy: [{ displayOrder: 'asc' }, { value: 'asc' }] });
   const pick = (kind: (typeof rows)[number]['kind'], fallback: readonly string[]): FilterOption[] => {
     const chosen = rows.filter((row) => row.kind === kind).map((row) => ({ value: row.value, label: row.label, hex: undef(row.hex) }));
@@ -445,6 +478,10 @@ export async function getFilterOptions(): Promise<CatalogFilters> {
     shape: pick('FRAME_SHAPE', FRAME_SHAPES),
     color: pick('COLOR_FAMILY', []),
   };
+});
+
+export async function getFilterOptions(): Promise<CatalogFilters> {
+  return getFilterOptionsCached();
 }
 
 export async function getFrameMaterialDetail(material: string | undefined): Promise<FrameMaterialDetail | undefined> {

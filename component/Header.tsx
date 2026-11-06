@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { User, Heart } from "lucide-react";
 import MobileMenu from "@/component/MobileMenu";
@@ -10,10 +11,21 @@ import WishlistBadge from "@/component/WishlistBadge";
 import { NAV_LINKS } from "@/component/nav-links";
 import { getCurrentUser } from "@/lib/auth/session";
 
-export default async function Header() {
-  // Signed in: user icon goes to /account. Signed out: opens the login modal.
+// Signed in: user icon goes to /account. Signed out: opens the login modal. Reading the session is a
+// database lookup, so it streams in behind Suspense (showing the login button, which is what most
+// visitors see) instead of holding up the header and the page under it.
+async function AccountButton() {
   const user = await getCurrentUser();
+  if (!user) return <LoginModalTrigger />;
 
+  return (
+    <Link href="/account" aria-label="Account" className="beu-icon-btn">
+      <User size={20} strokeWidth={1.75} />
+    </Link>
+  );
+}
+
+export default function Header() {
   return (
     // The wrapper is see-through and click-through; only the pill takes clicks.
     // Its height is --beu-header-h so the home hero can slide up behind it.
@@ -33,13 +45,9 @@ export default async function Header() {
         {/* xl:-mr-3 undoes the symmetric padding so the cart pill stays concentric with the curve. */}
         <div className="flex items-center justify-end gap-0.5 md:gap-1.5 xl:-mr-3">
           <HeaderSearch />
-          {user ? (
-            <Link href="/account" aria-label="Account" className="beu-icon-btn">
-              <User size={20} strokeWidth={1.75} />
-            </Link>
-          ) : (
-            <LoginModalTrigger />
-          )}
+          <Suspense fallback={<LoginModalTrigger />}>
+            <AccountButton />
+          </Suspense>
           <Link href="/account/wishlist" aria-label="Wishlist" className="beu-icon-btn relative hidden md:inline-flex">
             <Heart size={20} strokeWidth={1.75} />
             <WishlistBadge />

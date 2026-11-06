@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { requireUser } from '@/lib/auth/session';
+import { refreshCatalog } from '@/lib/catalog/cache';
 import { findVariant, getProductsBySlugs, getShippingMethods } from '@/lib/catalog/queries';
 import { OutOfStockError, takeStock } from '@/lib/catalog/stock';
 import { MAX_SAVED_ADDRESSES } from '@/lib/checkout/address';
@@ -172,6 +173,8 @@ export async function placeOrder(_prevState: PlaceOrderState, formData: FormData
   }
 
   revalidatePath('/account/orders');
+  // Placing an order took stock, so the cached shop pages should show the new figures.
+  refreshCatalog();
 
   // The order is saved and its stock held; now open the payment page for it. If
   // that fails the order stays (unpaid) and the buyer retries from their order page, so

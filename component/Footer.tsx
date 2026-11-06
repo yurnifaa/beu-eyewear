@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { Suspense } from "react";
 import Link from "next/link";
 import { ChevronDown, Phone } from "lucide-react";
 import PixelGlyph, { type GlyphName } from "@/component/beu/PixelGlyph";
@@ -135,8 +136,34 @@ function MobileSection({
   );
 }
 
-export default async function Footer() {
-  const phones = await supportPhones();
+function PhoneButtons({ phones }: { phones: string[] }) {
+  return (
+    <div className={`grid gap-2 ${phones.length === 1 ? "grid-cols-1" : "grid-cols-2"}`}>
+      {phones.map((phone) => (
+        <a
+          key={phone}
+          href={telHref(phone)}
+          className={`flex min-h-12 items-center justify-center gap-1.5 rounded-full border border-ink bg-background px-2 text-xs font-medium ${pressedClassName}`}
+        >
+          <Phone size={15} aria-hidden="true" />
+          {phone}
+        </a>
+      ))}
+    </div>
+  );
+}
+
+async function LivePhoneButtons() {
+  return <PhoneButtons phones={await supportPhones()} />;
+}
+
+async function LivePhoneText() {
+  return <>{(await supportPhones()).join(" / ")}</>;
+}
+
+// The numbers come from the store settings (a database read). They sit behind Suspense and show the
+// printed numbers meanwhile, so the footer never holds up the page it belongs to.
+export default function Footer() {
   return (
     <footer className="beu-snap-end beu-footer-bg relative overflow-hidden px-4 pt-6 text-foreground md:px-14 md:pt-16">
       <div className="mx-auto max-w-[1328px]">
@@ -155,18 +182,9 @@ export default async function Footer() {
             </p>
 
             <p className="mb-2 mt-[18px] text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Need help? Tap to call</p>
-            <div className={`grid gap-2 ${phones.length === 1 ? "grid-cols-1" : "grid-cols-2"}`}>
-              {phones.map((phone) => (
-                <a
-                  key={phone}
-                  href={telHref(phone)}
-                  className={`flex min-h-12 items-center justify-center gap-1.5 rounded-full border border-ink bg-background px-2 text-xs font-medium ${pressedClassName}`}
-                >
-                  <Phone size={15} aria-hidden="true" />
-                  {phone}
-                </a>
-              ))}
-            </div>
+            <Suspense fallback={<PhoneButtons phones={DEFAULT_PHONES} />}>
+              <LivePhoneButtons />
+            </Suspense>
 
             <div className="mt-4">
               <MobileSection title="Shop" links={shopLinks} defaultOpen />
@@ -196,7 +214,11 @@ export default async function Footer() {
             <p className="mt-4 max-w-xs text-xs leading-relaxed text-muted-foreground">
               Merging trendy aesthetics with smart wearable features to protect your vision.
             </p>
-            <p className="mt-6 text-sm">{phones.join(" / ")}</p>
+            <p className="mt-6 text-sm">
+              <Suspense fallback={DEFAULT_PHONES.join(" / ")}>
+                <LivePhoneText />
+              </Suspense>
+            </p>
             <div className="mt-5 flex items-center gap-3">
               <a href="#" aria-label="Instagram" className={socialClassName}>
                 <InstagramIcon />

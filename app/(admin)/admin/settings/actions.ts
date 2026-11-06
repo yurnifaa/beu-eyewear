@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { formValues, type ConfigFormState } from '@/lib/admin/config-form';
 import { requireAdmin } from '@/lib/auth/session';
+import { refreshCatalog } from '@/lib/catalog/cache';
 import { SETTING_FIELDS } from '@/lib/catalog/settings';
 import { prisma } from '@/lib/prisma';
 
@@ -45,7 +46,8 @@ export async function saveSettings(_previous: ConfigFormState, formData: FormDat
     return { values, error: 'We couldn’t save the settings. Please try again.' };
   }
   revalidatePath('/admin/settings');
-  return { message: 'Settings saved. The shop uses them on the next page load.' };
+  refreshCatalog();
+  return { message: 'Settings saved. The shop uses them within a minute.' };
 }
 
 const shippingSchema = z
@@ -72,5 +74,6 @@ export async function saveShippingRate(method: 'STANDARD' | 'EXPRESS', _previous
     return { values, error: 'We couldn’t save this delivery option. Please try again.' };
   }
   revalidatePath('/admin/settings');
+  refreshCatalog();
   return { message: 'Saved.' };
 }

@@ -2,12 +2,14 @@
 
 import { revalidatePath } from 'next/cache';
 import { requireAdmin } from '@/lib/auth/session';
+import { refreshCatalog } from '@/lib/catalog/cache';
 import { REVIEW_STATUSES, type ReviewStatusValue } from '@/lib/admin/reviews';
 import { prisma } from '@/lib/prisma';
 
-// The storefront reads reviews straight from the database, so only this page needs refreshing.
+// Published reviews show on the storefront (cached for up to a minute), so clear that as well.
 function refresh() {
   revalidatePath('/admin/reviews');
+  refreshCatalog();
 }
 
 export async function setReviewStatus(id: string, status: ReviewStatusValue) {

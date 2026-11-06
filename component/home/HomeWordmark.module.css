@@ -1,4 +1,4 @@
-/* The hero wordmark: the BeU script logo (public/Hero-Logo-Script.png) filled with a medium-to-deep
+/* The hero wordmark: the BeU script logo (public/Hero-Logo-Script.svg) filled with a medium-to-deep
    blue gloss so it stands off the ice background. The outline, glow and shadow live on the wrapper
    (a CSS filter on the masked element itself would be clipped away by its own mask). */
 .wordmark {
@@ -29,6 +29,14 @@
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0.14) 44%, rgba(255, 255, 255, 0) 50%),
     linear-gradient(180deg, #6fb4f0 0%, #3a7bd6 50%, #234f9e 100%);
-  -webkit-mask: url(/Hero-Logo-Script.png) center / 100% 100% no-repeat;
-  mask: url(/Hero-Logo-Script.png) center / 100% 100% no-repeat;
+  -webkit-mask: url(/Hero-Logo-Script.svg) center / 100% 100% no-repeat;
+  mask: url(/Hero-Logo-Script.svg) center / 100% 100% no-repeat;
+}
+
+/* Phones: let the logo span nearly the full screen width (it is positioned edge to edge, so it can
+   run past the hero's side padding). HomeHero sizes the glasses' top gap from the same width. */
+@media (max-width: 767px) {
+  .script {
+    width: min(96vw, 36rem);
+  }
 }

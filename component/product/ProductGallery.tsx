@@ -20,6 +20,7 @@ export default function ProductGallery({ images, alt }: { images: string[]; alt:
         <ProductImage
           imageUrl={images[index]}
           alt={alt}
+          eager={index === 0}
           sizes="(min-width: 1024px) 40vw, 100vw"
           // Product photos are wide: show the whole frame, and let a white photo background melt into the stage.
           objectFit="contain"

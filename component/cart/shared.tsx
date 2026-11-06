@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import Link from 'next/link';
-import { AnimatePresence, animate, motion, useMotionValue, useReducedMotion, useTransform } from 'framer-motion';
+import { AnimatePresence, animate, m, useMotionValue, useReducedMotion, useTransform } from 'framer-motion';
 import { ArrowRight, Check, Minus, Plus } from 'lucide-react';
 import PixelGlyph, { type GlyphName } from '@/component/beu/PixelGlyph';
 import ProductImage from '@/component/ProductImage';
@@ -30,7 +30,7 @@ export function RollingPrice({ value, className = '' }: { value: number; classNa
 
   return (
     <span className={`tabular-nums ${className}`}>
-      <motion.span aria-hidden="true">{text}</motion.span>
+      <m.span aria-hidden="true">{text}</m.span>
       <span className="sr-only">{formatPrice(value)}</span>
     </span>
   );
@@ -160,7 +160,7 @@ export function GelStepper({
       </button>
       <span className={s.stepVal} aria-live="polite" aria-atomic="true">
         <AnimatePresence initial={false} custom={dir}>
-          <motion.span
+          <m.span
             key={value}
             custom={dir}
             variants={rollVariants}
@@ -171,7 +171,7 @@ export function GelStepper({
             className="absolute inset-0 grid place-items-center tabular-nums"
           >
             {value}
-          </motion.span>
+          </m.span>
         </AnimatePresence>
       </span>
       <button type="button" aria-label="Increase quantity" onClick={() => step(value + 1)} className={s.stepBtn}>

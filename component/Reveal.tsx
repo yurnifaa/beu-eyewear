@@ -3,8 +3,9 @@
 import { useRef, type ComponentType, type ReactNode, type Ref } from 'react';
 import Image, { type ImageProps } from 'next/image';
 import {
+  LazyMotion,
   MotionConfig,
-  motion,
+  m,
   useReducedMotion,
   useScroll,
   useTransform,
@@ -25,8 +26,17 @@ const itemVariants: Variants = {
 
 // Wrap the storefront once. With "user", the OS reduced-motion setting turns every transform
 // animation (the slide-up in Reveal) into an instant jump while the opacity fade still plays.
+//
+// The animation engine itself is loaded lazily (LazyMotion + the `m` components below), so it comes
+// in its own chunk after the first paint instead of blocking it on a slow connection.
+const loadMotionFeatures = () => import('./motion-features').then((module) => module.default);
+
 export function MotionProvider({ children }: { children: ReactNode }) {
-  return <MotionConfig reducedMotion="user">{children}</MotionConfig>;
+  return (
+    <LazyMotion features={loadMotionFeatures}>
+      <MotionConfig reducedMotion="user">{children}</MotionConfig>
+    </LazyMotion>
+  );
 }
 
 export interface RevealProps {
@@ -55,21 +65,21 @@ export default function Reveal({ children, className = '', mode = 'inView', dela
       show: { transition: { staggerChildren: step, delayChildren: delay } },
     };
     return (
-      <motion.div className={className} variants={container} initial="hidden" {...trigger}>
+      <m.div className={className} variants={container} initial="hidden" {...trigger}>
         {children}
-      </motion.div>
+      </m.div>
     );
   }
 
   return (
-    <motion.div
+    <m.div
       className={className}
       initial={{ opacity: 0, y: mode === 'mount' ? 12 : 16 }}
       transition={{ duration: DURATION, ease: EASE, delay }}
       {...trigger}
     >
       {children}
-    </motion.div>
+    </m.div>
   );
 }
 
@@ -77,9 +87,9 @@ export default function Reveal({ children, className = '', mode = 'inView', dela
 // components (ProductCard...) never get stuck hidden on pages that don't stagger.
 export function RevealItem({ children, className = '' }: { children: ReactNode; className?: string }) {
   return (
-    <motion.div className={className} variants={itemVariants}>
+    <m.div className={className} variants={itemVariants}>
       {children}
-    </motion.div>
+    </m.div>
   );
 }
 
@@ -114,20 +124,20 @@ export function Parallax({
   const { ref, style } = useParallax<HTMLDivElement>(options);
   if (as === 'span') {
     return (
-      <motion.span ref={ref as unknown as Ref<HTMLSpanElement>} className={className} style={style}>
+      <m.span ref={ref as unknown as Ref<HTMLSpanElement>} className={className} style={style}>
         {children}
-      </motion.span>
+      </m.span>
     );
   }
   return (
-    <motion.div ref={ref} className={className} style={style}>
+    <m.div ref={ref} className={className} style={style}>
       {children}
-    </motion.div>
+    </m.div>
   );
 }
 
 // motion's typings for event handlers clash with next/image's DOM ones, so narrow to what we pass.
-const MotionImage = motion.create(Image) as unknown as ComponentType<
+const MotionImage = m.create(Image) as unknown as ComponentType<
   Omit<ImageProps, 'style'> & { ref?: Ref<HTMLImageElement>; style?: MotionStyle }
 >;
 

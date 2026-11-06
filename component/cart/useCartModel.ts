@@ -12,7 +12,7 @@ export function itemKey(line: CartLine) {
 // selection, totals and the checkout link can't drift apart between designs.
 export function useCartModel() {
   const lines = useCartLines();
-  const { items, ready } = useResolvedCartItems(lines);
+  const { items, ready, error, retry } = useResolvedCartItems(lines);
   const [selected, setSelected] = useState<Record<string, boolean>>({});
 
   // Lines default to selected until explicitly toggled off, so no effect is needed to seed the map.
@@ -27,6 +27,8 @@ export function useCartModel() {
   return {
     items,
     ready,
+    error,
+    retry,
     isSelected,
     allSelected,
     selectedItems,

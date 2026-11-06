@@ -1,6 +1,7 @@
 import 'server-only';
 
 import { revalidatePath } from 'next/cache';
+import { refreshCatalog } from '@/lib/catalog/cache';
 
 // Everything an order change can show up on: both order screens, plus the stock
 // figures a cancel puts back.
@@ -14,4 +15,5 @@ export function revalidateOrderViews(id: string) {
   revalidatePath('/account/orders');
   revalidatePath(`/account/orders/${id}`);
   revalidatePath('/listing');
+  refreshCatalog();
 }

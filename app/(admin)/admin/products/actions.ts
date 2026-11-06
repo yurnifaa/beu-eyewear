@@ -6,6 +6,7 @@ import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { MAX_GALLERY_IMAGES } from '@/lib/admin/product-form';
 import { requireAdmin } from '@/lib/auth/session';
+import { refreshCatalog } from '@/lib/catalog/cache';
 import { PRODUCT_CHECKBOX_FIELDS, PRODUCT_TEXT_FIELDS, type ProductFormState } from '@/lib/catalog/form-state';
 import { prisma } from '@/lib/prisma';
 import { uploadTotalError } from '@/lib/storage/image-rules';
@@ -17,10 +18,11 @@ import {
 } from '@/lib/storage/product-image';
 import { bundleItemSchema, createProductSchema, variantSchema } from '@/lib/validation/product';
 
-// Products are edited in the admin app and read by the storefront straight from Postgres,
-// so there is no cache to clear on the storefront side.
+// Products are edited in the admin app; the storefront caches its catalog reads for a minute, so
+// refreshCatalog() lets it pick the change up straight away.
 function revalidateAdmin() {
   for (const path of ['/admin', '/admin/products', '/admin/inventory']) revalidatePath(path);
+  refreshCatalog();
 }
 
 function uploadErrorMessage(error: unknown) {

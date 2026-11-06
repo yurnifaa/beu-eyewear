@@ -105,3 +105,56 @@ body {
   .benefits-group { min-width: 0; width: 100%; flex-wrap: wrap; gap: 1.5rem; padding-inline: 1.5rem; }
   .benefits-group[aria-hidden="true"] { display: none; }
 }
+
+/* ---------- Slow connections ---------- */
+
+/* Placeholder blocks on loading screens (component/skeleton/Skeleton.tsx). */
+@keyframes beu-skeleton-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+
+.beu-skeleton { animation: beu-skeleton-pulse 1.6s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .beu-skeleton { animation: none; }
+}
+
+/* Scroll reveals start at opacity 0 in the server HTML and only fade in once the scripts have
+   loaded. On a slow connection that can mean blank sections for a long time, so if ConnectionMode
+   hasn't flagged the page as hydrated after 3.5s, show the content anyway. */
+@keyframes beu-reveal-failsafe {
+  to { opacity: 1; transform: none; }
+}
+
+html:not([data-hydrated]) .beu-theme [style*="opacity:0"],
+html:not([data-hydrated]) .beu-theme [style*="opacity: 0"] {
+  animation: beu-reveal-failsafe 0.4s ease-out 3.5s forwards;
+}
+
+/* "Lite" mode (ConnectionMode sets data-lite for Save-Data and 2G/3G): drop what costs the most to
+   run on a weak phone or a slow link. Content, layout and colours stay the same. */
+html[data-lite] .beu-skeleton { animation: none; }
+
+/* No parallax or slide-ins: framer-motion writes these as inline transforms. Opacity fades stay. */
+html[data-lite] .beu-theme [style*="transform"] { transform: none !important; }
+
+/* No scroll snapping. */
+html.beu-snap[data-lite] { scroll-snap-type: none; }
+
+/* Scrolling bands stand still, laid out like the reduced-motion version. */
+html[data-lite] .beu-theme .beu-marquee { animation: none; }
+html[data-lite] .benefits-track { width: 100%; animation: none; }
+html[data-lite] .benefits-group { min-width: 0; width: 100%; flex-wrap: wrap; gap: 1.5rem; padding-inline: 1.5rem; }
+html[data-lite] .benefits-group[aria-hidden="true"] { display: none; }
+
+/* Backdrop blur is one of the costliest effects on low-end GPUs; use a firmer solid fill instead. */
+html[data-lite] .beu-theme :is(.beu-glass, .beu-chip, .beu-bar, .beu-header-pill),
+html[data-lite] [class*="backdrop-blur"] {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+html[data-lite] .beu-theme :is(.beu-chip, .beu-bar, .beu-header-pill):not([data-active="true"]) {
+  background: rgba(255, 255, 255, 0.94);
+}

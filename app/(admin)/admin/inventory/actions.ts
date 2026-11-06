@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { requireAdmin } from '@/lib/auth/session';
+import { refreshCatalog } from '@/lib/catalog/cache';
 import { applyStockAdjustment, stockAdjustmentSchema, type StockFormState } from '@/lib/admin/inventory';
 
 export async function adjustStock(sku: string, _previous: StockFormState, formData: FormData): Promise<StockFormState> {
@@ -27,7 +28,8 @@ export async function adjustStock(sku: string, _previous: StockFormState, formDa
     };
   }
 
-  // The storefront reads stock straight from the database, so only admin pages need refreshing.
+  // The storefront caches stock for up to a minute, so clear that too.
   for (const path of ['/admin/inventory', '/admin', '/admin/products']) revalidatePath(path);
+  refreshCatalog();
   return { message: `Stock is now ${result.after.toLocaleString('en-PH')}.` };
 }

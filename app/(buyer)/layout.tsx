@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import Header from '@/component/Header';
 import Footer from '@/component/Footer';
+import ConnectionMode from '@/component/ConnectionMode';
 import { MotionProvider } from '@/component/Reveal';
 import GlyphSprite from '@/component/beu/GlyphSprite';
 import { storefrontFontVariables } from './fonts';
@@ -13,6 +14,7 @@ export default function BuyerLayout({ children }: { children: ReactNode }) {
     <div className={`beu-theme ${storefrontFontVariables} flex flex-1 flex-col`}>
       {/* Hidden SVG sprite behind every <PixelGlyph> and the eyewear shapes. */}
       <GlyphSprite />
+      <ConnectionMode />
       <Header />
       {/* The scroll reveals start from opacity 0 in the server HTML. With JavaScript off nothing
           would ever fade them in, so show everything in that case. */}
