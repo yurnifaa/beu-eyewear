@@ -2,20 +2,24 @@
 
 import { useRef, type FormEvent } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { Search } from 'lucide-react';
 
 // The search field lives in the header pill itself (no popup). On phones there is no room for it
 // next to the logo, menu and cart, so the icon links to the /search page, which has its own field.
+// On /search itself the header search is hidden, so the page's centered field is the only one.
 export default function HeaderSearch() {
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
+  const pathname = usePathname();
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const query = inputRef.current?.value.trim() ?? '';
     router.push(query ? `/search?q=${encodeURIComponent(query)}` : '/search');
   };
+
+  if (pathname.startsWith('/search')) return null;
 
   return (
     <>

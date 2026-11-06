@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import FilterDropdown, { type FilterDropdownOption } from '@/component/FilterDropdown';
+import MobileFilters, { type MobileFilterGroup } from '@/component/listing/MobileFilters';
 import ProductCard from '@/component/ProductCard';
 import ProductRow from '@/component/ProductRow';
 import Reveal, { RevealItem } from '@/component/Reveal';
@@ -174,6 +175,30 @@ export default async function Page(props: PageProps<'/listing'>) {
   const clearHref = `/listing?category=${activeCategory.slug}`;
   const pageHref = (n: number) => withParams(current, { page: n > 1 ? String(n) : undefined });
 
+  // Phone filter bar: the same facets as the dropdowns, as sheet groups plus removable chips.
+  const allFacetGroups: MobileFilterGroup[] = [
+    { key: 'lens', title: 'Lens option', options: filterOptions.lens, active: lens },
+    { key: 'material', title: 'Frame material', options: filterOptions.material, active: material },
+    { key: 'shape', title: 'Frame shape', options: filterOptions.shape, active: shape },
+    { key: 'color', title: 'Color', options: filterOptions.color, active: color },
+  ];
+  const facetGroups = allFacetGroups.filter((group) => group.options.length > 0);
+  const filterChips = facetGroups.flatMap((group) =>
+    group.active
+      ? [
+          {
+            label: group.options.find((option) => option.value === group.active)?.label ?? group.active,
+            aria: `Remove ${group.title.toLowerCase()} filter`,
+            href: withParams(current, { [group.key]: undefined, page: undefined }),
+          },
+        ]
+      : [],
+  );
+  const mobileBaseParams: Record<string, string> = { category: activeCategory.slug };
+  if (sub) mobileBaseParams.sub = sub;
+  if (sort) mobileBaseParams.sort = sort;
+  const mobileSortLabel = sort === 'price-asc' ? 'Low–High' : sort === 'price-desc' ? 'High–Low' : 'Sort';
+
   return (
     <>
       <ListingHero
@@ -187,7 +212,18 @@ export default async function Page(props: PageProps<'/listing'>) {
 
       {/* Filter bar overlaps the bottom edge of the hero band. */}
       <div className="relative z-10 -mt-7 px-6 md:px-14">
-        <Reveal mode="mount" className="beu-bar mx-auto flex max-w-[1328px] flex-wrap items-center justify-between gap-2 rounded-3xl p-3 md:rounded-full md:px-4">
+        <Reveal mode="mount" className="beu-bar relative mx-auto max-w-[1328px] rounded-[1.75rem] p-2 md:rounded-full md:p-3 md:px-4">
+          <div className="md:hidden">
+            <MobileFilters
+              groups={facetGroups}
+              baseParams={mobileBaseParams}
+              sortOptions={sortOptions}
+              sortLabel={mobileSortLabel}
+              chips={filterChips}
+              clearHref={clearHref}
+            />
+          </div>
+          <div className="hidden flex-wrap items-center justify-between gap-2 md:flex">
           <div className="flex flex-wrap items-center gap-2">
             <FilterDropdown label="Lens Option" activeLabel={lens ? `Lens Option: ${lens}` : undefined} options={lensOptions} />
             <FilterDropdown
@@ -215,6 +251,7 @@ export default async function Page(props: PageProps<'/listing'>) {
             activeLabel={sort ? sortOptions.find((option) => option.active)?.label : undefined}
             options={sortOptions}
           />
+          </div>
         </Reveal>
       </div>
 

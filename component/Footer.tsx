@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { ChevronDown, Phone } from "lucide-react";
 import PixelGlyph, { type GlyphName } from "@/component/beu/PixelGlyph";
 import { getStoreSettings } from "@/lib/catalog/queries";
 
@@ -72,25 +73,120 @@ const GLYPH_ROW: GlyphName[] = [
   "cross", "heart", "star5", "bolt", "skull", "cluster",
 ];
 
-const DEFAULT_PHONES = '(02) 8676-9420 / 0912-345-6789';
+const DEFAULT_PHONES = ['(02) 8676-9420', '0912-345-6789'];
 
 // The footer must never break a page, so a sheet outage just falls back to the printed numbers.
 async function supportPhones() {
   try {
     const { supportPhones: phones } = await getStoreSettings();
-    return phones.length > 0 ? phones.join(' / ') : DEFAULT_PHONES;
+    return phones.length > 0 ? phones : DEFAULT_PHONES;
   } catch {
     return DEFAULT_PHONES;
   }
 }
 
+// Mobile-only pieces: every tap target is at least 48px (min-h-12 / h-12) with a pressed state.
+const pressedClassName = "active:bg-ice-soft focus-visible:outline-2 focus-visible:outline-offset-2";
+
+const mobileSocialClassName =
+  "flex h-12 w-12 items-center justify-center rounded-full border border-ink text-ink transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 active:bg-ice-soft";
+
+function telHref(phone: string) {
+  return `tel:${phone.replace(/[^\d+]/g, "")}`;
+}
+
+// Native <details>: collapses on phones with no client JS, and keyboard/screen-reader friendly.
+function MobileSection({
+  title,
+  links,
+  defaultOpen = false,
+}: {
+  title: string;
+  links: { label: string; href: string }[];
+  defaultOpen?: boolean;
+}) {
+  return (
+    <nav aria-label={title}>
+      <details open={defaultOpen} className="group border-t border-border">
+        <summary
+          className={`flex min-h-14 cursor-pointer list-none items-center justify-between text-xs font-medium uppercase tracking-[0.16em] [&::-webkit-details-marker]:hidden ${pressedClassName}`}
+        >
+          {title}
+          <ChevronDown
+            size={22}
+            aria-hidden="true"
+            className="shrink-0 transition-transform duration-200 group-open:rotate-180 motion-reduce:transition-none"
+          />
+        </summary>
+        <ul className="grid grid-cols-2 gap-x-2 pb-3">
+          {links.map(({ label, href }) => (
+            <li key={label}>
+              <Link
+                href={href}
+                className={`-ml-2.5 flex min-h-12 items-center rounded-xl px-2.5 text-[13px] leading-tight text-foreground ${pressedClassName}`}
+              >
+                {label}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </details>
+    </nav>
+  );
+}
+
 export default async function Footer() {
   const phones = await supportPhones();
   return (
-    <footer className="beu-footer-bg relative overflow-hidden px-4 pt-12 text-foreground md:px-14 md:pt-16">
+    <footer className="beu-footer-bg relative overflow-hidden px-4 pt-6 text-foreground md:px-14 md:pt-16">
       <div className="mx-auto max-w-[1328px]">
-        <div className="grid grid-cols-1 gap-10 rounded-[2rem] border border-white bg-background/80 p-7 shadow-[0_24px_50px_rgba(40,100,180,0.16)] md:grid-cols-[1.6fr_1fr_1fr] md:p-10">
-          <div>
+        <div className="rounded-[2rem] border border-white bg-background/80 px-5 pb-1 pt-5 shadow-[0_24px_50px_rgba(40,100,180,0.16)] md:grid md:grid-cols-[1.6fr_1fr_1fr] md:gap-10 md:p-10">
+          {/* Phones: compact, collapsible and tap-friendly. md and up keeps the three-column layout below. */}
+          <div className="md:hidden">
+            <div className="flex items-center gap-3.5">
+              <Image src="/Logo-Dark-Mark.png" alt="BeU" width={380} height={380} className="h-11 w-11 shrink-0" />
+              <p className="flex flex-col font-display text-xs font-semibold uppercase tracking-[0.06em]">
+                Be your
+                <span className="font-accent text-[1.875rem] font-normal normal-case leading-[1.05] tracking-normal">best self.</span>
+              </p>
+            </div>
+            <p className="mt-3.5 text-xs leading-relaxed text-muted-foreground">
+              Merging trendy aesthetics with smart wearable features to protect your vision.
+            </p>
+
+            <p className="mb-2 mt-[18px] text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Need help? Tap to call</p>
+            <div className={`grid gap-2 ${phones.length === 1 ? "grid-cols-1" : "grid-cols-2"}`}>
+              {phones.map((phone) => (
+                <a
+                  key={phone}
+                  href={telHref(phone)}
+                  className={`flex min-h-12 items-center justify-center gap-1.5 rounded-full border border-ink bg-background px-2 text-xs font-medium ${pressedClassName}`}
+                >
+                  <Phone size={15} aria-hidden="true" />
+                  {phone}
+                </a>
+              ))}
+            </div>
+
+            <div className="mt-4">
+              <MobileSection title="Shop" links={shopLinks} defaultOpen />
+              <MobileSection title="About BeU" links={aboutLinks} />
+            </div>
+
+            <div className="flex min-h-[72px] items-center justify-between border-t border-border">
+              <span className="text-xs font-medium uppercase tracking-[0.16em]">Follow BeU</span>
+              <div className="flex items-center gap-3">
+                <a href="#" aria-label="Instagram" className={mobileSocialClassName}>
+                  <InstagramIcon />
+                </a>
+                <a href="#" aria-label="Facebook" className={mobileSocialClassName}>
+                  <FacebookIcon />
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <div className="hidden md:block">
             <Image src="/Logo-Dark-Mark.png" alt="BeU" width={380} height={380} className="h-14 w-14" />
             <p className="mt-5 font-display text-3xl font-bold uppercase leading-[1.05] tracking-tight">
               Be your
@@ -100,7 +196,7 @@ export default async function Footer() {
             <p className="mt-4 max-w-xs text-xs leading-relaxed text-muted-foreground">
               Merging trendy aesthetics with smart wearable features to protect your vision.
             </p>
-            <p className="mt-6 text-sm">{phones}</p>
+            <p className="mt-6 text-sm">{phones.join(" / ")}</p>
             <div className="mt-5 flex items-center gap-3">
               <a href="#" aria-label="Instagram" className={socialClassName}>
                 <InstagramIcon />
@@ -111,7 +207,7 @@ export default async function Footer() {
             </div>
           </div>
 
-          <nav aria-label="Shop">
+          <nav aria-label="Shop" className="hidden md:block">
             <h2 className={headingClassName}>Shop</h2>
             <ul className="mt-5 flex flex-col gap-3 text-sm">
               {shopLinks.map(({ label, href }) => (
@@ -124,7 +220,7 @@ export default async function Footer() {
             </ul>
           </nav>
 
-          <nav aria-label="About BeU">
+          <nav aria-label="About BeU" className="hidden md:block">
             <h2 className={headingClassName}>About BeU</h2>
             <ul className="mt-5 flex flex-col gap-3 text-sm">
               {aboutLinks.map(({ label, href }) => (
@@ -138,17 +234,17 @@ export default async function Footer() {
           </nav>
         </div>
 
-        <div aria-hidden="true" className="mt-12 flex flex-wrap items-center justify-between gap-4 text-ink">
+        <div aria-hidden="true" className="mt-12 hidden flex-wrap md:flex items-center justify-between gap-4 text-ink">
           {GLYPH_ROW.map((name) => (
             <PixelGlyph key={name} name={name} size={40} className="shrink-0" />
           ))}
         </div>
 
-        <div className="mt-8 pb-10">
+        <div className="mt-6 md:mt-8 md:pb-10">
         </div>
       </div>
 
-      <div className="-mx-4 flex flex-wrap items-center justify-between gap-4 bg-ink px-4 py-4 text-[11px] uppercase tracking-[0.14em] text-ice-mist md:-mx-14 md:px-14">
+      <div className="-mx-4 flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5 bg-ink px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-4 text-[11px] uppercase tracking-[0.14em] text-ice-mist md:-mx-14 md:gap-4 md:px-14">
         <span>© {new Date().getFullYear()} BeU Eyewear</span>
         <span className="flex items-center gap-2">
           <PixelGlyph name="spark" size={12} className="text-ice" />
