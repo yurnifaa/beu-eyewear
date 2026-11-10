@@ -21,11 +21,6 @@ const nextConfig: NextConfig = {
       { source: '/products/:file(.+\\.(?:png|jpg|jpeg|webp|avif))', headers: cache },
     ];
   },
-  experimental: {
-    // Product photos are uploaded through a Server Action. The image limit is
-    // 4 MB (lib/storage/product-image.ts); the extra covers the form's other fields.
-    serverActions: { bodySizeLimit: '5mb' },
-  },
 };
 
 export default nextConfig;

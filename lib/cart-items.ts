@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import type { CartLine } from '@/lib/cart';
-import type { Product } from '@/lib/catalog/types';
+import type { ProductDTO } from '@/lib/catalog/dto';
 
 export interface ResolvedCartItem extends CartLine {
   name: string;
@@ -17,15 +17,15 @@ const noopSubscribe = () => () => {};
 // empty-looking cart. Only the slugs currently in the cart are kept, which keeps it small.
 const CACHE_KEY = 'beu:cart-products:v1';
 
-function readCachedProducts(): Record<string, Product> {
+function readCachedProducts(): Record<string, ProductDTO> {
   try {
-    return JSON.parse(window.localStorage.getItem(CACHE_KEY) ?? '{}') as Record<string, Product>;
+    return JSON.parse(window.localStorage.getItem(CACHE_KEY) ?? '{}') as Record<string, ProductDTO>;
   } catch {
     return {};
   }
 }
 
-function writeCachedProducts(products: Record<string, Product>) {
+function writeCachedProducts(products: Record<string, ProductDTO>) {
   try {
     window.localStorage.setItem(CACHE_KEY, JSON.stringify(products));
   } catch {
@@ -49,7 +49,7 @@ export function useResolvedCartItems(lines: CartLine[]): {
   error: boolean;
   retry: () => void;
 } {
-  const [products, setProducts] = useState<Record<string, Product>>({});
+  const [products, setProducts] = useState<Record<string, ProductDTO>>({});
   const [loadedKey, setLoadedKey] = useState<string | null>(null);
   const [failedKey, setFailedKey] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
@@ -87,7 +87,7 @@ export function useResolvedCartItems(lines: CartLine[]): {
         if (!res.ok) throw new Error(`lookup failed (${res.status})`);
         return res.json();
       })
-      .then((data: { products: Product[] }) => {
+      .then((data: { products: ProductDTO[] }) => {
         if (cancelled) return;
         const fresh = Object.fromEntries((data.products ?? []).map((product) => [product.slug, product]));
         setProducts(fresh);
@@ -112,7 +112,10 @@ export function useResolvedCartItems(lines: CartLine[]): {
     .map((line): ResolvedCartItem | null => {
       const product = products[line.slug];
       if (!product) return null;
-      return { ...line, name: product.name, price: product.price, imageUrl: product.imageUrl };
+      // The chosen color's own cover photo, else the product's. (A copy saved before color photos
+      // existed has no per-color image, so it simply falls back.)
+      const colorImage = product.variants?.find((variant) => variant.color === (line.color ?? 'Standard'))?.imageUrl;
+      return { ...line, name: product.name, price: product.price, imageUrl: colorImage ?? product.imageUrl };
     })
     .filter((item): item is ResolvedCartItem => item !== null);
 

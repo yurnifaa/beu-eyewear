@@ -6,7 +6,8 @@ import AddToCartSection from '@/component/AddToCartSection';
 import PixelGlyph from '@/component/beu/PixelGlyph';
 import Crumbs from '@/component/listing/Crumbs';
 import SubcategoryHeading from '@/component/listing/SubcategoryHeading';
-import ProductGallery from '@/component/product/ProductGallery';
+import ColorGallery from '@/component/product/ColorGallery';
+import ProductColorProvider from '@/component/product/ProductColorProvider';
 import ProductCard from '@/component/ProductCard';
 import ProductRow from '@/component/ProductRow';
 import Reveal, { RevealItem } from '@/component/Reveal';
@@ -73,8 +74,6 @@ export default async function Page(props: PageProps<'/listing/[slug]'>) {
     ? `${product.frameMaterial} Frame · ${lensInfo && product.lensOption ? `${product.lensOption} Coated` : 'UV400 Clear'}`
     : subcategory?.name;
 
-  // Only photos that exist are used; until they are uploaded the page keeps its placeholders.
-  const images = [product.imageUrl, ...product.galleryUrls].filter((url): url is string => Boolean(url));
   const categoryName = category?.name.replace(/^BeU\s+/i, '');
   const onSale = Boolean(product.compareAtPrice);
   const perks = [
@@ -107,9 +106,14 @@ export default async function Page(props: PageProps<'/listing/[slug]'>) {
             />
           </Reveal>
 
+          {/* The selected color is shared by the gallery and the swatches; the gallery shows that color's
+              photos (placeholders until it has any). */}
+          <ProductColorProvider
+            variants={product.variants.map(({ color, available, imageUrls }) => ({ color, available, images: imageUrls }))}
+          >
           <Reveal mode="mount" delay={0.05} className="mt-8 grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] lg:gap-14">
             <div className="lg:sticky lg:top-28 lg:self-start">
-              <ProductGallery images={images} alt={product.name} />
+              <ColorGallery alt={product.name} />
             </div>
 
             <div className="flex min-w-0 flex-col gap-7">
@@ -262,6 +266,7 @@ export default async function Page(props: PageProps<'/listing/[slug]'>) {
               </div>
             </div>
           </Reveal>
+          </ProductColorProvider>
         </div>
       </section>
 

@@ -2,10 +2,12 @@
 
 import { useState } from 'react';
 import { Check, ShoppingBag } from 'lucide-react';
+import { useProductColor } from '@/component/product/ProductColorProvider';
 import QuantityStepper from '@/component/QuantityStepper';
 import WishlistButton from '@/component/WishlistButton';
 import { addToCart } from '@/lib/cart';
 import { LOW_STOCK_THRESHOLD } from '@/lib/catalog/types';
+import { STANDARD_COLOR } from '@/lib/catalog/variants';
 
 export interface AddToCartVariant {
   color: string;
@@ -24,9 +26,9 @@ export interface AddToCartSectionProps {
 const MAX_QUANTITY = 99;
 
 export default function AddToCartSection({ slug, name, variants, lowStockThreshold = LOW_STOCK_THRESHOLD }: AddToCartSectionProps) {
-  const colored = variants.filter((variant) => variant.color !== 'Standard');
-  const firstInStock = colored.find((variant) => variant.available > 0) ?? colored[0];
-  const [selectedColor, setSelectedColor] = useState(firstInStock?.color);
+  const colored = variants.filter((variant) => variant.color !== STANDARD_COLOR);
+  // The selected color lives in the page's color provider so the photo gallery can follow it.
+  const { selectedColor, selectColor } = useProductColor();
   const [quantity, setQuantity] = useState(1);
   const [justAdded, setJustAdded] = useState(false);
 
@@ -59,7 +61,7 @@ export default function AddToCartSection({ slug, name, variants, lowStockThresho
                   checked={selectedColor === variant.color}
                   disabled={variant.available <= 0}
                   onChange={() => {
-                    setSelectedColor(variant.color);
+                    selectColor(variant.color);
                     setQuantity(1);
                   }}
                   className="peer sr-only"

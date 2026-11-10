@@ -55,24 +55,28 @@ export async function getAdminProducts(filters: AdminProductFilters) {
     select: {
       slug: true,
       name: true,
-      imageUrl: true,
       listPrice: true,
       salePrice: true,
       status: true,
       productType: true,
       category: { select: { name: true } },
       subcategory: { select: { name: true } },
-      variants: { select: { stockQuantity: true, isActive: true } },
+      variants: { select: { stockQuantity: true, isActive: true, isDefault: true, imageUrls: true } },
     },
   });
 
   return {
     products: rows.map((row) => {
       const active = row.variants.filter((variant) => variant.isActive);
+      // Same cover the shop uses: the default color's first photo, else any color's.
+      const cover =
+        row.variants.find((variant) => variant.isDefault && variant.imageUrls.length > 0)?.imageUrls[0] ??
+        row.variants.find((variant) => variant.imageUrls.length > 0)?.imageUrls[0] ??
+        null;
       return {
         slug: row.slug,
         name: row.name,
-        imageUrl: row.imageUrl,
+        imageUrl: cover,
         listPrice: row.listPrice,
         salePrice: row.salePrice,
         status: row.status,
@@ -154,8 +158,6 @@ export async function getProductForEdit(slug: string): Promise<ProductFormDefaul
     returnWindowDays: text(row.returnWindowDays),
     sortOrder: String(row.sortOrder),
     status: row.status,
-    imageUrl: row.imageUrl,
-    galleryUrls: row.galleryUrls,
     variants: row.variants.map((variant) => ({
       sku: variant.sku,
       color: variant.color,
@@ -165,6 +167,7 @@ export async function getProductForEdit(slug: string): Promise<ProductFormDefaul
       isDefault: variant.isDefault,
       stock: variant.stockQuantity,
       isNew: false,
+      imageUrls: variant.imageUrls,
     })),
     bundleItems: row.bundleItems.map((item) => ({ name: item.name, quantity: item.quantity, componentSlug: item.componentSlug ?? '' })),
   };

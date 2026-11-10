@@ -94,9 +94,14 @@ function toCatalogProduct(
     colorFamily: undef(variant.colorFamily),
     hex: undef(variant.hex),
     lensTint: undef(variant.lensTint),
+    imageUrls: variant.imageUrls,
     available: Math.max(0, variant.stockQuantity),
     isDefault: variant.isDefault,
   }));
+  // Cards and listings show one picture: the default color's first photo, else whichever color has one.
+  const cover =
+    variants.find((variant) => variant.isDefault && variant.imageUrls.length > 0)?.imageUrls[0] ??
+    variants.find((variant) => variant.imageUrls.length > 0)?.imageUrls[0];
   const stockQuantity = variants.reduce((sum, variant) => sum + variant.available, 0);
   // A sale price only counts when it is a real reduction.
   const price = row.salePrice !== null && row.salePrice > 0 && row.salePrice < row.listPrice ? row.salePrice : row.listPrice;
@@ -135,8 +140,7 @@ function toCatalogProduct(
     warrantyYears: row.warrantyYears,
     returnWindowDays: row.returnWindowDays ?? settings.returnWindowDays,
     hasEyewearKit: row.hasEyewearKit,
-    imageUrl: undef(row.imageUrl),
-    galleryUrls: row.galleryUrls,
+    imageUrl: cover,
     features: row.features,
     tags: row.tags,
     compatibleWith: row.compatibleWith,

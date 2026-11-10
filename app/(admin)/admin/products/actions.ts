@@ -4,18 +4,11 @@ import { Prisma } from '@prisma/client';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
-import { MAX_GALLERY_IMAGES } from '@/lib/admin/product-form';
 import { requireAdmin } from '@/lib/auth/session';
 import { refreshCatalog } from '@/lib/catalog/cache';
 import { PRODUCT_CHECKBOX_FIELDS, PRODUCT_TEXT_FIELDS, type ProductFormState } from '@/lib/catalog/form-state';
 import { prisma } from '@/lib/prisma';
-import { uploadTotalError } from '@/lib/storage/image-rules';
-import {
-  BlobNotConfiguredError,
-  deleteProductImage,
-  uploadProductImage,
-  validateImageFile,
-} from '@/lib/storage/product-image';
+import { deleteProductImage } from '@/lib/storage/product-image';
 import { bundleItemSchema, createProductSchema, variantSchema } from '@/lib/validation/product';
 
 // Products are edited in the admin app; the storefront caches its catalog reads for a minute, so
@@ -23,12 +16,6 @@ import { bundleItemSchema, createProductSchema, variantSchema } from '@/lib/vali
 function revalidateAdmin() {
   for (const path of ['/admin', '/admin/products', '/admin/inventory']) revalidatePath(path);
   refreshCatalog();
-}
-
-function uploadErrorMessage(error: unknown) {
-  return error instanceof BlobNotConfiguredError
-    ? 'Photo uploads aren’t set up yet: BLOB_READ_WRITE_TOKEN is missing from .env.'
-    : 'We couldn’t upload the photos. Please try again.';
 }
 
 // What the form sent, as text, so a failed save can put it all back.
@@ -39,10 +26,6 @@ function readValues(formData: FormData): Record<string, string> {
   values.variants = String(formData.get('variants') ?? '[]');
   values.bundleItems = String(formData.get('bundleItems') ?? '[]');
   return values;
-}
-
-function files(formData: FormData, key: string): File[] {
-  return formData.getAll(key).filter((entry): entry is File => entry instanceof File && entry.size > 0);
 }
 
 function parseRows<T extends z.ZodType>(raw: string, schema: T, label: string): { data: z.infer<T>[] } | { error: string } {
@@ -61,11 +44,9 @@ interface Prepared {
   data: z.infer<typeof createProductSchema>;
   variants: z.infer<typeof variantSchema>[];
   bundleItems: z.infer<typeof bundleItemSchema>[];
-  primary: File | null;
-  gallery: File[];
 }
 
-// Everything both create and update check before touching the database or Blob.
+// Everything both create and update check before touching the database.
 async function prepare(
   formData: FormData,
   existing: { slug: string } | null,
@@ -83,15 +64,6 @@ async function prepare(
   const bundleRows = parseRows(values.bundleItems, bundleItemSchema, 'bundle items');
   if ('error' in variantRows) fieldErrors.variants = [variantRows.error];
   if ('error' in bundleRows) fieldErrors.bundleItems = [bundleRows.error];
-
-  const primary = files(formData, 'image')[0] ?? null;
-  const gallery = files(formData, 'gallery');
-  for (const file of [primary, ...gallery]) {
-    const problem = file && validateImageFile(file);
-    if (problem) fieldErrors[file === primary ? 'image' : 'gallery'] = [problem];
-  }
-  const totalProblem = uploadTotalError([...(primary ? [primary] : []), ...gallery]);
-  if (totalProblem && !fieldErrors.gallery) fieldErrors.gallery = [totalProblem];
 
   if (!parsed.success || 'error' in variantRows || 'error' in bundleRows || Object.keys(fieldErrors).length > 0) {
     return fail(fieldErrors);
@@ -137,7 +109,7 @@ async function prepare(
 
   return {
     ok: true,
-    prepared: { values, data, variants, bundleItems: data.productType === 'BUNDLE' ? bundleRows.data : [], primary, gallery },
+    prepared: { values, data, variants, bundleItems: data.productType === 'BUNDLE' ? bundleRows.data : [] },
   };
 }
 
@@ -153,26 +125,11 @@ export async function createProduct(_prevState: ProductFormState, formData: Form
 
   const result = await prepare(formData, null);
   if (!result.ok) return result.state;
-  const { values, data, variants, bundleItems, primary, gallery } = result.prepared;
+  const { values, data, variants, bundleItems } = result.prepared;
 
   if (await prisma.product.findUnique({ where: { slug: data.slug }, select: { slug: true } })) {
     return { values, fieldErrors: { slug: ['A product with this slug already exists'] } };
   }
-
-  const uploaded: string[] = [];
-  let imageUrl: string | null = null;
-  try {
-    if (primary) {
-      imageUrl = await uploadProductImage(data.slug, primary);
-      uploaded.push(imageUrl);
-    }
-    for (const file of gallery.slice(0, MAX_GALLERY_IMAGES)) uploaded.push(await uploadProductImage(data.slug, file));
-  } catch (error) {
-    console.error('uploading product images failed', error);
-    await Promise.all(uploaded.map(deleteProductImage));
-    return { values, error: uploadErrorMessage(error) };
-  }
-  const galleryUrls = imageUrl ? uploaded.slice(1) : uploaded;
 
   try {
     await prisma.$transaction(async (tx) => {
@@ -180,8 +137,8 @@ export async function createProduct(_prevState: ProductFormState, formData: Form
         data: {
           ...productData(data),
           slug: data.slug,
-          imageUrl,
-          galleryUrls,
+          // Photos live on the colors; these old product-level columns stay empty.
+          galleryUrls: [],
           variants: {
             create: variants.map(({ stock, ...variant }, index) => ({ ...variant, sortOrder: index, stockQuantity: stock })),
           },
@@ -203,7 +160,6 @@ export async function createProduct(_prevState: ProductFormState, formData: Form
       }
     });
   } catch (error) {
-    await Promise.all(uploaded.map(deleteProductImage));
     // The primary keys are the source of truth, so this also covers two admins racing.
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
       return { values, fieldErrors: { slug: ['A product with this slug or one of these SKUs already exists'] } };
@@ -228,30 +184,7 @@ export async function updateProduct(
 
   const result = await prepare(formData, existing);
   if (!result.ok) return result.state;
-  const { values, data, variants, bundleItems, primary, gallery } = result.prepared;
-
-  // Photos: a new file replaces the old one; "remove" drops it; otherwise keep what is there.
-  const removeGallery = new Set(formData.getAll('removeGallery').map(String));
-  const keptGallery = existing.galleryUrls.filter((url) => !removeGallery.has(url));
-  if (keptGallery.length + gallery.length > MAX_GALLERY_IMAGES) {
-    return { values, fieldErrors: { gallery: [`A product can have at most ${MAX_GALLERY_IMAGES} gallery photos.`] } };
-  }
-
-  const uploaded: string[] = [];
-  let newPrimary: string | null = null;
-  try {
-    if (primary) {
-      newPrimary = await uploadProductImage(slug, primary);
-      uploaded.push(newPrimary);
-    }
-    for (const file of gallery) uploaded.push(await uploadProductImage(slug, file));
-  } catch (error) {
-    console.error('uploading product images failed', error);
-    await Promise.all(uploaded.map(deleteProductImage));
-    return { values, error: uploadErrorMessage(error) };
-  }
-  const imageUrl = newPrimary ?? (formData.get('removeImage') === 'on' ? null : existing.imageUrl);
-  const galleryUrls = [...keptGallery, ...(newPrimary ? uploaded.slice(1) : uploaded)];
+  const { values, data, variants, bundleItems } = result.prepared;
 
   const existingBySku = new Map(existing.variants.map((variant) => [variant.sku, variant]));
   const submitted = new Set(variants.map((variant) => variant.sku));
@@ -261,7 +194,8 @@ export async function updateProduct(
     await prisma.$transaction(async (tx) => {
       await tx.product.update({
         where: { slug },
-        data: { ...productData(data), imageUrl, galleryUrls },
+        // Photos live on the colors now, so any old product-level photos are cleared here.
+        data: { ...productData(data), imageUrl: null, galleryUrls: [] },
       });
 
       // Colors that were taken out leave the shop; whatever stock they held is written off
@@ -319,7 +253,6 @@ export async function updateProduct(
       }
     });
   } catch (error) {
-    await Promise.all(uploaded.map(deleteProductImage));
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
       return { values, fieldErrors: { variants: ['One of these SKUs or colors is already in use.'] } };
     }
@@ -327,9 +260,15 @@ export async function updateProduct(
     return { values, error: 'We couldn’t save your changes. Please try again.' };
   }
 
-  // Only now that the row points at the new photos is it safe to drop the old ones.
-  if (existing.imageUrl && existing.imageUrl !== imageUrl) await deleteProductImage(existing.imageUrl);
-  await Promise.all(existing.galleryUrls.filter((url) => !galleryUrls.includes(url)).map(deleteProductImage));
+  // Only now that the rows point at the new photos is it safe to drop the old ones: photos taken off a
+  // color, photos of colors that were removed, and any old product-level photos no color kept.
+  const before = new Set([
+    ...(existing.imageUrl ? [existing.imageUrl] : []),
+    ...existing.galleryUrls,
+    ...existing.variants.flatMap((variant) => variant.imageUrls),
+  ]);
+  const after = new Set(variants.flatMap((variant) => variant.imageUrls));
+  await Promise.all([...before].filter((url) => !after.has(url)).map(deleteProductImage));
 
   revalidateAdmin();
   redirect('/admin/products');
@@ -340,7 +279,7 @@ export async function deleteProduct(slug: string) {
 
   const existing = await prisma.product.findUnique({
     where: { slug },
-    select: { imageUrl: true, galleryUrls: true, variants: { select: { sku: true, stockQuantity: true } } },
+    select: { imageUrl: true, galleryUrls: true, variants: { select: { sku: true, stockQuantity: true, imageUrls: true } } },
   });
   if (existing) {
     // Order history keeps working: OrderItem snapshots the product and has no FK to it.
@@ -361,7 +300,9 @@ export async function deleteProduct(slug: string) {
         });
       }
     });
-    await Promise.all([existing.imageUrl, ...existing.galleryUrls].map(deleteProductImage));
+    await Promise.all(
+      [existing.imageUrl, ...existing.galleryUrls, ...existing.variants.flatMap((variant) => variant.imageUrls)].map(deleteProductImage),
+    );
   }
 
   revalidateAdmin();

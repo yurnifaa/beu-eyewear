@@ -13,6 +13,14 @@ export class BlobNotConfiguredError extends Error {
   }
 }
 
+// The message shown to the admin when an upload fails (shared by the form's save action and the
+// per-photo upload route).
+export function uploadErrorMessage(error: unknown) {
+  return error instanceof BlobNotConfiguredError
+    ? 'Photo uploads aren’t set up yet: BLOB_READ_WRITE_TOKEN is missing from .env.'
+    : 'We couldn’t upload the photos. Please try again.';
+}
+
 // Returns an error message, or null when the file is acceptable.
 export function validateImageFile(file: File): string | null {
   return imageFileError(file);

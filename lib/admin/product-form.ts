@@ -13,6 +13,11 @@ export interface VariantRow {
   // False for a SKU already saved on the product: its code can't change and its stock
   // is adjusted from Inventory.
   isNew: boolean;
+  // This color's own photos in display order; the first is the cover. Empty = use the shared photos.
+  imageUrls: string[];
+  // Client-only identity for React keys and for matching async uploads to their row.
+  // Never sent to the server (stripped when the form serialises the rows).
+  uid?: number;
 }
 
 export interface BundleRow {
@@ -52,8 +57,6 @@ export interface ProductFormDefaults {
   returnWindowDays: string;
   sortOrder: string;
   status: string;
-  imageUrl: string | null;
-  galleryUrls: string[];
   variants: VariantRow[];
   bundleItems: BundleRow[];
 }
@@ -67,7 +70,8 @@ export interface ProductFormOptions {
   colorFamilies: { value: string; label: string }[];
 }
 
-export const MAX_GALLERY_IMAGES = 8;
+// Photos belong to colors; each color can have up to this many.
+export const MAX_VARIANT_IMAGES = 8;
 
 export function emptyProductDefaults(options: ProductFormOptions, nextSortOrder: number): ProductFormDefaults {
   const categorySlug = options.categories[0]?.slug ?? '';
@@ -102,9 +106,7 @@ export function emptyProductDefaults(options: ProductFormOptions, nextSortOrder:
     returnWindowDays: '',
     sortOrder: String(nextSortOrder),
     status: 'ACTIVE',
-    imageUrl: null,
-    galleryUrls: [],
-    variants: [{ sku: '', color: '', colorFamily: '', hex: '', lensTint: '', isDefault: true, stock: 0, isNew: true }],
+    variants: [{ sku: '', color: '', colorFamily: '', hex: '', lensTint: '', isDefault: true, stock: 0, isNew: true, imageUrls: [] }],
     bundleItems: [],
   };
 }

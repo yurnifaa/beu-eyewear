@@ -6,7 +6,8 @@ export interface ProductDTO extends Product {
   listPrice: number;
   compareAtPrice?: number;
   isOnSale: boolean;
-  variants: { sku: string; color: string; hex?: string; available: number }[];
+  // `imageUrl` is the color's cover photo, when it has its own photos.
+  variants: { sku: string; color: string; hex?: string; imageUrl?: string; available: number }[];
 }
 
 export function toProductDTO(product: CatalogProduct): ProductDTO {
@@ -24,6 +25,6 @@ export function toProductDTO(product: CatalogProduct): ProductDTO {
     warrantyYears: product.warrantyYears,
     imageUrl: product.imageUrl,
     stockQuantity: product.stockQuantity,
-    variants: product.variants.map(({ sku, color, hex, available }) => ({ sku, color, hex, available })),
+    variants: product.variants.map(({ sku, color, hex, imageUrls, available }) => ({ sku, color, hex, imageUrl: imageUrls[0], available })),
   };
 }

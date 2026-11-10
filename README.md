@@ -64,6 +64,7 @@ app/
 
 - **Stock** is per SKU (one per color) on `ProductVariant`. Checkout and order cancellation change it inside the same database transaction as the order, and every change (sale, return, delivery, correction) is recorded in `StockMovement`, which the admin Inventory page shows.
 - **Product photos** are uploaded from the admin to Vercel Blob (`BLOB_READ_WRITE_TOKEN`). Images that ship with the app live under `public/products/` and are referenced as `/products/<file>`.
+  - Photos belong to **colors**: each `ProductVariant` has an ordered `imageUrls` list of up to 8 photos (the first is the cover). The product page shows the selected color's photos; cards use the default color's first photo. Photos upload one at a time from the product form to `/admin/api/product-images` (resized to WebP) as soon as they are chosen. A photo uploaded but never saved can be left behind in Blob if the form is abandoned; it's harmless. `Product.imageUrl` / `galleryUrls` are legacy columns that nothing reads or writes any more.
 - **New database:** run `npx prisma migrate deploy`, then `npx prisma db seed` to load the starter catalog from `prisma/seed-data/catalog.json` (it only creates what is missing, so it never overwrites admin edits or live stock), then `npm run admin:create` for the admin account.
 
 **Notes**

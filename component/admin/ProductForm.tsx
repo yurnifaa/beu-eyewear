@@ -1,21 +1,17 @@
 'use client';
 
-import { useActionState, useEffect, useState, type ReactNode } from 'react';
-import Image from 'next/image';
+import { useActionState, useEffect, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { buttonClassName } from '@/component/Button';
+import VariantPhotos, { discardUploadedPhoto } from '@/component/admin/VariantPhotos';
 import {
-  MAX_GALLERY_IMAGES,
+  MAX_VARIANT_IMAGES,
   type BundleRow,
   type ProductFormDefaults,
   type ProductFormOptions,
   type VariantRow,
 } from '@/lib/admin/product-form';
 import type { ProductFormState } from '@/lib/catalog/form-state';
-import { ACCEPTED_IMAGE_TYPES, imageFileError, uploadTotalError } from '@/lib/storage/image-rules';
-
-// What the other photo input already holds, so the combined size can be checked.
-const pickedFiles = (inputId: string) => Array.from((document.getElementById(inputId) as HTMLInputElement | null)?.files ?? []);
 import { PRODUCT_STATUSES, PRODUCT_STATUS_LABELS, PRODUCT_TYPES, PRODUCT_TYPE_LABELS } from '@/lib/validation/product';
 
 const fieldClassName = 'mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm';
@@ -57,13 +53,10 @@ const invalid = (id: string, error?: string) => ({
   'aria-describedby': error ? `${id}-error` : undefined,
 });
 
-function Thumb({ src, alt }: { src: string; alt: string }) {
-  return (
-    <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-lg border border-border bg-card">
-      <Image src={src} alt={alt} fill sizes="80px" unoptimized className="object-cover" />
-    </div>
-  );
-}
+// Gives each color row a client-only identity (never rendered into the page, never submitted) so React
+// keys stay stable as rows are added and removed, and an upload finishing later finds its own row.
+let nextRowUid = 1;
+const newUid = () => nextRowUid++;
 
 export interface ProductFormProps {
   action: (prevState: ProductFormState, formData: FormData) => Promise<ProductFormState>;
@@ -74,18 +67,7 @@ export interface ProductFormProps {
 }
 
 export default function ProductForm({ action, options, defaults, isEdit, submitLabel }: ProductFormProps) {
-  const [pickedPrimary, setPickedPrimary] = useState<string | null>(null);
-  const [pickedCount, setPickedCount] = useState(0);
-  // Set when a chosen file is rejected in the browser, before any upload.
-  const [fileProblem, setFileProblem] = useState<{ image?: string; gallery?: string }>({});
-  const [state, formAction, pending] = useActionState(async (prevState: ProductFormState, formData: FormData) => {
-    const next = await action(prevState, formData);
-    // A failed save clears the file inputs, so drop the stale previews with them.
-    setPickedPrimary(null);
-    setPickedCount(0);
-    setFileProblem({});
-    return next;
-  }, initialState);
+  const [state, formAction, pending] = useActionState(action, initialState);
   const errors = state.fieldErrors ?? {};
   const err = (key: string) => errors[key]?.[0];
 
@@ -99,19 +81,53 @@ export default function ProductForm({ action, options, defaults, isEdit, submitL
   const [slugEdited, setSlugEdited] = useState(false);
   const [categorySlug, setCategorySlug] = useState(defaults.categorySlug);
   const [productType, setProductType] = useState(defaults.productType);
-  const [removeImage, setRemoveImage] = useState(false);
-  const [variants, setVariants] = useState<VariantRow[]>(defaults.variants);
+  const [variants, setVariants] = useState<VariantRow[]>(() => defaults.variants.map((row) => ({ ...row, uid: newUid() })));
   const [bundleItems, setBundleItems] = useState<BundleRow[]>(defaults.bundleItems);
+  // Color photos upload the moment they are picked. `fresh` holds the ones not saved yet, so they can be
+  // thrown away again if the admin removes them or leaves; `uploading` keeps Save off until all are in.
+  const [uploading, setUploading] = useState(0);
+  const fresh = useRef(new Set<string>());
+  const variantsRef = useRef(variants);
+  useEffect(() => {
+    variantsRef.current = variants;
+  }, [variants]);
+
+  const dropPhoto = (url: string) => {
+    if (fresh.current.delete(url)) discardUploadedPhoto(url);
+  };
+  const addPhoto = (uid: number | undefined, url: string) => {
+    const row = variantsRef.current.find((candidate) => candidate.uid === uid);
+    // The color was removed (or is already full) while this photo was uploading.
+    if (!row || row.imageUrls.length >= MAX_VARIANT_IMAGES) {
+      discardUploadedPhoto(url);
+      return;
+    }
+    fresh.current.add(url);
+    setVariants((rows) => rows.map((candidate) => (candidate.uid === uid ? { ...candidate, imageUrls: [...candidate.imageUrls, url] } : candidate)));
+  };
+  const moveVariantPhoto = (uid: number | undefined, from: number, to: number) =>
+    setVariants((rows) =>
+      rows.map((row) => {
+        if (row.uid !== uid || to < 0 || to >= row.imageUrls.length) return row;
+        const next = [...row.imageUrls];
+        next.splice(to, 0, next.splice(from, 1)[0]);
+        return { ...row, imageUrls: next };
+      }),
+    );
+  const removeVariantPhoto = (uid: number | undefined, url: string) => {
+    dropPhoto(url);
+    setVariants((rows) => rows.map((row) => (row.uid === uid ? { ...row, imageUrls: row.imageUrls.filter((candidate) => candidate !== url) } : row)));
+  };
+  const removeVariant = (index: number) => {
+    for (const url of variants[index]?.imageUrls ?? []) dropPhoto(url);
+    setVariants((rows) => rows.filter((_, i) => i !== index));
+  };
+  const leaveForm = () => {
+    for (const url of fresh.current) discardUploadedPhoto(url, { keepalive: true });
+    fresh.current.clear();
+  };
 
   const subcategories = options.subcategories.filter((subcategory) => subcategory.categorySlug === categorySlug);
-  const shownImage = pickedPrimary ?? (removeImage ? null : defaults.imageUrl);
-
-  // Object URLs hold the file in memory until revoked.
-  useEffect(() => {
-    return () => {
-      if (pickedPrimary) URL.revokeObjectURL(pickedPrimary);
-    };
-  }, [pickedPrimary]);
 
   const patchVariant = (index: number, patch: Partial<VariantRow>) =>
     setVariants((rows) => rows.map((row, i) => (i === index ? { ...row, ...patch } : row)));
@@ -327,121 +343,20 @@ export default function ProductForm({ action, options, defaults, isEdit, submitL
       </fieldset>
 
       <fieldset className={sectionClassName}>
-        <legend className="px-2 text-sm font-bold uppercase tracking-wide">Photos</legend>
-
-        <div>
-          <label className={labelClassName} htmlFor="image">
-            Main photo
-          </label>
-          <div className="mt-1 flex items-start gap-4">
-            <div className="relative flex h-32 w-32 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-card">
-              {shownImage ? (
-                <Image src={shownImage} alt="Main photo preview" fill sizes="128px" unoptimized className="object-contain" />
-              ) : (
-                <span className="px-2 text-center text-xs text-muted-foreground">No photo</span>
-              )}
-            </div>
-            <div className="flex min-w-0 flex-1 flex-col gap-2">
-              <input
-                id="image"
-                name="image"
-                type="file"
-                accept={ACCEPTED_IMAGE_TYPES}
-                onChange={(event) => {
-                  const file = event.target.files?.[0];
-                  const problem = file ? (imageFileError(file) ?? uploadTotalError([file, ...pickedFiles('gallery')])) : null;
-                  setFileProblem((current) => ({ ...current, image: problem ?? undefined }));
-                  if (problem) {
-                    // Don't submit a file the server would reject anyway.
-                    event.target.value = '';
-                    setPickedPrimary(null);
-                    return;
-                  }
-                  setPickedPrimary(file ? URL.createObjectURL(file) : null);
-                }}
-                {...invalid('image', fileProblem.image ?? err('image'))}
-                className="w-full text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-muted file:px-3 file:py-2 file:text-sm file:font-semibold"
-              />
-              <p className="text-xs text-muted-foreground">
-                JPG, PNG, WebP or AVIF, up to 4 MB. A product shot on a plain white background works best.
-                {isEdit && defaults.imageUrl ? ' Choosing a new file replaces the current photo.' : ''}
-              </p>
-              {isEdit && defaults.imageUrl && (
-                <label className={checkboxLabelClassName}>
-                  <input type="checkbox" name="removeImage" checked={removeImage} onChange={(event) => setRemoveImage(event.target.checked)} />
-                  Remove current photo
-                </label>
-              )}
-            </div>
-          </div>
-          {(fileProblem.image ?? err('image')) && (
-            <p id="image-error" className="mt-1 text-xs text-red-500">
-              {fileProblem.image ?? err('image')}
-            </p>
-          )}
-        </div>
-
-        <div>
-          <label className={labelClassName} htmlFor="gallery">
-            Gallery photos
-          </label>
-          {defaults.galleryUrls.length > 0 && (
-            <ul className="mt-2 flex flex-wrap gap-3">
-              {defaults.galleryUrls.map((url, index) => (
-                <li key={url} className="flex flex-col items-start gap-1">
-                  <Thumb src={url} alt={`Gallery photo ${index + 1}`} />
-                  <label className="flex items-center gap-1.5 text-xs">
-                    <input type="checkbox" name="removeGallery" value={url} /> Remove
-                  </label>
-                </li>
-              ))}
-            </ul>
-          )}
-          <input
-            id="gallery"
-            name="gallery"
-            type="file"
-            multiple
-            accept={ACCEPTED_IMAGE_TYPES}
-            onChange={(event) => {
-              const picked = Array.from(event.target.files ?? []);
-              const problem = picked.map((file) => imageFileError(file)).find(Boolean) ?? uploadTotalError([...picked, ...pickedFiles('image')]);
-              setFileProblem((current) => ({ ...current, gallery: problem ?? undefined }));
-              if (problem) {
-                event.target.value = '';
-                setPickedCount(0);
-                return;
-              }
-              setPickedCount(picked.length);
-            }}
-            {...invalid('gallery', fileProblem.gallery ?? err('gallery'))}
-            className="mt-2 w-full text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-muted file:px-3 file:py-2 file:text-sm file:font-semibold"
-          />
-          <p className="mt-1 text-xs text-muted-foreground">
-            Up to {MAX_GALLERY_IMAGES} photos in total, and the photos you add in one save must total 4 MB or less (save, then add more).{' '}
-            {pickedCount > 0 ? `${pickedCount} new photo${pickedCount === 1 ? '' : 's'} will be added.` : ''}
-          </p>
-          {(fileProblem.gallery ?? err('gallery')) && (
-            <p id="gallery-error" className="mt-1 text-xs text-red-500">
-              {fileProblem.gallery ?? err('gallery')}
-            </p>
-          )}
-        </div>
-      </fieldset>
-
-      <fieldset className={sectionClassName}>
         <legend className="px-2 text-sm font-bold uppercase tracking-wide">Colors &amp; stock</legend>
         <p className="text-xs text-muted-foreground">
           Each row is one sellable option with its own SKU and stock. Use <strong>Standard</strong> for items sold in a single
-          option, such as a care kit. Stock for an existing SKU is changed from Inventory so the change is recorded.
+          option, such as a care kit. Stock for an existing SKU is changed from Inventory so the change is recorded. Photos belong to
+          each color: add up to {MAX_VARIANT_IMAGES} per color, and the shop shows that color&rsquo;s photos when it is selected.
         </p>
-        <input type="hidden" name="variants" value={JSON.stringify(variants)} />
+        {/* The client-only row id is left out of what is sent. */}
+        <input type="hidden" name="variants" value={JSON.stringify(variants.map((row) => ({ ...row, uid: undefined })))} />
 
         <ul className="flex flex-col gap-3">
           {variants.map((variant, index) => {
             const swatch = /^#[0-9a-fA-F]{6}$/.test(variant.hex) ? variant.hex : '#cccccc';
             return (
-              <li key={index} className="grid grid-cols-2 items-end gap-3 rounded-lg border border-border p-3 sm:grid-cols-6">
+              <li key={variant.uid ?? index} className="grid grid-cols-2 items-end gap-3 rounded-lg border border-border p-3 sm:grid-cols-6">
                 <div className="col-span-2">
                   <label className="text-xs font-semibold" htmlFor={`sku-${index}`}>SKU</label>
                   <input id={`sku-${index}`} value={variant.sku} readOnly={!variant.isNew} onChange={(event) => patchVariant(index, { sku: event.target.value })} placeholder="BEU-CLS-HOR-MBK" className={`${fieldClassName} ${variant.isNew ? '' : 'opacity-60'}`} />
@@ -485,11 +400,21 @@ export default function ProductForm({ action, options, defaults, isEdit, submitL
                 </label>
                 <button
                   type="button"
-                  onClick={() => setVariants((rows) => rows.filter((_, i) => i !== index))}
+                  onClick={() => removeVariant(index)}
                   className={buttonClassName({ variant: 'secondary', size: 'sm', className: 'text-red-600' })}
                 >
                   Remove
                 </button>
+                <div className="col-span-2 border-t border-border pt-3 sm:col-span-6">
+                  <VariantPhotos
+                    images={variant.imageUrls}
+                    slug={slug}
+                    onAdd={(url) => addPhoto(variant.uid, url)}
+                    onMove={(from, to) => moveVariantPhoto(variant.uid, from, to)}
+                    onRemove={(url) => removeVariantPhoto(variant.uid, url)}
+                    onBusy={(delta) => setUploading((count) => count + delta)}
+                  />
+                </div>
               </li>
             );
           })}
@@ -499,7 +424,7 @@ export default function ProductForm({ action, options, defaults, isEdit, submitL
         <div>
           <button
             type="button"
-            onClick={() => setVariants((rows) => [...rows, { sku: '', color: rows.length === 0 ? 'Standard' : '', colorFamily: '', hex: '', lensTint: '', isDefault: rows.length === 0, stock: 0, isNew: true }])}
+            onClick={() => setVariants((rows) => [...rows, { sku: '', color: rows.length === 0 ? 'Standard' : '', colorFamily: '', hex: '', lensTint: '', isDefault: rows.length === 0, stock: 0, isNew: true, imageUrls: [], uid: newUid() }])}
             className={buttonClassName({ variant: 'secondary', size: 'sm' })}
           >
             Add a color
@@ -547,10 +472,10 @@ export default function ProductForm({ action, options, defaults, isEdit, submitL
       </p>
 
       <div className="flex items-center gap-3">
-        <button type="submit" disabled={pending} className={buttonClassName({ variant: 'primary', className: 'uppercase' })}>
-          {pending ? 'Saving…' : submitLabel}
+        <button type="submit" disabled={pending || uploading > 0} className={buttonClassName({ variant: 'primary', className: 'uppercase' })}>
+          {pending ? 'Saving…' : uploading > 0 ? 'Uploading photos…' : submitLabel}
         </button>
-        <Link href="/admin/products" className={buttonClassName({ variant: 'ghost' })}>
+        <Link href="/admin/products" onClick={leaveForm} className={buttonClassName({ variant: 'ghost' })}>
           Cancel
         </Link>
       </div>

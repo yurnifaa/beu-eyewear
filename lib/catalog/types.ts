@@ -59,7 +59,8 @@ export interface ProductVariant {
   // Swatch color, for example "#DCE9F7".
   hex?: string;
   lensTint?: string;
-  imageUrl?: string;
+  // This color's photos in display order (up to 8); the first is its cover. Empty shows a placeholder.
+  imageUrls: string[];
   available: number;
   isDefault: boolean;
 }
@@ -92,7 +93,6 @@ export interface CatalogProduct extends Product {
   dimensions?: ProductDimensions;
   features: string[];
   tags: string[];
-  galleryUrls: string[];
   compatibleWith: string[];
   returnWindowDays: number;
   hasEyewearKit: boolean;

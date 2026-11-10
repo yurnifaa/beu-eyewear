@@ -1,5 +1,7 @@
 import { z } from 'zod';
 import { MAX_STOCK } from '@/lib/admin/config';
+import { MAX_VARIANT_IMAGES } from '@/lib/admin/product-form';
+import { isAllowedImageUrl } from '@/lib/storage/image-rules';
 
 export const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 // SKUs are typed by people on stock sheets and barcodes: letters, digits and . _ -
@@ -67,6 +69,12 @@ export const variantSchema = z.object({
   isDefault: z.boolean(),
   // Opening stock. Only used when the SKU is new; existing SKUs change through Inventory.
   stock: z.number().int('Stock must be a whole number').min(0, 'Stock can’t be negative').max(MAX_STOCK, `Stock must be ${MAX_STOCK.toLocaleString('en-US')} or less`),
+  // This color's own photos, in order. Optional: a color with none shows the product's shared photos.
+  imageUrls: z
+    .array(z.string().trim().max(500, 'A photo address is too long').refine(isAllowedImageUrl, 'That photo address isn’t allowed'))
+    .max(MAX_VARIANT_IMAGES, `A color can have at most ${MAX_VARIANT_IMAGES} photos`)
+    .refine((urls) => new Set(urls).size === urls.length, 'A photo can only be used once per color')
+    .default([]),
 });
 export type VariantInput = z.infer<typeof variantSchema>;
 

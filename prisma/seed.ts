@@ -40,13 +40,25 @@ async function main() {
       created(
         'products',
         await tx.product.createMany({
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars -- the colors are created below
-          data: fresh.map(({ variants, createdAt, ...product }) => ({ ...product, createdAt: new Date(createdAt) })),
+          // The colors are created below, and photos belong to colors now: the snapshot's product-level
+          // photos are copied onto each color instead of being stored on the product.
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          data: fresh.map(({ variants, createdAt, imageUrl, galleryUrls, ...product }) => ({
+            ...product,
+            galleryUrls: [],
+            createdAt: new Date(createdAt),
+          })),
         }),
       );
-      const variants = fresh.flatMap((product) =>
-        product.variants.map(({ stock, ...variant }) => ({ ...variant, productSlug: product.slug, stockQuantity: stock })),
-      );
+      const variants = fresh.flatMap((product) => {
+        const photos = [product.imageUrl, ...product.galleryUrls].filter((url): url is string => Boolean(url)).slice(0, 8);
+        return product.variants.map(({ stock, ...variant }) => ({
+          ...variant,
+          imageUrls: photos,
+          productSlug: product.slug,
+          stockQuantity: stock,
+        }));
+      });
       created('variants', await tx.productVariant.createMany({ data: variants, skipDuplicates: true }));
       // Opening stock gets a movement, so the stock history starts from the import.
       created(

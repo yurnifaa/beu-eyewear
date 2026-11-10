@@ -18,9 +18,10 @@ export default function ProductGallery({ images, alt }: { images: string[]; alt:
     <div className="flex flex-col gap-4 md:flex-row-reverse md:gap-5">
       <div className="beu-stage relative aspect-[4/5] min-w-0 flex-1 overflow-hidden rounded-3xl">
         <ProductImage
-          imageUrl={images[index]}
+          imageUrl={images[index] ?? images[0]}
           alt={alt}
-          eager={index === 0}
+          // The stage is the one image the visitor is waiting on, whichever photo or color it shows.
+          eager
           sizes="(min-width: 1024px) 40vw, 100vw"
           // Product photos are wide: show the whole frame, and let a white photo background melt into the stage.
           objectFit="contain"
@@ -47,7 +48,7 @@ export default function ProductGallery({ images, alt }: { images: string[]; alt:
       <div className="flex gap-3 overflow-x-auto p-1 md:flex-col md:overflow-visible">
         {thumbs.map((url, i) => (
           <button
-            key={i}
+            key={url ?? `placeholder-${i}`}
             type="button"
             disabled={count === 0}
             aria-label={`Show image ${i + 1}`}
