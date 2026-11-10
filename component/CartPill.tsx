@@ -1,23 +1,43 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import Link from "next/link";
-import { buttonClassName } from "@/component/Button";
+import { ShoppingCart } from "lucide-react";
+import CartBadge from "@/component/CartBadge";
 import { useCartCount } from "@/lib/cart";
+import { CART_LANDED_EVENT, CART_TARGET_ATTR } from "@/lib/cart-fly";
 
 export default function CartPill() {
   const count = useCartCount();
+  const linkRef = useRef<HTMLAnchorElement>(null);
 
-  // The shared small primary pill (Midnight Navy, lifts on hover), 44px tall for the touch target.
+  // Pop the icon when the "+N" chip lands. Driven by an event rather than by the count changing,
+  // so the count going 0 -> N on page load doesn't trigger it.
+  useEffect(() => {
+    const bump = () => {
+      const el = linkRef.current;
+      if (!el) return;
+      el.classList.remove("beu-cart-bump");
+      void el.offsetWidth; // restart the animation if it is already running
+      el.classList.add("beu-cart-bump");
+    };
+    window.addEventListener(CART_LANDED_EVENT, bump);
+    return () => window.removeEventListener(CART_LANDED_EVENT, bump);
+  }, []);
+
+  // Same Midnight Navy as the old pill so the main action keeps its weight beside the ghost icons;
+  // 44px round for the touch target.
   return (
     <Link
+      ref={linkRef}
       href="/cart"
+      {...{ [CART_TARGET_ATTR]: "" }}
       aria-label={`Cart, ${count} ${count === 1 ? "item" : "items"}`}
-      className={buttonClassName({
-        size: "sm",
-        className: "h-11 shrink-0 whitespace-nowrap uppercase tracking-[0.14em] active:translate-y-0 active:scale-[0.97] max-[374px]:px-2.5 sm:px-4 md:px-5",
-      })}
+      onAnimationEnd={(event) => event.currentTarget.classList.remove("beu-cart-bump")}
+      className="relative inline-flex size-11 shrink-0 items-center justify-center rounded-full bg-brand-700 text-on-brand transition duration-150 ease-out hover:-translate-y-0.5 hover:bg-brand-800 hover:shadow-md active:translate-y-0 active:scale-[0.97]"
     >
-      Cart ({count})
+      <ShoppingCart size={20} strokeWidth={1.75} aria-hidden="true" />
+      <CartBadge />
     </Link>
   );
 }

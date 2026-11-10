@@ -106,6 +106,19 @@ body {
   .benefits-group[aria-hidden="true"] { display: none; }
 }
 
+/* Header cart icon: a quick pop when the "+N" chip lands (lib/cart-fly.ts, CartPill.tsx). */
+@keyframes beu-cart-bump {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+
+.beu-cart-bump { animation: beu-cart-bump 0.26s ease-out; }
+
+@media (prefers-reduced-motion: reduce) {
+  .beu-cart-bump { animation: none; }
+}
+
 /* ---------- Slow connections ---------- */
 
 /* Placeholder blocks on loading screens (component/skeleton/Skeleton.tsx). */
