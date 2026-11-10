@@ -2,6 +2,7 @@ import 'server-only';
 
 import type { Prisma } from '@prisma/client';
 import { returnOrderItemsToStock } from '@/lib/catalog/stock';
+import { notifyOrderPaid } from '@/lib/email/order-confirmation';
 import { formatOrderNumber } from '@/lib/format';
 import { closeCheckoutSession } from '@/lib/payments/payrex';
 import { syncOrderPayment } from '@/lib/payments/sync';
@@ -51,6 +52,8 @@ export async function markOrderPaid(id: string): Promise<TransitionResult> {
     data: { paymentStatus: 'PAID', paidAt: new Date() },
   });
   if (count === 1) {
+    // Only the call that wins the update gets here, so the buyer is emailed exactly once.
+    await notifyOrderPaid(id);
     // Best effort: retire the payment page so the buyer can't pay a second time.
     const order = await prisma.order.findUnique({ where: { id }, select: { checkoutSessionId: true } });
     if (order?.checkoutSessionId) {

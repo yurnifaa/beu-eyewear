@@ -4,6 +4,8 @@ interface Email {
   to: string;
   subject: string;
   html: string;
+  // Plain-text alternative; mail clients and spam filters like having one.
+  text?: string;
   // Printed instead of sent when no API key is configured (local dev).
   devLink?: string;
 }
@@ -12,7 +14,7 @@ const BREVO_URL = 'https://api.brevo.com/v3/smtp/email';
 
 // Brevo's free tier (300 emails/day) over its REST API. EMAIL_FROM must be a
 // sender you've verified in Brevo.
-export async function sendEmail({ to, subject, html, devLink }: Email) {
+export async function sendEmail({ to, subject, html, text, devLink }: Email) {
   const apiKey = process.env.BREVO_API_KEY;
 
   if (!apiKey) {
@@ -34,7 +36,10 @@ export async function sendEmail({ to, subject, html, devLink }: Email) {
       to: [{ email: to }],
       subject,
       htmlContent: html,
+      ...(text && { textContent: text }),
     }),
+    // Don't let a hung Brevo call hold up the webhook or page that triggered the email.
+    signal: AbortSignal.timeout(10_000),
   });
 
   if (!response.ok) {

@@ -1,5 +1,6 @@
 import 'server-only';
 
+import { notifyOrderPaid } from '@/lib/email/order-confirmation';
 import { prisma } from '@/lib/prisma';
 import { paidPaymentFromIntent, retrieveCheckoutSession, type PaidPayment } from './payrex';
 
@@ -40,7 +41,11 @@ export async function recordGatewayPayment(payment: PaidPayment): Promise<{ resu
     where: { id: order.id, paymentStatus: 'UNPAID', status: { not: 'CANCELLED' } },
     data: { paymentStatus: 'PAID', paidAt: new Date(), paymentRef: payment.paymentRef },
   });
-  if (count === 1) return { result: 'paid', orderId: order.id };
+  if (count === 1) {
+    // Only the call that wins the update gets here, so the buyer is emailed exactly once.
+    await notifyOrderPaid(order.id);
+    return { result: 'paid', orderId: order.id };
+  }
 
   const current = await prisma.order.findUnique({ where: { id: order.id }, select: { status: true, paymentStatus: true } });
   if (current?.paymentStatus === 'PAID') return { result: 'already-paid', orderId: order.id };
