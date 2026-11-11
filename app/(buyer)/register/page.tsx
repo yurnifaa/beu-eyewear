@@ -1,8 +1,11 @@
+import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import RegisterForm from '@/component/RegisterForm';
 import AuthShell from '@/component/auth/AuthShell';
 import Reveal from '@/component/Reveal';
 import { getCurrentUser, safeNextPath } from '@/lib/auth/session';
+
+export const metadata: Metadata = { title: 'Create Account' };
 
 export default async function RegisterPage(props: PageProps<'/register'>) {
   const { next } = await props.searchParams;

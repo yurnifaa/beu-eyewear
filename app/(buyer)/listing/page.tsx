@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import FilterDropdown, { type FilterDropdownOption } from '@/component/FilterDropdown';
@@ -18,6 +19,16 @@ import { formatPrice } from '@/lib/format';
 // Reads live, admin-editable catalog data — don't bake it into a static
 // build-time snapshot.
 export const dynamic = 'force-dynamic';
+
+export async function generateMetadata(props: PageProps<'/listing'>): Promise<Metadata> {
+  const sp = await props.searchParams;
+  const categorySlug = Array.isArray(sp.category) ? sp.category[0] : sp.category;
+  if (categorySlug) {
+    const cat = await getCategoryBySlug(categorySlug);
+    if (cat) return { title: cat.name };
+  }
+  return { title: 'Shop All' };
+}
 
 type Params = Record<string, string | undefined>;
 

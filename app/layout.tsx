@@ -8,7 +8,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "BeU Eyewear | Online Shop",
+  title: { default: 'BeU Eyewear | Online Shop', template: '%s | BeU Eyewear' },
   description: "Be ur best self",
 };
 

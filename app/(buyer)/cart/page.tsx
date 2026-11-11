@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import CartLens from '@/component/cart/CartLens';
 import ProductCard from '@/component/ProductCard';
 import ProductRow from '@/component/ProductRow';
@@ -8,6 +9,7 @@ import { formatPrice } from '@/lib/format';
 // Reads live, admin-editable catalog data — don't bake it into a static
 // build-time snapshot.
 export const dynamic = 'force-dynamic';
+export const metadata: Metadata = { title: 'Cart' };
 
 export default async function Page() {
   const featuredProducts = await getFeaturedProducts(4);

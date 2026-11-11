@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ChevronLeft } from 'lucide-react';
 import PixelGlyph from '@/component/beu/PixelGlyph';
@@ -7,6 +8,8 @@ import Reveal from '@/component/Reveal';
 import { requireUser } from '@/lib/auth/session';
 import { getShippingMethods } from '@/lib/catalog/queries';
 import { getSavedAddresses } from '@/lib/checkout/saved-address';
+
+export const metadata: Metadata = { title: 'Checkout' };
 
 export default async function Page(props: PageProps<'/check-out'>) {
   const { line } = await props.searchParams;

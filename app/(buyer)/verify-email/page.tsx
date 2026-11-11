@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import ConfirmEmailForm from '@/component/ConfirmEmailForm';
 import AuthHeading from '@/component/auth/AuthHeading';
@@ -5,6 +6,8 @@ import { authPrimaryClass } from '@/component/auth/auth-classes';
 import AuthShell from '@/component/auth/AuthShell';
 import Reveal from '@/component/Reveal';
 import { isTokenUsable } from '@/lib/auth/tokens';
+
+export const metadata: Metadata = { title: 'Verify Email' };
 
 export default async function VerifyEmailPage(props: PageProps<'/verify-email'>) {
   const { token } = await props.searchParams;

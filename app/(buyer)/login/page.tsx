@@ -1,8 +1,11 @@
+import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import LoginForm from '@/component/LoginForm';
 import AuthShell from '@/component/auth/AuthShell';
 import Reveal from '@/component/Reveal';
 import { getCurrentUser, safeNextPath } from '@/lib/auth/session';
+
+export const metadata: Metadata = { title: 'Sign In' };
 
 export default async function LoginPage(props: PageProps<'/login'>) {
   const { next, reset } = await props.searchParams;

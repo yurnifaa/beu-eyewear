@@ -1,9 +1,12 @@
+import type { Metadata } from 'next';
 import AccountHeader from '@/component/account/AccountHeader';
 import ChangePasswordForm from '@/component/account/ChangePasswordForm';
 import Panel from '@/component/account/Panel';
 import ProfileForm from '@/component/account/ProfileForm';
 import VerificationCard from '@/component/account/VerificationCard';
 import { requireUser } from '@/lib/auth/session';
+
+export const metadata: Metadata = { title: 'Profile' };
 
 export default async function ProfilePage() {
   // Checked here rather than in account/layout.tsx so /account/wishlist

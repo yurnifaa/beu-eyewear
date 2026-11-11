@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Plus } from 'lucide-react';
 import PixelGlyph from '@/component/beu/PixelGlyph';
@@ -7,6 +8,8 @@ import { requireUser } from '@/lib/auth/session';
 import { MAX_SAVED_ADDRESSES } from '@/lib/checkout/address';
 import { getSavedAddresses } from '@/lib/checkout/saved-address';
 import { deleteAddress, setDefaultAddress } from './actions';
+
+export const metadata: Metadata = { title: 'Address Book' };
 
 const chip = 'beu-chip inline-flex h-9 items-center px-4 text-[11px] uppercase tracking-[0.12em]';
 

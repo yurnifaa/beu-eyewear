@@ -1,9 +1,12 @@
+import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import AccountHeader from '@/component/account/AccountHeader';
 import AddressForm from '@/component/account/AddressForm';
 import Panel from '@/component/account/Panel';
 import { requireUser } from '@/lib/auth/session';
 import { getSavedAddress } from '@/lib/checkout/saved-address';
+
+export const metadata: Metadata = { title: 'Edit Address' };
 
 export default async function EditAddressPage(props: PageProps<'/account/addresses/[id]/edit'>) {
   const { id } = await props.params;

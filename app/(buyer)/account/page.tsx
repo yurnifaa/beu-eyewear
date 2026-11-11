@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ArrowRight, BadgeCheck, MailWarning } from 'lucide-react';
 import PixelGlyph, { type GlyphName } from '@/component/beu/PixelGlyph';
@@ -12,6 +13,8 @@ import { getSavedAddresses } from '@/lib/checkout/saved-address';
 import { formatOrderNumber, formatPrice } from '@/lib/format';
 import { getOrdersForUser } from '@/lib/orders/queries';
 import { orderBucket } from '@/lib/orders/tabs';
+
+export const metadata: Metadata = { title: 'My Account' };
 
 function initialsOf(name: string) {
   return name

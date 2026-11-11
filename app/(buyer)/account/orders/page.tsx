@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import AccountHeader from '@/component/account/AccountHeader';
 import EmptyOrders from '@/component/order/EmptyOrders';
 import OrderCard from '@/component/order/OrderCard';
@@ -5,6 +6,8 @@ import OrderTabs from '@/component/order/OrderTabs';
 import { requireUser } from '@/lib/auth/session';
 import { getOrdersForUser } from '@/lib/orders/queries';
 import { inTab, ORDER_TABS, orderBucket, parseTab, type OrderTabId } from '@/lib/orders/tabs';
+
+export const metadata: Metadata = { title: 'My Orders' };
 
 export default async function OrdersPage(props: PageProps<'/account/orders'>) {
   const { tab: tabParam } = await props.searchParams;

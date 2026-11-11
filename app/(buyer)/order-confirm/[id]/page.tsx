@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import PixelGlyph from '@/component/beu/PixelGlyph';
@@ -12,6 +13,8 @@ import { PAYMENT_PROVIDER_NAME } from '@/lib/checkout/payment';
 import { formatOrderNumber } from '@/lib/format';
 import { getOrderForUser } from '@/lib/orders/queries';
 import { syncOrderPayment } from '@/lib/payments/sync';
+
+export const metadata: Metadata = { title: 'Order Confirmed' };
 
 export default async function Page(props: PageProps<'/order-confirm/[id]'>) {
   const { id } = await props.params;

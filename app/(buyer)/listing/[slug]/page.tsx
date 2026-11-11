@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Star } from 'lucide-react';
@@ -29,6 +30,12 @@ import { formatPrice } from '@/lib/format';
 // Reads live catalog data from the database: don't bake it into a static
 // build-time snapshot.
 export const dynamic = 'force-dynamic';
+
+export async function generateMetadata(props: PageProps<'/listing/[slug]'>): Promise<Metadata> {
+  const { slug } = await props.params;
+  const product = await getProductBySlug(slug);
+  return { title: product?.name ?? 'Product' };
+}
 
 function Stars({ value }: { value: number }) {
   return (

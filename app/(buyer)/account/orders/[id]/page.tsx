@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import AccountHeader from '@/component/account/AccountHeader';
 import Panel from '@/component/account/Panel';
@@ -15,6 +16,13 @@ import { cancelBlockedReason, canCancel } from '@/lib/orders/rules';
 import { orderBucket } from '@/lib/orders/tabs';
 import { syncOrderPayment } from '@/lib/payments/sync';
 import { cancelMyOrder, payMyOrder } from '../actions';
+
+export async function generateMetadata(props: PageProps<'/account/orders/[id]'>): Promise<Metadata> {
+  const { id } = await props.params;
+  const user = await requireUser(`/account/orders/${id}`);
+  const order = await getOrderForUser(user.id, id);
+  return { title: order ? `Order #${formatOrderNumber(order.number)}` : 'Order' };
+}
 
 export default async function OrderDetailPage(props: PageProps<'/account/orders/[id]'>) {
   const { id } = await props.params;

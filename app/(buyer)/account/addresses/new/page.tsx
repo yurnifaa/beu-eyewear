@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import AccountHeader from '@/component/account/AccountHeader';
 import AddressForm from '@/component/account/AddressForm';
@@ -5,6 +6,8 @@ import Panel from '@/component/account/Panel';
 import { requireUser } from '@/lib/auth/session';
 import { MAX_SAVED_ADDRESSES } from '@/lib/checkout/address';
 import { getSavedAddresses } from '@/lib/checkout/saved-address';
+
+export const metadata: Metadata = { title: 'New Address' };
 
 export default async function NewAddressPage() {
   const user = await requireUser('/account/addresses/new');

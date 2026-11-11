@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Search } from 'lucide-react';
 import PixelGlyph from '@/component/beu/PixelGlyph';
@@ -12,6 +13,12 @@ import { formatPrice } from '@/lib/format';
 // Reads live, admin-editable catalog data — don't bake it into a static
 // build-time snapshot.
 export const dynamic = 'force-dynamic';
+
+export async function generateMetadata(props: PageProps<'/search'>): Promise<Metadata> {
+  const sp = await props.searchParams;
+  const q = (Array.isArray(sp.q) ? sp.q[0] : sp.q ?? '').trim();
+  return { title: q ? `Search: ${q}` : 'Search' };
+}
 
 export default async function SearchPage(props: PageProps<'/search'>) {
   const sp = await props.searchParams;

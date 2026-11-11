@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import BenefitsBar from '@/component/BenefitsBar';
 import ProductCard from '@/component/ProductCard';
 import ProductRow from '@/component/ProductRow';
@@ -25,6 +26,7 @@ import { formatPrice } from '@/lib/format';
 // Reads live, admin-editable catalog data, so don't bake it into a static
 // build-time snapshot.
 export const dynamic = 'force-dynamic';
+export const metadata: Metadata = { title: 'Home' };
 
 // Figma order. Gumagana kahit "beu-classic" o "classic" ang slug.
 const CATEGORY_ORDER = ['classic', 'premium', 'smart', 'collections', 'accessories'];
