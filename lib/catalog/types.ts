@@ -152,6 +152,7 @@ export interface Offer {
   eligibility: 'NONE' | 'FIRST_ORDER';
   requiresCode: boolean;
   endsAt?: string;
+  termsAndConditions: string;
 }
 
 export interface FilterOption {

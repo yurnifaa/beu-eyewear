@@ -59,6 +59,9 @@ export default function CheckoutForm({ defaultName, savedAddresses, selectedKeys
   const [shippingMethod, setShippingMethod] = useState<ShippingMethodId>('STANDARD');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethodId>('CARD');
   const [promoCode, setPromoCode] = useState('');
+  const [promoResult, setPromoResult] = useState<{ offerName: string; offerId: string; discountAmount: number; freeShipping: boolean } | null>(null);
+  const [promoError, setPromoError] = useState<string | null>(null);
+  const [promoLoading, setPromoLoading] = useState(false);
   // Set once the order exists, while the browser leaves for the payment page.
   const [placedMessage, setPlacedMessage] = useState<string | null>(null);
   const [selectedAddressId, setSelectedAddressId] = useState(
@@ -102,7 +105,13 @@ export default function CheckoutForm({ defaultName, savedAddresses, selectedKeys
 
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const shippingOption = (id: ShippingMethodId) => shippingMethods.find((method) => method.id === id) ?? { id, ...SHIPPING_METHODS[id] };
-  const { shippingFee, total } = calcTotals(subtotal, shippingMethod, shippingOption(shippingMethod).fee);
+  const { shippingFee, discountAmount, total } = calcTotals(
+    subtotal,
+    shippingMethod,
+    shippingOption(shippingMethod).fee,
+    promoResult?.discountAmount ?? 0,
+    promoResult?.freeShipping ?? false,
+  );
   const orderLines = JSON.stringify(items.map(({ slug, color, quantity }) => ({ slug, color, quantity })));
 
   const fieldErrors = state.fieldErrors ?? {};
@@ -187,10 +196,17 @@ export default function CheckoutForm({ defaultName, savedAddresses, selectedKeys
           <span className="text-muted-foreground">Subtotal</span>
           <span>{formatPrice(subtotal)}</span>
         </div>
-        <div className="mt-2 flex justify-between border-b border-border pb-4 text-sm">
+        <div className="mt-2 flex justify-between text-sm">
           <span className="text-muted-foreground">Shipping</span>
-          <span>{shippingFee === 0 ? 'Free' : formatPrice(shippingFee)}</span>
+          <span>{promoResult?.freeShipping ? <><s className="text-muted-foreground">{formatPrice(shippingOption(shippingMethod).fee)}</s> Free</> : shippingFee === 0 ? 'Free' : formatPrice(shippingFee)}</span>
         </div>
+        {discountAmount > 0 && (
+          <div className="mt-2 flex justify-between text-sm text-green-600">
+            <span>Discount ({promoResult?.offerName})</span>
+            <span>-{formatPrice(discountAmount)}</span>
+          </div>
+        )}
+        <div className="mt-2 border-b border-border pb-4" />
         <div className="mt-4 flex items-baseline justify-between">
           <span className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Total</span>
           <span className="font-display text-2xl font-black tracking-[-0.03em]">{formatPrice(total)}</span>
@@ -198,26 +214,62 @@ export default function CheckoutForm({ defaultName, savedAddresses, selectedKeys
 
         <div className="mt-6 flex flex-col gap-1.5">
           <FieldLabel htmlFor="promo">Promo / Gift Card</FieldLabel>
-          <div className="flex gap-2">
-            <input
-              id="promo"
-              type="text"
-              value={promoCode}
-              onChange={(e) => setPromoCode(e.target.value)}
-              // This input lives inside the checkout <form>; Enter must not place the order.
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') e.preventDefault();
-              }}
-              placeholder="Enter code"
-              className="h-12 w-full min-w-0 rounded-full border border-border bg-background/70 px-5 text-base md:text-sm outline-none placeholder:text-muted-foreground focus:border-accent focus:ring-2 focus:ring-accent/30"
-            />
-            <button
-              type="button"
-              className="beu-chip h-12 shrink-0 px-6 text-xs uppercase tracking-[0.14em]"
-            >
-              Apply
-            </button>
-          </div>
+          {promoResult ? (
+            <div className="flex items-center gap-2 rounded-full border border-green-300 bg-green-50 px-4 py-2.5 text-sm dark:border-green-800 dark:bg-green-950">
+              <CheckCircle2 size={16} className="shrink-0 text-green-600" />
+              <span className="flex-1 font-medium">{promoCode.toUpperCase()}</span>
+              <button
+                type="button"
+                onClick={() => { setPromoResult(null); setPromoError(null); setPromoCode(''); }}
+                className="text-xs text-muted-foreground underline underline-offset-2"
+              >
+                Remove
+              </button>
+            </div>
+          ) : (
+            <div className="flex gap-2">
+              <input
+                id="promo"
+                type="text"
+                value={promoCode}
+                onChange={(e) => { setPromoCode(e.target.value); setPromoError(null); }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') e.preventDefault();
+                }}
+                placeholder="Enter code"
+                className="h-12 w-full min-w-0 rounded-full border border-border bg-background/70 px-5 text-base md:text-sm outline-none placeholder:text-muted-foreground focus:border-accent focus:ring-2 focus:ring-accent/30"
+              />
+              <button
+                type="button"
+                disabled={!promoCode.trim() || promoLoading}
+                onClick={async () => {
+                  setPromoLoading(true);
+                  setPromoError(null);
+                  try {
+                    const res = await fetch('/api/promo/validate', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ code: promoCode.trim(), subtotal }),
+                    });
+                    const data = await res.json();
+                    if (data.valid) {
+                      setPromoResult({ offerName: data.offerName, offerId: data.offerId, discountAmount: data.discountAmount, freeShipping: data.freeShipping });
+                    } else {
+                      setPromoError(data.error || 'Invalid promo code.');
+                    }
+                  } catch {
+                    setPromoError('Could not verify the code. Please try again.');
+                  } finally {
+                    setPromoLoading(false);
+                  }
+                }}
+                className="beu-chip h-12 shrink-0 px-6 text-xs uppercase tracking-[0.14em] disabled:opacity-50"
+              >
+                {promoLoading ? 'Checking…' : 'Apply'}
+              </button>
+            </div>
+          )}
+          {promoError && <p aria-live="polite" className="text-sm text-red-500">{promoError}</p>}
         </div>
 
         {showPlaceOrder && (
@@ -242,6 +294,7 @@ export default function CheckoutForm({ defaultName, savedAddresses, selectedKeys
       <input type="hidden" name="lines" value={orderLines} />
       <input type="hidden" name="shippingMethod" value={shippingMethod} />
       <input type="hidden" name="paymentMethod" value={paymentMethod} />
+      {promoResult && <input type="hidden" name="promoCode" value={promoCode} />}
 
       <Panel className="py-2 md:py-3 lg:hidden">
         <AccordionSection title="Order Summary" defaultOpen>

@@ -52,4 +52,5 @@ export const checkoutSchema = addressSchema.extend({
   shippingMethod: z.enum(SHIPPING_METHOD_IDS, 'Choose a shipping method'),
   paymentMethod: z.enum(PAYMENT_METHOD_IDS, 'Choose a payment method'),
   lines: z.array(cartLineSchema).min(1, 'Your cart is empty').max(50),
+  promoCode: z.string().trim().max(50).optional(),
 });

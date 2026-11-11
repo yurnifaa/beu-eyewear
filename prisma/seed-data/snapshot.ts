@@ -97,6 +97,10 @@ export interface CatalogSnapshot {
     eligibility: 'NONE' | 'FIRST_ORDER';
     requiresCode: boolean;
     endsAt: string | null;
+    code?: string | null;
+    maxRedemptions?: number | null;
+    termsAndConditions?: string;
+    minOrderAmount?: number | null;
   }[];
   shippingRates: {
     method: 'STANDARD' | 'EXPRESS';

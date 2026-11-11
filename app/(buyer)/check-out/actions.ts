@@ -8,6 +8,7 @@ import { findVariant, getProductsBySlugs, getShippingMethods } from '@/lib/catal
 import { OutOfStockError, takeStock } from '@/lib/catalog/stock';
 import { MAX_SAVED_ADDRESSES } from '@/lib/checkout/address';
 import { calcTotals } from '@/lib/checkout/pricing';
+import { validatePromoCode } from '@/lib/checkout/promo';
 import type { PlaceOrderState } from '@/lib/checkout/types';
 import { formatOrderNumber } from '@/lib/format';
 import { openPaymentPage } from '@/lib/payments/checkout';
@@ -52,12 +53,13 @@ export async function placeOrder(_prevState: PlaceOrderState, formData: FormData
     shippingMethod: text(formData, 'shippingMethod'),
     paymentMethod: text(formData, 'paymentMethod'),
     lines: rawLines,
+    promoCode: text(formData, 'promoCode') || undefined,
   });
   if (!parsed.success) {
     return { values, fieldErrors: z.flattenError(parsed.error).fieldErrors };
   }
 
-  const { lines, shippingMethod, paymentMethod, ...address } = parsed.data;
+  const { lines, shippingMethod, paymentMethod, promoCode: submittedCode, ...address } = parsed.data;
 
   // The client only says *what* to buy. Names, prices and which colors exist all come
   // from the catalog in the database, read here on the server.
@@ -102,7 +104,22 @@ export async function placeOrder(_prevState: PlaceOrderState, formData: FormData
 
   const subtotal = items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
   const shippingFee = (await getShippingMethods()).find((method) => method.id === shippingMethod)?.fee;
-  const totals = calcTotals(subtotal, shippingMethod, shippingFee);
+
+  let promoOfferId: string | undefined;
+  let promoOfferCode: string | undefined;
+  let promoDiscount = 0;
+  let promoFreeShipping = false;
+
+  if (submittedCode) {
+    const promo = await validatePromoCode(submittedCode, user.id, subtotal);
+    if (!promo.ok) return { values, error: promo.error };
+    promoOfferId = promo.offerId;
+    promoOfferCode = submittedCode.trim().toUpperCase();
+    promoDiscount = promo.discountAmount;
+    promoFreeShipping = promo.freeShipping;
+  }
+
+  const totals = calcTotals(subtotal, shippingMethod, shippingFee, promoDiscount, promoFreeShipping);
 
   let orderId: string;
   try {
@@ -114,6 +131,8 @@ export async function placeOrder(_prevState: PlaceOrderState, formData: FormData
             shippingMethod,
             paymentMethod,
             ...totals,
+            offerId: promoOfferId,
+            offerCode: promoOfferCode,
             shipName: address.fullName,
             shipAddress: address.address,
             shipCity: address.city,
@@ -125,9 +144,15 @@ export async function placeOrder(_prevState: PlaceOrderState, formData: FormData
           select: { id: true, number: true },
         });
 
-        // Takes the units, or throws OutOfStockError so the order above rolls back with it.
-        // Two buyers going for the last unit can't both succeed: the second one's
-        // conditional update finds the stock already gone.
+        if (promoOfferId) {
+          await tx.$executeRaw`
+            UPDATE "Offer"
+            SET "currentRedemptions" = "currentRedemptions" + 1
+            WHERE "id" = ${promoOfferId}
+              AND ("maxRedemptions" IS NULL OR "currentRedemptions" < "maxRedemptions")
+          `;
+        }
+
         await takeStock(
           tx,
           [...demand].map(([sku, { name, quantity }]) => ({ sku, name, quantity })),

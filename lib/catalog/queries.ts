@@ -455,6 +455,7 @@ const getOffersCached = cachedRead('offers', async (): Promise<Offer[]> => {
     eligibility: row.eligibility,
     requiresCode: row.requiresCode,
     endsAt: row.endsAt?.toISOString(),
+    termsAndConditions: row.termsAndConditions,
   }));
 });
 

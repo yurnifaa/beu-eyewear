@@ -9,6 +9,7 @@ export const SUPPORT_LINKS = [
   { href: '/faq', label: 'FAQ' },
   { href: '/policies/shipping-returns', label: 'Shipping & Returns' },
   { href: '/policies/terms-privacy', label: 'Terms & Privacy' },
+  { href: '/vouchers', label: 'Vouchers' },
 ] as const;
 
 // Chip row that scrolls sideways on phones.

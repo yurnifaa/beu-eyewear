@@ -17,16 +17,19 @@ const offerSchema = z
     eligibility: z.enum(['NONE', 'FIRST_ORDER']),
     requiresCode: z.boolean(),
     isActive: z.boolean(),
-    // The offer runs through the end of this day (Manila time).
     endsAt: z
       .string()
       .trim()
       .refine((value) => value === '' || /^\d{4}-\d{2}-\d{2}$/.test(value), 'Use a date for the end of the offer.')
       .transform((value) => (value ? new Date(`${value}T23:59:59+08:00`) : null)),
+    code: z.string().trim().toUpperCase().max(50).transform((v) => v || null).nullable(),
+    maxRedemptions: z.string().trim().transform((v) => (v && /^\d+$/.test(v) ? Number(v) : null)).nullable(),
+    termsAndConditions: z.string().trim().max(2000),
+    minOrderAmount: z.string().trim().transform((v) => (v && /^\d+$/.test(v) ? Number(v) : null)).nullable(),
   })
   .refine((data) => data.kind !== 'PERCENT' || data.value <= 100, { message: 'A percentage can’t be more than 100.', path: ['value'] });
 
-const TEXT_KEYS = ['name', 'description', 'badge', 'kind', 'value', 'eligibility', 'endsAt'] as const;
+const TEXT_KEYS = ['name', 'description', 'badge', 'kind', 'value', 'eligibility', 'endsAt', 'code', 'maxRedemptions', 'termsAndConditions', 'minOrderAmount'] as const;
 const CHECKBOX_KEYS = ['requiresCode', 'isActive'] as const;
 
 function parse(formData: FormData) {
@@ -46,7 +49,10 @@ export async function createOffer(_previous: ConfigFormState, formData: FormData
   if (!parsed.success) return { values, error: parsed.error.issues[0].message };
   try {
     await prisma.offer.create({ data: parsed.data });
-  } catch (error) {
+  } catch (error: unknown) {
+    if (error && typeof error === 'object' && 'code' in error && error.code === 'P2002') {
+      return { values, error: 'This promo code is already in use.' };
+    }
     console.error('createOffer failed', error);
     return { values, error: 'We couldn’t save this offer. Please try again.' };
   }
@@ -61,7 +67,10 @@ export async function updateOffer(id: string, _previous: ConfigFormState, formDa
   try {
     const { count } = await prisma.offer.updateMany({ where: { id }, data: parsed.data });
     if (count === 0) return { values, error: 'This offer no longer exists. Refresh the page.' };
-  } catch (error) {
+  } catch (error: unknown) {
+    if (error && typeof error === 'object' && 'code' in error && error.code === 'P2002') {
+      return { values, error: 'This promo code is already in use.' };
+    }
     console.error('updateOffer failed', error);
     return { values, error: 'We couldn’t save this offer. Please try again.' };
   }
