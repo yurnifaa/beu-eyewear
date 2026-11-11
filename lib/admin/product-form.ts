@@ -48,7 +48,6 @@ export interface ProductFormDefaults {
   tags: string;
   listPrice: string;
   salePrice: string;
-  isStudentEligible: boolean;
   hasEyewearKit: boolean;
   isFeatured: boolean;
   featuredRank: string;
@@ -97,7 +96,6 @@ export function emptyProductDefaults(options: ProductFormOptions, nextSortOrder:
     tags: '',
     listPrice: '',
     salePrice: '',
-    isStudentEligible: false,
     hasEyewearKit: false,
     isFeatured: false,
     featuredRank: '',

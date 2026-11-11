@@ -111,7 +111,6 @@ export const productFieldsSchema = z
     tags: listOf('tag', { max: 20, itemMax: 40, separator: /[\n,]/ }),
     listPrice: wholeNumber('Price', { min: 1, max: 10_000_000 }),
     salePrice: optionalNumber('Sale price', 10_000_000),
-    isStudentEligible: z.boolean(),
     hasEyewearKit: z.boolean(),
     isFeatured: z.boolean(),
     featuredRank: optionalNumber('Featured rank', 99),

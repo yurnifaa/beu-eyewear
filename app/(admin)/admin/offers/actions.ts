@@ -14,7 +14,7 @@ const offerSchema = z
     badge: z.string().trim().min(1, 'Enter a badge label, such as “5% Off”.').max(30, 'The badge label must be 30 characters or fewer.'),
     kind: z.enum(['PERCENT', 'FIXED_AMOUNT']),
     value: z.string().trim().regex(/^\d{1,7}$/, 'The value must be a whole number.').transform(Number),
-    eligibility: z.enum(['NONE', 'STUDENT_ID', 'FIRST_ORDER']),
+    eligibility: z.enum(['NONE', 'FIRST_ORDER']),
     requiresCode: z.boolean(),
     isActive: z.boolean(),
     // The offer runs through the end of this day (Manila time).

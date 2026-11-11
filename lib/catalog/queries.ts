@@ -123,7 +123,6 @@ function toCatalogProduct(
     listPrice: row.listPrice,
     compareAtPrice: price < row.listPrice ? row.listPrice : undefined,
     isOnSale: price < row.listPrice,
-    isStudentEligible: row.isStudentEligible,
     isNewArrival: row.isNewArrival,
     isFeatured: row.isFeatured,
     featuredRank: undef(row.featuredRank),

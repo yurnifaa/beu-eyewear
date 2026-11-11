@@ -38,4 +38,4 @@ export const PRODUCT_TEXT_FIELDS = [
   'status',
 ] as const;
 
-export const PRODUCT_CHECKBOX_FIELDS = ['isStudentEligible', 'hasEyewearKit', 'isFeatured', 'isNewArrival'] as const;
+export const PRODUCT_CHECKBOX_FIELDS = ['hasEyewearKit', 'isFeatured', 'isNewArrival'] as const;

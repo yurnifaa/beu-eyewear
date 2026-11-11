@@ -149,7 +149,6 @@ export async function getProductForEdit(slug: string): Promise<ProductFormDefaul
     tags: row.tags.join(', '),
     listPrice: String(row.listPrice),
     salePrice: text(row.salePrice),
-    isStudentEligible: row.isStudentEligible,
     hasEyewearKit: row.hasEyewearKit,
     isFeatured: row.isFeatured,
     featuredRank: text(row.featuredRank),

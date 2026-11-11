@@ -80,7 +80,6 @@ export interface CatalogProduct extends Product {
   listPrice: number;
   compareAtPrice?: number;
   isOnSale: boolean;
-  isStudentEligible: boolean;
   isNewArrival: boolean;
   isFeatured: boolean;
   featuredRank?: number;
@@ -150,7 +149,7 @@ export interface Offer {
   badge: string;
   kind: 'PERCENT' | 'FIXED_AMOUNT';
   value: number;
-  eligibility: 'NONE' | 'STUDENT_ID' | 'FIRST_ORDER';
+  eligibility: 'NONE' | 'FIRST_ORDER';
   requiresCode: boolean;
   endsAt?: string;
 }

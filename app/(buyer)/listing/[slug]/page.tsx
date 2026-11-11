@@ -62,7 +62,6 @@ export default async function Page(props: PageProps<'/listing/[slug]'>) {
       getProductsBySlugs(product.compatibleWith),
     ]);
 
-  const studentOffer = product.isStudentEligible ? offers.find((offer) => offer.eligibility === 'STUDENT_ID') : undefined;
   const dimensions = product.dimensions;
   const dimensionsText =
     dimensions?.lensWidthMm && dimensions.bridgeWidthMm && dimensions.templeLengthMm
@@ -145,14 +144,6 @@ export default async function Page(props: PageProps<'/listing/[slug]'>) {
                   </p>
                 )}
 
-                {studentOffer && (
-                  <p className="beu-chip mt-5 inline-flex items-center gap-2.5 px-4 py-2.5 text-xs leading-snug">
-                    <PixelGlyph name="spark" size={14} className="shrink-0 text-accent" />
-                    <span>
-                      Student? {studentOffer.kind === 'PERCENT' ? `${studentOffer.value}% off` : 'A discount'} at checkout with a valid student ID.
-                    </span>
-                  </p>
-                )}
               </div>
 
               <AddToCartSection

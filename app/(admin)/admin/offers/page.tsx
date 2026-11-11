@@ -13,7 +13,6 @@ const KIND_OPTIONS = [
 ];
 const ELIGIBILITY_OPTIONS = [
   { value: 'NONE', label: 'Everyone' },
-  { value: 'STUDENT_ID', label: 'Students (with ID)' },
   { value: 'FIRST_ORDER', label: 'First order' },
 ];
 

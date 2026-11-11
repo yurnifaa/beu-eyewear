@@ -1,5 +1,5 @@
-// Prisma 7's CLI no longer auto-loads .env — this config module must load it itself.
-import 'dotenv/config';
+import dotenv from 'dotenv';
+dotenv.config({ path: ['.env.local', '.env'] });
 import { defineConfig, env } from 'prisma/config';
 
 export default defineConfig({

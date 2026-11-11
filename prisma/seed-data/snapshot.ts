@@ -36,7 +36,6 @@ export interface SnapshotProduct {
   tags: string[];
   listPrice: number;
   salePrice: number | null;
-  isStudentEligible: boolean;
   hasEyewearKit: boolean;
   isFeatured: boolean;
   featuredRank: number | null;
@@ -95,7 +94,7 @@ export interface CatalogSnapshot {
     badge: string;
     kind: 'PERCENT' | 'FIXED_AMOUNT';
     value: number;
-    eligibility: 'NONE' | 'STUDENT_ID' | 'FIRST_ORDER';
+    eligibility: 'NONE' | 'FIRST_ORDER';
     requiresCode: boolean;
     endsAt: string | null;
   }[];

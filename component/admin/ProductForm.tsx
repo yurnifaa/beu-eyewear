@@ -74,7 +74,7 @@ export default function ProductForm({ action, options, defaults, isEdit, submitL
   // After a failed save the action echoes what was typed; otherwise show the saved product.
   // The form resets its uncontrolled inputs after every action, so these must stay current.
   const text = (key: keyof ProductFormDefaults) => state.values?.[key] ?? String(defaults[key] ?? '');
-  const checked = (key: 'isStudentEligible' | 'hasEyewearKit' | 'isFeatured' | 'isNewArrival') =>
+  const checked = (key: 'hasEyewearKit' | 'isFeatured' | 'isNewArrival') =>
     state.values ? state.values[key] === 'on' : defaults[key];
 
   const [slug, setSlug] = useState(defaults.slug);
@@ -263,9 +263,6 @@ export default function ProductForm({ action, options, defaults, isEdit, submitL
           </Field>
           <label className={checkboxLabelClassName}>
             <input type="checkbox" name="isNewArrival" defaultChecked={checked('isNewArrival')} /> New arrival
-          </label>
-          <label className={checkboxLabelClassName}>
-            <input type="checkbox" name="isStudentEligible" defaultChecked={checked('isStudentEligible')} /> Student eligible
           </label>
           <label className={checkboxLabelClassName}>
             <input type="checkbox" name="hasEyewearKit" defaultChecked={checked('hasEyewearKit')} /> Includes free eyewear kit

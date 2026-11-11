@@ -76,7 +76,6 @@ model Product {
   // listPrice is the normal price; salePrice, when set and lower, is what the shopper pays.
   listPrice         Int
   salePrice         Int?
-  isStudentEligible Boolean @default(false)
   hasEyewearKit     Boolean @default(false)
   isFeatured        Boolean @default(false)
   featuredRank      Int?
@@ -244,24 +243,26 @@ enum OfferKind {
 
 enum OfferEligibility {
   NONE
-  STUDENT_ID
   FIRST_ORDER
 }
 
-// Promotions shown on the home and product pages. Prices already reflect any sale, so an
-// offer is display-only; it does not change what checkout charges.
 model Offer {
-  id           String           @id @default(cuid())
-  name         String
-  description  String           @default("")
-  badge        String           @default("Offer")
-  kind         OfferKind        @default(PERCENT)
-  value        Int              @default(0)
-  eligibility  OfferEligibility @default(NONE)
-  requiresCode Boolean          @default(false)
-  isActive     Boolean          @default(true)
-  endsAt       DateTime?
-  createdAt    DateTime         @default(now())
+  id                 String           @id @default(cuid())
+  name               String
+  description        String           @default("")
+  badge              String           @default("Offer")
+  kind               OfferKind        @default(PERCENT)
+  value              Int              @default(0)
+  eligibility        OfferEligibility @default(NONE)
+  requiresCode       Boolean          @default(false)
+  isActive           Boolean          @default(true)
+  endsAt             DateTime?
+  code               String?          @unique
+  maxRedemptions     Int?
+  currentRedemptions Int              @default(0)
+  termsAndConditions String           @default("")
+  minOrderAmount     Int?
+  createdAt          DateTime         @default(now())
 }
 
 // What is inside a BUNDLE product. componentSlug is optional and not a foreign key: a
@@ -393,7 +394,10 @@ model Order {
   shippingMethod ShippingMethod
   subtotal       Int
   shippingFee    Int
+  discountAmount Int            @default(0)
   total          Int
+  offerId        String?
+  offerCode      String?
 
   // Address snapshot: later edits to a saved address must not rewrite history.
   shipName     String

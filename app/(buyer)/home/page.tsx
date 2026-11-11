@@ -47,12 +47,11 @@ const SPARE_GLYPHS = ['g-wrap', 'g-shield', 'g-round', 'g-butterfly', 'g-rect'];
 export default async function Page() {
   // Everything below is read from the catalog sheet (featured flags, ratings, live offers,
   // featured reviews, category order, frame shapes, benefits-bar text).
-  const [allCategories, featuredProducts, bundleResults, studentPickResults, offers, reviews, settings, filterOptions] =
+  const [allCategories, featuredProducts, bundleResults, offers, reviews, settings, filterOptions] =
     await Promise.all([
       getCategories(),
       getFeaturedProducts(5),
       getProducts({ category: 'collections', sub: 'bundles' }),
-      getProducts({ category: 'collections', sub: 'student-picks' }),
       getOffers(),
       getFeaturedReviews(3),
       getStoreSettings(),
@@ -60,8 +59,6 @@ export default async function Page() {
     ]);
   const categories = [...allCategories].sort((a, b) => categoryRank(a.slug) - categoryRank(b.slug));
   const bundles = bundleResults.items;
-  const studentPick = studentPickResults.items[0];
-  const studentOffer = offers.find((offer) => offer.eligibility === 'STUDENT_ID');
   // Other automatic promotions running right now (no code, no eligibility check).
   const promoOffers = offers.filter((offer) => offer.eligibility === 'NONE' && !offer.requiresCode).slice(0, 2);
   const offerStub = (offer: { kind: 'PERCENT' | 'FIXED_AMOUNT'; value: number; badge: string }) =>
@@ -157,17 +154,6 @@ export default async function Page() {
               actionLabel="Shop Now"
             />
           ))}
-          {studentOffer && (
-            <OfferTicket
-              stubLabel={offerStub(studentOffer)}
-              tone="ice"
-              eyebrow="Student Exclusive"
-              title={studentOffer.name}
-              detail={studentOffer.description}
-              href={studentPick ? `/listing/${studentPick.slug}` : undefined}
-              actionLabel="Verify & Redeem"
-            />
-          )}
         </div>
       </Reveal>
 
