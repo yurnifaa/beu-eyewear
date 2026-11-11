@@ -354,33 +354,61 @@ export async function getStartingPrice(): Promise<number | undefined> {
   return prices.length > 0 ? Math.min(...prices) : undefined;
 }
 
+function escapeRegex(s: string) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 export async function searchProducts(query: string): Promise<CatalogProduct[]> {
   const tokens = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
   if (tokens.length === 0) return [];
+
+  const patterns = tokens.map((t) => new RegExp(`\\b${escapeRegex(t)}`, 'i'));
 
   const rows = await prisma.product.findMany({
     where: VISIBLE,
     include: { ...include, category: { select: { name: true } }, subcategory: { select: { name: true } } },
     orderBy: SHOP_ORDER,
   });
-  const matches = rows.filter((product) => {
-    const haystack = [
-      product.name,
-      product.description,
-      product.frameMaterial,
-      product.lensOption,
-      product.frameShape,
-      product.tags.join(' '),
-      product.variants.map((variant) => variant.color).join(' '),
-      product.category.name,
-      product.subcategory.name,
-    ]
-      .filter(Boolean)
-      .join(' ')
-      .toLowerCase();
-    return tokens.every((token) => haystack.includes(token));
-  });
-  return present(matches);
+
+  type ScoredRow = { row: (typeof rows)[number]; score: number };
+  const scored: ScoredRow[] = [];
+
+  for (const row of rows) {
+    const fields: [string, number][] = [
+      [row.name, 10],
+      [row.category.name, 6],
+      [row.subcategory.name, 6],
+      [row.frameMaterial ?? '', 4],
+      [row.lensOption ?? '', 4],
+      [row.frameShape ?? '', 4],
+      [row.tags.join(' '), 4],
+      [row.variants.map((v) => v.color).join(' '), 4],
+      [row.shortDescription, 2],
+      [row.description, 1],
+    ];
+
+    let allMatch = true;
+    let score = 0;
+
+    for (const pattern of patterns) {
+      let tokenMatched = false;
+      for (const [text, weight] of fields) {
+        if (text && pattern.test(text)) {
+          score += weight;
+          tokenMatched = true;
+        }
+      }
+      if (!tokenMatched) {
+        allMatch = false;
+        break;
+      }
+    }
+
+    if (allMatch) scored.push({ row, score });
+  }
+
+  scored.sort((a, b) => b.score - a.score);
+  return present(scored.map((s) => s.row));
 }
 
 // ---- Reviews ---------------------------------------------------------------------------
