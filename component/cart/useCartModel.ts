@@ -47,7 +47,7 @@ export function useCartModel() {
       for (const item of selectedItems) removeFromCart(item.slug, item.color);
     },
     removeItem: (item: ResolvedCartItem) => removeFromCart(item.slug, item.color),
-    setQuantity: (item: ResolvedCartItem, quantity: number) => updateCartQuantity(item.slug, item.color, quantity),
+    setQuantity: (item: ResolvedCartItem, quantity: number) => updateCartQuantity(item.slug, item.color, Math.min(quantity, item.available || quantity)),
   };
 }
 

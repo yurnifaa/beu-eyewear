@@ -61,7 +61,7 @@ export default function AddToCartSection({ slug, name, variants, lowStockThresho
     const animate = !shouldReduceMotion();
     if (buttonRef.current) await flyToCart({ from: buttonRef.current, label: `+${added}` });
 
-    addToCart(slug, added, selectedColor);
+    addToCart(slug, added, selectedColor, available);
     setAdding(false);
     setJustAdded(true);
 

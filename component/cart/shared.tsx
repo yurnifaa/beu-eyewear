@@ -133,11 +133,13 @@ export function GelStepper({
   value,
   onChange,
   label,
+  max,
   className = '',
 }: {
   value: number;
   onChange: (next: number) => void;
   label: string;
+  max?: number;
   className?: string;
 }) {
   const [dir, setDir] = useState(1);
@@ -174,7 +176,7 @@ export function GelStepper({
           </m.span>
         </AnimatePresence>
       </span>
-      <button type="button" aria-label="Increase quantity" onClick={() => step(value + 1)} className={s.stepBtn}>
+      <button type="button" aria-label="Increase quantity" disabled={max !== undefined && value >= max} onClick={() => step(value + 1)} className={s.stepBtn}>
         <Plus size={14} strokeWidth={2.5} aria-hidden="true" />
       </button>
     </div>

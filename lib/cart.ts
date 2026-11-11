@@ -75,14 +75,17 @@ function getSnapshot(): CartLine[] {
   return cachedSnapshot;
 }
 
-export function addToCart(slug: string, quantity: number, color?: string) {
+export function addToCart(slug: string, quantity: number, color?: string, maxStock?: number) {
   const lines = readLines();
   const key = lineKey(slug, color);
   const existing = lines.find((line) => lineKey(line.slug, line.color) === key);
 
+  const raw = (existing?.quantity ?? 0) + quantity;
+  const capped = maxStock !== undefined ? Math.min(raw, maxStock) : raw;
+
   const next = existing
-    ? lines.map((line) => (lineKey(line.slug, line.color) === key ? { ...line, quantity: line.quantity + quantity } : line))
-    : [...lines, { slug, color, quantity }];
+    ? lines.map((line) => (lineKey(line.slug, line.color) === key ? { ...line, quantity: Math.max(1, capped) } : line))
+    : [...lines, { slug, color, quantity: Math.max(1, capped) }];
 
   writeLines(next);
 }

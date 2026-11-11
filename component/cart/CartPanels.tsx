@@ -84,11 +84,15 @@ function Row({
         <GelStepper
           label={item.name}
           value={item.quantity}
+          max={item.available || undefined}
           onChange={(quantity) => {
             model.setQuantity(item, quantity);
             onChange?.();
           }}
         />
+        {item.available > 0 && item.quantity >= item.available && (
+          <p className="mt-1 text-[10px] text-amber-600">Only {item.available} left</p>
+        )}
       </div>
 
       <div className={s.aPrice}>

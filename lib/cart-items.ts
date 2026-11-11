@@ -8,6 +8,7 @@ export interface ResolvedCartItem extends CartLine {
   name: string;
   price: number;
   imageUrl?: string;
+  available: number;
 }
 
 const noopSubscribe = () => () => {};
@@ -114,8 +115,10 @@ export function useResolvedCartItems(lines: CartLine[]): {
       if (!product) return null;
       // The chosen color's own cover photo, else the product's. (A copy saved before color photos
       // existed has no per-color image, so it simply falls back.)
-      const colorImage = product.variants?.find((variant) => variant.color === (line.color ?? 'Standard'))?.imageUrl;
-      return { ...line, name: product.name, price: product.price, imageUrl: colorImage ?? product.imageUrl };
+      const variant = product.variants?.find((v) => v.color === (line.color ?? 'Standard'));
+      const colorImage = variant?.imageUrl;
+      const available = variant?.available ?? 0;
+      return { ...line, name: product.name, price: product.price, imageUrl: colorImage ?? product.imageUrl, available };
     })
     .filter((item): item is ResolvedCartItem => item !== null);
 
