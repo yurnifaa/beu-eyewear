@@ -23,6 +23,8 @@ export default function CategoryTile({ slug, name, description, imageUrl, index 
         imageUrl={imageUrl}
         alt={name}
         sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+        objectFit="contain"
+        imageClassName="mix-blend-multiply p-4"
         className="aspect-[4/3] w-full rounded-2xl"
       />
       <div className="flex items-end justify-between gap-4 px-3 pb-3 pt-5">

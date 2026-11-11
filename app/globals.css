@@ -88,7 +88,6 @@ body {
    scroll-snap-stop line. Switched off for reduced motion. */
 .beu-snap-section {
   scroll-snap-align: start;
-  scroll-snap-stop: always;
   scroll-margin-top: var(--beu-header-h, 0px);
 }
 
@@ -97,7 +96,7 @@ body {
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  html.beu-snap { scroll-snap-type: y mandatory; }
+  html.beu-snap { scroll-snap-type: y proximity; }
 }
 
 @media (prefers-reduced-motion: reduce) {

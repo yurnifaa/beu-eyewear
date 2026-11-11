@@ -22,7 +22,8 @@ export default function CategoryRow({ categories }: { categories: CategoryTile[]
                 imageUrl={category.imageUrl}
                 alt={category.name}
                 sizes="112px"
-                imageClassName="beu-zoom"
+                objectFit="contain"
+                imageClassName="beu-zoom mix-blend-multiply p-2"
                 className="h-24 w-24 rounded-full ring-4 ring-ice/60 md:h-28 md:w-28"
               />
             </span>

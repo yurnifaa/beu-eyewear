@@ -14,6 +14,7 @@ import ShapePicker, { type ShapeOption } from '@/component/home/ShapePicker';
 import Spotlight from '@/component/home/Spotlight';
 import {
   getCategories,
+  getCategoryPreviewImages,
   getFeaturedProducts,
   getFilterOptions,
   getFeaturedReviews,
@@ -49,7 +50,7 @@ const SPARE_GLYPHS = ['g-wrap', 'g-shield', 'g-round', 'g-butterfly', 'g-rect'];
 export default async function Page() {
   // Everything below is read from the catalog sheet (featured flags, ratings, live offers,
   // featured reviews, category order, frame shapes, benefits-bar text).
-  const [allCategories, featuredProducts, bundleResults, offers, reviews, settings, filterOptions] =
+  const [allCategories, featuredProducts, bundleResults, offers, reviews, settings, filterOptions, previewImages] =
     await Promise.all([
       getCategories(),
       getFeaturedProducts(5),
@@ -58,6 +59,7 @@ export default async function Page() {
       getFeaturedReviews(3),
       getStoreSettings(),
       getFilterOptions(),
+      getCategoryPreviewImages(),
     ]);
   const categories = [...allCategories].sort((a, b) => categoryRank(a.slug) - categoryRank(b.slug));
   const bundles = bundleResults.items;
@@ -120,7 +122,7 @@ export default async function Page() {
         <RevealItem>
           <SectionLabel>Category</SectionLabel>
         </RevealItem>
-        <CategoryRow categories={categories.map(({ slug, name, imageUrl }) => ({ slug, name, imageUrl }))} />
+        <CategoryRow categories={categories.map(({ slug, name }) => ({ slug, name, imageUrl: previewImages[slug] }))} />
       </Reveal>
 
       {/* Trust badges */}

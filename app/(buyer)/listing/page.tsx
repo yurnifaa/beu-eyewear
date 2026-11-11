@@ -12,7 +12,7 @@ import ListingHero from '@/component/listing/ListingHero';
 import Pagination from '@/component/listing/Pagination';
 import SubcategoryHeading from '@/component/listing/SubcategoryHeading';
 import PixelGlyph from '@/component/beu/PixelGlyph';
-import { getCategories, getCategoryBySlug, getFilterOptions, getProducts, getSubcategories } from '@/lib/catalog/queries';
+import { getCategories, getCategoryBySlug, getCategoryPreviewImages, getFilterOptions, getProducts, getSubcategories } from '@/lib/catalog/queries';
 import type { FilterOption } from '@/lib/catalog/types';
 import { formatPrice } from '@/lib/format';
 
@@ -90,8 +90,9 @@ export default async function Page(props: PageProps<'/listing'>) {
     const rank = categoryOrder.findIndex((key) => slug.includes(key));
     return rank === -1 ? categoryOrder.length : rank;
   };
-  const categories = (await getCategories())
-    .map((category) => ({ ...category, name: category.name.replace(/^BeU\s+/i, '') }))
+  const [rawCategories, previewImages] = await Promise.all([getCategories(), getCategoryPreviewImages()]);
+  const categories = rawCategories
+    .map((category) => ({ ...category, name: category.name.replace(/^BeU\s+/i, ''), imageUrl: previewImages[category.slug] ?? category.imageUrl }))
     .sort((a, b) => categoryRank(a.slug) - categoryRank(b.slug));
 
   // Hub mode — no category picked yet, so show the tiers themselves

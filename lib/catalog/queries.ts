@@ -177,6 +177,26 @@ export async function getCategories(): Promise<Category[]> {
   return loadCategories();
 }
 
+export async function getCategoryPreviewImages(): Promise<Record<string, string>> {
+  const categories = await prisma.category.findMany({ where: { isActive: true }, select: { slug: true } });
+  const map: Record<string, string> = {};
+  await Promise.all(
+    categories.map(async (cat) => {
+      const variant = await prisma.productVariant.findFirst({
+        where: {
+          isActive: true,
+          imageUrls: { isEmpty: false },
+          product: { ...VISIBLE, categorySlug: cat.slug },
+        },
+        orderBy: [{ product: { sortOrder: 'asc' } }, { sortOrder: 'asc' }],
+        select: { imageUrls: true },
+      });
+      if (variant) map[cat.slug] = variant.imageUrls[0];
+    }),
+  );
+  return map;
+}
+
 export async function getCategoryBySlug(slug: string | undefined): Promise<Category | undefined> {
   if (!slug) return undefined;
   return (await loadCategories()).find((category) => category.slug === slug);
