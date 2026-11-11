@@ -1,7 +1,7 @@
-import Image from "next/image";
 import { Suspense } from "react";
 import Link from "next/link";
 import { ChevronDown, Phone } from "lucide-react";
+import NavLogo from "@/component/NavLogo";
 import PixelGlyph, { type GlyphName } from "@/component/beu/PixelGlyph";
 import { getStoreSettings } from "@/lib/catalog/queries";
 
@@ -170,13 +170,11 @@ export default function Footer() {
         <div className="rounded-[2rem] border border-white bg-background/80 px-5 pb-1 pt-5 shadow-[0_24px_50px_rgba(40,100,180,0.16)] md:grid md:grid-cols-[1.6fr_1fr_1fr] md:gap-10 md:p-10">
           {/* Phones: compact, collapsible and tap-friendly. md and up keeps the three-column layout below. */}
           <div className="md:hidden">
-            <div className="flex items-center gap-3.5">
-              <Image src="/Logo-Dark-Mark.png" alt="BeU" width={380} height={380} className="h-11 w-11 shrink-0" />
-              <p className="flex flex-col font-display text-xs font-semibold uppercase tracking-[0.06em]">
-                Be your
-                <span className="font-accent text-[1.875rem] font-normal normal-case leading-[1.05] tracking-normal">best self.</span>
-              </p>
-            </div>
+            <NavLogo />
+            <p className="mt-3 flex flex-col font-display text-xs font-semibold uppercase tracking-[0.06em]">
+              Be your
+              <span className="font-accent text-[1.875rem] font-normal normal-case leading-[1.05] tracking-normal">best self.</span>
+            </p>
             <p className="mt-3.5 text-xs leading-relaxed text-muted-foreground">
               Merging trendy aesthetics with smart wearable features to protect your vision.
             </p>
@@ -205,7 +203,7 @@ export default function Footer() {
           </div>
 
           <div className="hidden md:block">
-            <Image src="/Logo-Dark-Mark.png" alt="BeU" width={380} height={380} className="h-14 w-14" />
+            <NavLogo />
             <p className="mt-5 font-display text-3xl font-bold uppercase leading-[1.05] tracking-tight">
               Be your
               <br />

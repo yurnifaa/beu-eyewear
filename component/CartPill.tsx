@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { ShoppingCart } from "lucide-react";
 import CartBadge from "@/component/CartBadge";
 import { useCartCount } from "@/lib/cart";
@@ -9,6 +10,8 @@ import { CART_LANDED_EVENT, CART_TARGET_ATTR } from "@/lib/cart-fly";
 
 export default function CartPill() {
   const count = useCartCount();
+  const pathname = usePathname();
+  const active = pathname === "/cart" || pathname.startsWith("/cart/");
   const linkRef = useRef<HTMLAnchorElement>(null);
 
   // Pop the icon when the "+N" chip lands. Driven by an event rather than by the count changing,
@@ -34,7 +37,7 @@ export default function CartPill() {
       {...{ [CART_TARGET_ATTR]: "" }}
       aria-label={`Cart, ${count} ${count === 1 ? "item" : "items"}`}
       onAnimationEnd={(event) => event.currentTarget.classList.remove("beu-cart-bump")}
-      className="relative inline-flex size-11 shrink-0 items-center justify-center rounded-full bg-brand-700 text-on-brand transition duration-150 ease-out hover:-translate-y-0.5 hover:bg-brand-800 hover:shadow-md active:translate-y-0 active:scale-[0.97]"
+      className={`beu-icon-btn relative shrink-0${active ? " bg-brand-700 text-on-brand hover:bg-brand-800" : ""}`}
     >
       <ShoppingCart size={20} strokeWidth={1.75} aria-hidden="true" />
       <CartBadge />

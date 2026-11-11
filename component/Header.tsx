@@ -6,6 +6,7 @@ import NavLogo from "@/component/NavLogo";
 import CartPill from "@/component/CartPill";
 import HeaderSearch from "@/component/HeaderSearch";
 import HeaderNav from "@/component/HeaderNav";
+import HeaderIconLink from "@/component/HeaderIconLink";
 import LoginModalTrigger from "@/component/LoginModalTrigger";
 import WishlistBadge from "@/component/WishlistBadge";
 import { NAV_LINKS } from "@/component/nav-links";
@@ -19,9 +20,9 @@ async function AccountButton() {
   if (!user) return <LoginModalTrigger />;
 
   return (
-    <Link href="/account" aria-label="Account" className="beu-icon-btn">
+    <HeaderIconLink href="/account" label="Account" excludePaths={["/account/wishlist"]}>
       <User size={20} strokeWidth={1.75} />
-    </Link>
+    </HeaderIconLink>
   );
 }
 
@@ -48,10 +49,10 @@ export default function Header() {
           <Suspense fallback={<LoginModalTrigger />}>
             <AccountButton />
           </Suspense>
-          <Link href="/account/wishlist" aria-label="Wishlist" className="beu-icon-btn relative hidden md:inline-flex">
+          <HeaderIconLink href="/account/wishlist" label="Wishlist" className="relative hidden md:inline-flex">
             <Heart size={20} strokeWidth={1.75} />
             <WishlistBadge />
-          </Link>
+          </HeaderIconLink>
           <CartPill />
         </div>
       </div>
