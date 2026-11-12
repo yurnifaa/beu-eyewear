@@ -4,6 +4,7 @@ import { useActionState, useState } from 'react';
 import { buttonClassName } from '@/component/Button';
 import TextField from '@/component/FormField';
 import { updateProfile } from '@/lib/auth/account-actions';
+import { sanitizeName } from '@/lib/checkout/address';
 import type { FormState } from '@/lib/auth/types';
 
 const initialState: FormState = {};
@@ -34,6 +35,9 @@ export default function ProfileForm({ name, email }: ProfileFormProps) {
         label="Full Name"
         autoComplete="name"
         maxLength={100}
+        onInput={(e) => {
+          e.currentTarget.value = sanitizeName(e.currentTarget.value, 100);
+        }}
         required
         defaultValue={state.values?.name ?? name}
         errors={fieldErrors.name}

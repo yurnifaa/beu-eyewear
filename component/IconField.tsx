@@ -12,6 +12,8 @@ export interface IconFieldProps {
   icon: ReactNode;
   error?: string | string[];
   minLength?: number;
+  /** Rewrites the value as the user types or pastes (e.g. to strip disallowed characters). */
+  onInput?: React.FormEventHandler<HTMLInputElement>;
   /** Always-visible rule shown under the field (e.g. password length). */
   hint?: string;
 }
@@ -24,6 +26,7 @@ export default function IconField({
   icon,
   error,
   minLength,
+  onInput,
   hint,
 }: IconFieldProps) {
   const message = Array.isArray(error) ? error[0] : error;
@@ -50,6 +53,7 @@ export default function IconField({
             autoComplete={autoComplete}
             placeholder={placeholder}
             minLength={minLength}
+            onInput={onInput}
             required
             aria-invalid={message ? true : undefined}
             aria-describedby={describedBy}

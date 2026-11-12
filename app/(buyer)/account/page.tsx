@@ -93,8 +93,18 @@ export default async function AccountPage() {
           <p className="font-display text-xl font-black uppercase tracking-[-0.02em] [overflow-wrap:anywhere]">{user.name}</p>
           <p className="mt-1 text-sm text-muted-foreground [overflow-wrap:anywhere]">{user.email}</p>
         </div>
-        <span className="beu-chip inline-flex h-9 items-center gap-2 px-4 text-[11px] uppercase tracking-[0.14em]">
-          {verified ? <BadgeCheck size={14} aria-hidden="true" /> : <MailWarning size={14} aria-hidden="true" />}
+        {/* On-brand status, readable at a glance without leaving the palette: verified is a filled
+            Signal Blue pill (the same family as the Sale badge); not verified is an open Ink-dashed
+            pill ("incomplete", like the dashed empty states). The neutral glass chip blended into
+            the ice sky, so neither state read. */}
+        <span
+          className={`inline-flex h-9 items-center gap-2 rounded-full px-4 text-[11px] font-medium uppercase tracking-[0.14em] ${
+            verified
+              ? 'border border-accent-hover bg-accent text-on-accent shadow-[0_6px_16px_rgba(47,102,196,0.35),inset_0_1px_0_rgba(255,255,255,0.35)]'
+              : 'border-2 border-dashed border-ink bg-background text-ink'
+          }`}
+        >
+          {verified ? <BadgeCheck size={15} strokeWidth={2.25} aria-hidden="true" /> : <MailWarning size={15} strokeWidth={2.25} aria-hidden="true" />}
           {verified ? 'Verified' : 'Not verified'}
         </span>
       </Panel>

@@ -7,6 +7,7 @@ import AuthHeading from '@/component/auth/AuthHeading';
 import { authPrimaryClass } from '@/component/auth/auth-classes';
 import IconField from '@/component/IconField';
 import { register } from '@/lib/auth/actions';
+import { sanitizeName } from '@/lib/checkout/address';
 import type { FormState } from '@/lib/auth/types';
 import { useFormValidation } from '@/lib/use-form-validation';
 import { registerSchema } from '@/lib/validation/auth';
@@ -37,6 +38,9 @@ export default function RegisterForm({ next }: { next?: string }) {
             type="text"
             placeholder="Full Name"
             autoComplete="name"
+            onInput={(e) => {
+              e.currentTarget.value = sanitizeName(e.currentTarget.value, 100);
+            }}
             icon={<User size={16} aria-hidden="true" />}
             error={errorFor('name')}
           />

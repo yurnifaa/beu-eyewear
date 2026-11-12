@@ -1,7 +1,7 @@
 'use client';
 
-import TextField from '@/component/FormField';
-import { ADDRESS_LIMITS, digitsOnly, normalizePhone, type AddressFields } from '@/lib/checkout/address';
+import TextField, { FieldLabel } from '@/component/FormField';
+import { ADDRESS_LIMITS, digitsOnly, phoneInputValue, sanitizeName, type AddressFields } from '@/lib/checkout/address';
 
 interface AddressFieldsProps {
   // Prefill. Inputs are uncontrolled, so changing these only takes effect when
@@ -9,6 +9,59 @@ interface AddressFieldsProps {
   values: Partial<Record<keyof AddressFields, string>>;
   errors?: Record<string, string[] | undefined>;
   floatingLabels?: boolean;
+}
+
+const onNameInput = (e: React.FormEvent<HTMLInputElement>) => {
+  e.currentTarget.value = sanitizeName(e.currentTarget.value, ADDRESS_LIMITS.fullName);
+};
+
+// Mobile number with a fixed "+63". The user types the 10 digits after it; the server turns
+// that into the stored 09XXXXXXXXX form (normalizePhone). No maxLength on purpose: the browser
+// would cut a pasted "0917 123 4567" before the handler could strip the spaces and the 0.
+function PhoneField({ value, errors, floating }: { value?: string; errors?: string[]; floating: boolean }) {
+  const hasError = Boolean(errors?.length);
+  const boxClassName = `flex w-full items-center rounded-2xl border bg-background/70 text-foreground focus-within:ring-2 ${
+    hasError ? 'border-red-500 focus-within:ring-red-500/30' : 'border-border focus-within:border-accent focus-within:ring-accent/30'
+  } ${floating ? 'h-14 pt-6 pb-2 text-base' : 'h-12 text-base md:text-sm'}`;
+
+  return (
+    <div className="flex flex-col gap-1.5">
+      {!floating && <FieldLabel htmlFor="phone">Mobile Number</FieldLabel>}
+      <div className="relative">
+        {floating && (
+          <label htmlFor="phone" className="pointer-events-none absolute top-1.5 left-4 text-[10px] text-muted-foreground">
+            Mobile Number
+          </label>
+        )}
+        <div className={boxClassName}>
+          <span aria-hidden="true" className="select-none pl-4 text-muted-foreground">
+            +63
+          </span>
+          <input
+            id="phone"
+            name="phone"
+            type="tel"
+            autoComplete="tel-national"
+            inputMode="numeric"
+            placeholder="9171234567"
+            required
+            defaultValue={phoneInputValue(value ?? '')}
+            onInput={(e) => {
+              e.currentTarget.value = phoneInputValue(e.currentTarget.value);
+            }}
+            aria-invalid={hasError || undefined}
+            aria-describedby={hasError ? 'phone-error' : undefined}
+            className="h-full min-w-0 flex-1 bg-transparent pr-4 pl-2 outline-none placeholder:text-muted-foreground/70"
+          />
+        </div>
+      </div>
+      {hasError && (
+        <p id="phone-error" className="text-xs text-red-500">
+          {errors![0]}
+        </p>
+      )}
+    </div>
+  );
 }
 
 // The six shipping-address inputs, shared by checkout and the address book.
@@ -19,8 +72,8 @@ export default function AddressFieldsInputs({ values, errors = {}, floatingLabel
         <fieldset>
           <legend className="mb-1 text-xs text-muted-foreground">Personal Details</legend>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <TextField id="fullName" label="Full Name" floatingLabel autoComplete="name" maxLength={ADDRESS_LIMITS.fullName} required defaultValue={values.fullName} errors={errors.fullName} />
-            <TextField id="phone" label="Mobile Number" floatingLabel type="tel" autoComplete="tel" inputMode="numeric" onInput={(e) => { e.currentTarget.value = normalizePhone(e.currentTarget.value).slice(0, ADDRESS_LIMITS.phone); }} required defaultValue={values.phone} errors={errors.phone} />
+            <TextField id="fullName" label="Full Name" floatingLabel autoComplete="name" maxLength={ADDRESS_LIMITS.fullName} onInput={onNameInput} required defaultValue={values.fullName} errors={errors.fullName} />
+            <PhoneField floating value={values.phone} errors={errors.phone} />
           </div>
         </fieldset>
         <fieldset>
@@ -40,17 +93,16 @@ export default function AddressFieldsInputs({ values, errors = {}, floatingLabel
     <>
       <TextField
         id="fullName"
-        floatingLabel={floatingLabels}
         label="Full Name"
         autoComplete="name"
         maxLength={ADDRESS_LIMITS.fullName}
+        onInput={onNameInput}
         required
         defaultValue={values.fullName}
         errors={errors.fullName}
       />
       <TextField
         id="address"
-        floatingLabel={floatingLabels}
         label="Address"
         autoComplete="street-address"
         maxLength={ADDRESS_LIMITS.address}
@@ -61,7 +113,6 @@ export default function AddressFieldsInputs({ values, errors = {}, floatingLabel
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <TextField
           id="city"
-          floatingLabel={floatingLabels}
           label="City"
           autoComplete="address-level2"
           maxLength={ADDRESS_LIMITS.city}
@@ -71,7 +122,6 @@ export default function AddressFieldsInputs({ values, errors = {}, floatingLabel
         />
         <TextField
           id="province"
-          floatingLabel={floatingLabels}
           label="Province"
           autoComplete="address-level1"
           maxLength={ADDRESS_LIMITS.province}
@@ -83,7 +133,6 @@ export default function AddressFieldsInputs({ values, errors = {}, floatingLabel
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <TextField
           id="zip"
-          floatingLabel={floatingLabels}
           label="Zip / Postal Code"
           autoComplete="postal-code"
           inputMode="numeric"
@@ -95,23 +144,7 @@ export default function AddressFieldsInputs({ values, errors = {}, floatingLabel
           defaultValue={values.zip}
           errors={errors.zip}
         />
-        {/* No maxLength here on purpose: the browser would cut a pasted "0917 123 4567" to
-            11 characters (9 digits) before the filter below could strip the spaces. */}
-        <TextField
-          id="phone"
-          floatingLabel={floatingLabels}
-          label="Mobile Number"
-          type="tel"
-          autoComplete="tel"
-          inputMode="numeric"
-          placeholder="09171234567"
-          onInput={(e) => {
-            e.currentTarget.value = normalizePhone(e.currentTarget.value).slice(0, ADDRESS_LIMITS.phone);
-          }}
-          required
-          defaultValue={values.phone}
-          errors={errors.phone}
-        />
+        <PhoneField floating={false} value={values.phone} errors={errors.phone} />
       </div>
     </>
   );

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ADDRESS_LABEL_MAX, ADDRESS_LIMITS, normalizePhone } from '@/lib/checkout/address';
+import { ADDRESS_LABEL_MAX, ADDRESS_LIMITS, NAME_PATTERN, NAME_RULE_MESSAGE, normalizePhone } from '@/lib/checkout/address';
 import { PAYMENT_METHOD_IDS } from '@/lib/checkout/payment';
 import { SHIPPING_METHOD_IDS } from '@/lib/checkout/shipping';
 
@@ -14,11 +14,11 @@ const requiredText = (requiredMessage: string, label: string, max: number) =>
 const phone = z
   .string()
   .transform(normalizePhone)
-  .pipe(z.string().regex(/^09\d{9}$/, 'Enter an 11-digit mobile number starting with 09, e.g. 09171234567'));
+  .pipe(z.string().regex(/^09\d{9}$/, 'Enter a 10-digit mobile number starting with 9, e.g. 9171234567'));
 
 // The shipping address fields. Shared by checkout and the saved address.
 export const addressSchema = z.object({
-  fullName: requiredText('Enter your full name', 'Full name', ADDRESS_LIMITS.fullName),
+  fullName: requiredText('Enter your full name', 'Full name', ADDRESS_LIMITS.fullName).regex(NAME_PATTERN, NAME_RULE_MESSAGE),
   address: requiredText('Enter your street address', 'Address', ADDRESS_LIMITS.address),
   city: requiredText('Enter your city', 'City', ADDRESS_LIMITS.city),
   province: requiredText('Enter your province', 'Province', ADDRESS_LIMITS.province),

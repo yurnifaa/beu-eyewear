@@ -30,7 +30,7 @@ export default function WishlistButton({ slug, name, variant = 'icon', className
         className={`beu-chip inline-flex h-14 items-center justify-center gap-2 px-6 text-xs uppercase tracking-[0.14em] ${className}`}
       >
         <Heart size={16} className={isWishlisted ? 'fill-current' : ''} />
-        {isWishlisted ? 'Favourited' : 'Favourite'}
+        {isWishlisted ? 'Added to Favorites' : 'Add to Favorites'}
       </button>
     );
   }

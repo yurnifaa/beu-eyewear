@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { NAME_PATTERN, NAME_RULE_MESSAGE } from '@/lib/checkout/address';
 
 const email = z
   .string()
@@ -7,7 +8,7 @@ const email = z
   .pipe(z.email('Enter a valid email address'));
 
 export const registerSchema = z.object({
-  name: z.string().trim().min(1, 'Enter your name').max(100),
+  name: z.string().trim().min(1, 'Enter your name').max(100).regex(NAME_PATTERN, NAME_RULE_MESSAGE),
   email,
   password: z.string().min(8, 'Password must be at least 8 characters').max(128),
 });

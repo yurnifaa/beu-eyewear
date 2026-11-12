@@ -85,6 +85,9 @@ export default function Spotlight({ product }: { product: CatalogProduct }) {
 
           {/* No z-index or transform on this wrapper: that would isolate the image's multiply blend
               from the grey background, leaving a white tile around product photos shot on white. */}
+          {/* The box keeps its size so the price row below doesn't move. Product shots carry
+              whitespace around the frame, so the image is scaled up inside the box instead (a scale
+              takes no layout space; the section clips any overflow). */}
           <div className="relative mx-auto -mt-[min(9vw,6rem)] aspect-[3/2] w-[min(760px,92%)] sm:aspect-[2/1]">
             <div aria-hidden="true" className="absolute bottom-[24%] left-1/2 h-8 w-3/5 -translate-x-1/2 rounded-full bg-ink/30 blur-2xl" />
             {product.imageUrl ? (
@@ -93,8 +96,8 @@ export default function Spotlight({ product }: { product: CatalogProduct }) {
                 src={product.imageUrl}
                 alt={product.name}
                 fill
-                sizes="(min-width: 768px) 760px, 92vw"
-                className="-rotate-[8deg] object-contain mix-blend-multiply"
+                sizes="(min-width: 1024px) 1100px, 100vw"
+                className="-rotate-[8deg] scale-110 object-contain mix-blend-multiply md:scale-125 lg:scale-[1.45]"
               />
             ) : (
               <svg viewBox="0 0 240 100" role="img" aria-label={product.name} className="size-full -rotate-[8deg] text-chrome drop-shadow-[0_30px_28px_rgba(20,40,80,0.45)]">
