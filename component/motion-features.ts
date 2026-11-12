@@ -1,4 +1,3 @@
-// The animation engine, in its own file so the bundler splits it into a separate chunk. Reveal.tsx
-// loads it after first paint (LazyMotion), so it never delays the page's first render. domMax rather
-// than domAnimation because the cart's rows use layout animations.
-export { domMax as default } from 'framer-motion';
+// The standard animation engine, in its own file so the bundler splits it into a separate chunk.
+// MotionProvider loads it after first paint (LazyMotion), so it never delays a page's first render.
+export { domAnimation as default } from 'framer-motion';

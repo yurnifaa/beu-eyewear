@@ -10,14 +10,16 @@ import { itemKey, type CartModel } from './useCartModel';
 import { Bead, CartThumb, GelStepper, GlossCta, RollingPrice, TrustList } from './shared';
 import s from './CartPanels.module.css';
 
+// Rows arrive almost together (the 4th and later share one turn): the cart is something to act on,
+// so nothing should keep it waiting for a stagger to finish.
 const rowVariants: Variants = {
   hidden: { opacity: 0, y: 14 },
   show: (index: number) => ({
     opacity: 1,
     y: 0,
-    transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1], delay: Math.min(index, 6) * 0.07 },
+    transition: { duration: 0.25, ease: [0.16, 1, 0.3, 1], delay: Math.min(index, 3) * 0.04 },
   }),
-  out: { opacity: 0, x: 40, transition: { duration: 0.3, ease: 'easeOut' } },
+  out: { opacity: 0, x: 40, transition: { duration: 0.25, ease: 'easeOut' } },
 };
 
 // Takes `ref` as a prop: AnimatePresence (popLayout) measures the row through it.

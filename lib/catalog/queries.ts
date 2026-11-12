@@ -26,9 +26,17 @@ import type {
   Subcategory,
 } from './types';
 
-// Storefront catalog queries, answered from Postgres. The admin app edits the same
-// tables, so a change shows here on the next request: there is deliberately no cache
-// across requests, only React's per-request memoization.
+// Storefront catalog queries, answered from Postgres. The admin app edits the same tables.
+//
+// Two layers of reuse, both deliberate:
+//  - React's per-request memoization (`cache`) so one page render never asks twice.
+//  - A short server cache (`cachedRead`, below) for read-only loaders that many visitors share:
+//    listings, categories, related products, reviews and so on. See lib/catalog/cache.ts.
+//
+// What is NOT cached across requests, on purpose: anything that decides what a shopper pays or
+// whether they can buy it right now. That is a single product's own row and stock
+// (getProductBySlug), the cart/checkout lookups (getProductsBySlugs) and the shipping rates that
+// placeOrder charges (getShippingMethods).
 
 // A product is on sale in the shop when it is ACTIVE, its category and subcategory are
 // switched on, and it has at least one active color/SKU to buy.
@@ -56,9 +64,11 @@ function undef<T>(value: T | null): T | undefined {
   return value === null ? undefined : value;
 }
 
-// Short server cache for the read-only loaders the home and shop pages use. Results are plain JSON
-// (no Dates), so they survive the cache. lib/catalog/cache.ts says how it is refreshed. Loaders that
-// must stay live (a single product's stock, the cart's lookups, order data) are not wrapped.
+// Short server cache for the read-only loaders the home, shop and product pages use. Results must be
+// plain JSON (no Dates, and no `undefined` as the whole result: return null and convert back), so they
+// survive the cache. Arguments become part of the cache key, so pass small values (a slug, not a whole
+// product). lib/catalog/cache.ts says how it is refreshed. Loaders that must stay live (see the top of
+// this file) are not wrapped.
 function cachedRead<Args extends unknown[], Result>(name: string, read: (...args: Args) => Promise<Result>) {
   return unstable_cache(read, ['catalog', name], { revalidate: CATALOG_REVALIDATE_SECONDS, tags: [CATALOG_CACHE_TAG] });
 }
@@ -177,7 +187,9 @@ export async function getCategories(): Promise<Category[]> {
   return loadCategories();
 }
 
-export async function getCategoryPreviewImages(): Promise<Record<string, string>> {
+// One cover photo per category, for the home and listing hubs. It runs a query per category (in
+// parallel), on every home and listing visit, so it is worth sharing between visitors.
+const cachedCategoryPreviewImages = cachedRead('category-preview-images', async (): Promise<Record<string, string>> => {
   const categories = await prisma.category.findMany({ where: { isActive: true }, select: { slug: true } });
   const map: Record<string, string> = {};
   await Promise.all(
@@ -195,6 +207,10 @@ export async function getCategoryPreviewImages(): Promise<Record<string, string>
     }),
   );
   return map;
+});
+
+export async function getCategoryPreviewImages(): Promise<Record<string, string>> {
+  return cachedCategoryPreviewImages();
 }
 
 export async function getCategoryBySlug(slug: string | undefined): Promise<Category | undefined> {
@@ -202,19 +218,21 @@ export async function getCategoryBySlug(slug: string | undefined): Promise<Categ
   return (await loadCategories()).find((category) => category.slug === slug);
 }
 
-const loadSubcategories = cache(async (): Promise<Subcategory[]> => {
-  const rows = await prisma.subcategory.findMany({
-    where: { isActive: true, category: { isActive: true } },
-    orderBy: [{ displayOrder: 'asc' }, { slug: 'asc' }],
-  });
-  return rows.map((row) => ({
-    slug: row.slug,
-    categorySlug: row.categorySlug,
-    name: row.name,
-    description: undef(row.description),
-    displayOrder: row.displayOrder,
-  }));
-});
+const loadSubcategories = cache(
+  cachedRead('subcategories', async (): Promise<Subcategory[]> => {
+    const rows = await prisma.subcategory.findMany({
+      where: { isActive: true, category: { isActive: true } },
+      orderBy: [{ displayOrder: 'asc' }, { slug: 'asc' }],
+    });
+    return rows.map((row) => ({
+      slug: row.slug,
+      categorySlug: row.categorySlug,
+      name: row.name,
+      description: undef(row.description),
+      displayOrder: row.displayOrder,
+    }));
+  }),
+);
 
 export async function getSubcategories(categorySlug: string): Promise<Subcategory[]> {
   return (await loadSubcategories()).filter((subcategory) => subcategory.categorySlug === categorySlug);
@@ -285,39 +303,55 @@ export async function getProducts(filters: ProductFilters = {}): Promise<Product
   return cachedProducts(filters);
 }
 
-export async function getProductBySlug(slug: string): Promise<CatalogProduct | undefined> {
-  const row = await prisma.product.findFirst({ where: { ...VISIBLE, slug }, include });
-  return row ? (await present([row]))[0] : undefined;
-}
+// Live on purpose (this is the stock and price a shopper is about to buy), so no cross-request cache.
+// `cache` makes the product page's metadata and its body share one lookup, and the row, its ratings
+// and the settings don't depend on each other, so they are fetched together.
+export const getProductBySlug = cache(async (slug: string): Promise<CatalogProduct | undefined> => {
+  const [row, ratings, settings] = await Promise.all([
+    prisma.product.findFirst({ where: { ...VISIBLE, slug }, include }),
+    loadRatings([slug]),
+    getStoreSettings(),
+  ]);
+  return row ? toCatalogProduct(row, settings, ratings.get(slug)) : undefined;
+});
 
 export async function getProductsBySlugs(slugs: string[]): Promise<CatalogProduct[]> {
   if (slugs.length === 0) return [];
   return present(await prisma.product.findMany({ where: { ...VISIBLE, slug: { in: slugs } }, include, orderBy: SHOP_ORDER }));
 }
 
+// "You might also like": the same subcategory first, topped up from the same category. Shared between
+// visitors (60s, refreshed with the catalog), keyed by the three slugs rather than the whole product.
+const cachedRelatedProducts = cachedRead(
+  'related-products',
+  async (slug: string, subcategorySlug: string, categorySlug: string, limit: number): Promise<CatalogProduct[]> => {
+    const sameSubcategory = await prisma.product.findMany({
+      where: { ...VISIBLE, subcategorySlug, slug: { not: slug } },
+      include,
+      orderBy: SHOP_ORDER,
+      take: limit,
+    });
+    const rows = [...sameSubcategory];
+    if (rows.length < limit) {
+      rows.push(
+        ...(await prisma.product.findMany({
+          where: {
+            ...VISIBLE,
+            categorySlug,
+            slug: { notIn: [slug, ...rows.map((row) => row.slug)] },
+          },
+          include,
+          orderBy: SHOP_ORDER,
+          take: limit - rows.length,
+        })),
+      );
+    }
+    return present(rows);
+  },
+);
+
 export async function getRelatedProducts(product: CatalogProduct, limit = 4): Promise<CatalogProduct[]> {
-  const sameSubcategory = await prisma.product.findMany({
-    where: { ...VISIBLE, subcategorySlug: product.subcategorySlug, slug: { not: product.slug } },
-    include,
-    orderBy: SHOP_ORDER,
-    take: limit,
-  });
-  const rows = [...sameSubcategory];
-  if (rows.length < limit) {
-    rows.push(
-      ...(await prisma.product.findMany({
-        where: {
-          ...VISIBLE,
-          categorySlug: product.categorySlug,
-          slug: { notIn: [product.slug, ...rows.map((row) => row.slug)] },
-        },
-        include,
-        orderBy: SHOP_ORDER,
-        take: limit - rows.length,
-      })),
-    );
-  }
-  return present(rows);
+  return cachedRelatedProducts(product.slug, product.subcategorySlug, product.categorySlug, limit);
 }
 
 // Products flagged is_featured, in featured_rank order; topped up from the rest of the
@@ -449,13 +483,17 @@ function toReview(row: Review): ProductReview {
   };
 }
 
-export async function getProductReviews(slug: string, limit = 20): Promise<ProductReview[]> {
+const cachedProductReviews = cachedRead('product-reviews', async (slug: string, limit: number): Promise<ProductReview[]> => {
   const rows = await prisma.review.findMany({
     where: { productSlug: slug, status: 'PUBLISHED' },
     orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
     take: limit,
   });
   return rows.map(toReview);
+});
+
+export async function getProductReviews(slug: string, limit = 20): Promise<ProductReview[]> {
+  return cachedProductReviews(slug, limit);
 }
 
 // Reviews flagged for the home page, in their home display order.
@@ -474,7 +512,7 @@ export async function getFeaturedReviews(limit = 3): Promise<ProductReview[]> {
 
 // ---- Bundles, offers, filters and product page content -----------------------------------
 
-export async function getBundleComponents(slug: string): Promise<BundleComponent[]> {
+const cachedBundleComponents = cachedRead('bundle-components', async (slug: string): Promise<BundleComponent[]> => {
   const items = await prisma.bundleItem.findMany({ where: { bundleSlug: slug }, orderBy: [{ sortOrder: 'asc' }, { id: 'asc' }] });
   const linked = items.map((item) => item.componentSlug).filter((value): value is string => Boolean(value));
   // Only link to components that are actually on sale.
@@ -486,6 +524,10 @@ export async function getBundleComponents(slug: string): Promise<BundleComponent
     quantity: item.quantity,
     slug: item.componentSlug && live.has(item.componentSlug) ? item.componentSlug : undefined,
   }));
+});
+
+export async function getBundleComponents(slug: string): Promise<BundleComponent[]> {
+  return cachedBundleComponents(slug);
 }
 
 const getOffersCached = cachedRead('offers', async (): Promise<Offer[]> => {
@@ -536,8 +578,8 @@ export async function getFilterOptions(): Promise<CatalogFilters> {
   return getFilterOptionsCached();
 }
 
-export async function getFrameMaterialDetail(material: string | undefined): Promise<FrameMaterialDetail | undefined> {
-  if (!material) return undefined;
+// (Cached: null, not undefined, stands for "no such row", then it is turned back into undefined.)
+const cachedFrameMaterialDetail = cachedRead('frame-material-detail', async (material: string): Promise<FrameMaterialDetail | null> => {
   const row = await prisma.frameMaterialInfo.findFirst({ where: { material, isActive: true } });
   return row
     ? {
@@ -548,11 +590,15 @@ export async function getFrameMaterialDetail(material: string | undefined): Prom
         nosePad: row.nosePad,
         isHypoallergenic: row.isHypoallergenic,
       }
-    : undefined;
+    : null;
+});
+
+export async function getFrameMaterialDetail(material: string | undefined): Promise<FrameMaterialDetail | undefined> {
+  if (!material) return undefined;
+  return (await cachedFrameMaterialDetail(material)) ?? undefined;
 }
 
-export async function getLensOptionDetail(lens: string | undefined): Promise<LensOptionDetail | undefined> {
-  if (!lens) return undefined;
+const cachedLensOptionDetail = cachedRead('lens-option-detail', async (lens: string): Promise<LensOptionDetail | null> => {
   const row = await prisma.lensOptionInfo.findFirst({ where: { lensOption: lens, isActive: true } });
   return row
     ? {
@@ -561,10 +607,16 @@ export async function getLensOptionDetail(lens: string | undefined): Promise<Len
         upgradeMinPrice: undef(row.upgradeMinPrice),
         upgradeMaxPrice: undef(row.upgradeMaxPrice),
       }
-    : undefined;
+    : null;
+});
+
+export async function getLensOptionDetail(lens: string | undefined): Promise<LensOptionDetail | undefined> {
+  if (!lens) return undefined;
+  return (await cachedLensOptionDetail(lens)) ?? undefined;
 }
 
 // Active rates from the database, falling back to the built-in two if none are set up.
+// Live: checkout and placeOrder charge from this, so they must never see a stale fee.
 export async function getShippingMethods(): Promise<ShippingMethodDetail[]> {
   const rows = await prisma.shippingRate.findMany({ where: { isActive: true }, orderBy: { fee: 'asc' } });
   if (rows.length > 0) {
@@ -573,6 +625,14 @@ export async function getShippingMethods(): Promise<ShippingMethodDetail[]> {
   return (Object.entries(SHIPPING_METHODS) as [ShippingMethodId, (typeof SHIPPING_METHODS)[ShippingMethodId]][]).map(
     ([id, method]) => ({ id, label: method.label, fee: method.fee, minDays: method.minDays, maxDays: method.maxDays }),
   );
+}
+
+// The same rates for pages that only describe them (FAQ, contact, shipping policy). Shared between
+// visitors for up to a minute; never use it to charge anyone.
+const cachedShippingMethods = cachedRead('shipping-methods', getShippingMethods);
+
+export async function getShippingMethodsForDisplay(): Promise<ShippingMethodDetail[]> {
+  return cachedShippingMethods();
 }
 
 export interface StockSummary {

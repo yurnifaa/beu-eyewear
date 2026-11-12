@@ -34,6 +34,14 @@ function writeCachedProducts(products: Record<string, ProductDTO>) {
   }
 }
 
+// Called when something is added to the cart from a page that already has the product's details, so
+// the cart page can paint the new row straight away instead of showing a skeleton while it looks the
+// product up. It adds to the saved copy rather than replacing it: the cart only paints from the copy
+// when it covers every line. The cart still refreshes from the server in the background.
+export function rememberCartProduct(product: ProductDTO) {
+  writeCachedProducts({ ...readCachedProducts(), [product.slug]: product });
+}
+
 // The cart only stores slug/color/quantity in localStorage, so names and prices
 // are looked up from the catalog. These prices are for display only — the
 // server re-reads them when an order is placed.

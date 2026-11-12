@@ -133,11 +133,24 @@ export default async function Page(props: PageProps<'/listing'>) {
   }
   const activeCategory = { ...category, name: category.name.replace(/^BeU\s+/i, '') };
 
-  const subcategories = await getSubcategories(activeCategory.slug);
   const hasFilters = Boolean(sub || lens || material || shape || color || sort);
 
-  // Filter choices come from the lookups tab of the sheet.
-  const filterOptions = await getFilterOptions();
+  // None of these depend on each other, so they are fetched together. Filter choices come from the
+  // lookups tab of the sheet.
+  const [subcategories, filterOptions, results] = await Promise.all([
+    getSubcategories(activeCategory.slug),
+    getFilterOptions(),
+    getProducts({
+      category: activeCategory.slug,
+      sub,
+      lens,
+      material,
+      shape,
+      color,
+      sort,
+      page,
+    }),
+  ]);
   const lensOptions = facetOptions('Lens Options', filterOptions.lens, lens, 'lens', current);
   const materialOptions = facetOptions('Frame Materials', filterOptions.material, material, 'material', current);
   const shapeOptions = facetOptions('Frame Shapes', filterOptions.shape, shape, 'shape', current);
@@ -147,17 +160,6 @@ export default async function Page(props: PageProps<'/listing'>) {
     { label: 'Price: Low to High', href: withParams(current, { sort: 'price-asc', page: undefined }), active: sort === 'price-asc' },
     { label: 'Price: High to Low', href: withParams(current, { sort: 'price-desc', page: undefined }), active: sort === 'price-desc' },
   ];
-
-  const results = await getProducts({
-    category: activeCategory.slug,
-    sub,
-    lens,
-    material,
-    shape,
-    color,
-    sort,
-    page,
-  });
 
   const subcategoryRowResults = await Promise.all(
     subcategories.map(async (subcat) => ({

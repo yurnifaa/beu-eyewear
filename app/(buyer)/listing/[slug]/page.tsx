@@ -25,6 +25,7 @@ import {
   getStoreSettings,
   getSubcategoryBySlug,
 } from '@/lib/catalog/queries';
+import { toProductDTO } from '@/lib/catalog/dto';
 import { formatPrice } from '@/lib/format';
 
 // Reads live catalog data from the database: don't bake it into a static
@@ -116,12 +117,14 @@ export default async function Page(props: PageProps<'/listing/[slug]'>) {
           <ProductColorProvider
             variants={product.variants.map(({ color, available, imageUrls }) => ({ color, available, images: imageUrls }))}
           >
-          <Reveal mode="mount" delay={0.05} className="mt-8 grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] lg:gap-14">
+          {/* The photo is the page's largest element, so it is never animated (a fade would delay it
+              being counted as loaded); only the text beside it eases in. */}
+          <div className="mt-8 grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] lg:gap-14">
             <div className="lg:sticky lg:top-28 lg:self-start">
               <ColorGallery alt={product.name} />
             </div>
 
-            <div className="flex min-w-0 flex-col gap-7">
+            <div className="beu-enter flex min-w-0 flex-col gap-7">
               <div>
                 <div className="flex flex-wrap items-center gap-2 text-[11px] uppercase tracking-[0.18em]">
                   {categoryName && <span className="beu-chip px-3 py-1.5">{categoryName}</span>}
@@ -156,6 +159,7 @@ export default async function Page(props: PageProps<'/listing/[slug]'>) {
                 slug={product.slug}
                 name={product.name}
                 variants={product.variants.map(({ color, hex, available }) => ({ color, hex, available }))}
+                cartProduct={toProductDTO(product)}
                 lowStockThreshold={settings.lowStockThreshold}
               />
 
@@ -262,7 +266,7 @@ export default async function Page(props: PageProps<'/listing/[slug]'>) {
             </AccordionSection>
               </div>
             </div>
-          </Reveal>
+          </div>
           </ProductColorProvider>
         </div>
       </section>

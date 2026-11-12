@@ -24,7 +24,9 @@ export function RollingPrice({ value, className = '' }: { value: number; classNa
       motionValue.set(value);
       return;
     }
-    const controls = animate(motionValue, value, { duration: 0.7, ease: [0.16, 1, 0.3, 1] });
+    // Short on purpose: it runs on every tick of a quantity or checkbox, and a long count-up makes
+    // the total look like it is lagging behind the click.
+    const controls = animate(motionValue, value, { duration: 0.25, ease: [0.16, 1, 0.3, 1] });
     return () => controls.stop();
   }, [value, reduce, motionValue]);
 

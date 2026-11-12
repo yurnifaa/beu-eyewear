@@ -80,12 +80,12 @@ body {
   to { transform: translateX(0); }
 }
 
-/* Home page: the scroll stops at each big part (HomeScrollSnap adds .beu-snap to <html> while it is
-   mounted). "mandatory" always settles on a section, and "always" stops a fast flick at every section
-   instead of skipping past. A section taller than the screen can still be scrolled through freely.
-   Every part needs a snap point (mandatory would skip anything between them), and the footer snaps by
-   its end so the bottom of the page stays reachable. To soften it: use "proximity" below, or drop the
-   scroll-snap-stop line. Switched off for reduced motion. */
+/* Home page: the scroll settles on a big part when it stops near one (HomeScrollSnap adds .beu-snap
+   to <html> while it is mounted). "proximity" only snaps when the scroll ends close to a snap point, so
+   a section taller than the screen can still be scrolled through freely. Every part needs a snap point,
+   and the footer snaps by its end so the bottom of the page stays reachable. To make it firmer, change
+   "proximity" below to "mandatory". Only for a mouse or trackpad: on a touch screen the browser's own
+   fling and the snapping fight each other and the page feels sticky. Switched off for reduced motion. */
 .beu-snap-section {
   scroll-snap-align: start;
   scroll-margin-top: var(--beu-header-h, 0px);
@@ -95,7 +95,7 @@ body {
   scroll-snap-align: end;
 }
 
-@media (prefers-reduced-motion: no-preference) {
+@media (prefers-reduced-motion: no-preference) and (hover: hover) and (pointer: fine) {
   html.beu-snap { scroll-snap-type: y proximity; }
 }
 
@@ -132,17 +132,61 @@ body {
   .beu-skeleton { animation: none; }
 }
 
-/* Scroll reveals start at opacity 0 in the server HTML and only fade in once the scripts have
-   loaded. On a slow connection that can mean blank sections for a long time, so if ConnectionMode
-   hasn't flagged the page as hydrated after 3.5s, show the content anyway. */
-@keyframes beu-reveal-failsafe {
-  to { opacity: 1; transform: none; }
+/* ---------- Entrances (component/Reveal.tsx) ----------
+   Nothing is hidden in the server HTML, so the page is readable the moment it paints, with or
+   without JavaScript. These only add a short fade-and-slide on top. */
+
+@keyframes beu-enter {
+  from { opacity: 0; transform: translateY(12px); }
 }
 
-html:not([data-hydrated]) .beu-theme [style*="opacity:0"],
-html:not([data-hydrated]) .beu-theme [style*="opacity: 0"] {
-  animation: beu-reveal-failsafe 0.4s ease-out 3.5s forwards;
+@keyframes beu-enter-fade {
+  from { opacity: 0; }
 }
+
+/* Reveal mode="mount": plays as the page paints, no JavaScript involved. The fill is "backwards"
+   only: it holds the start state through any delay, and afterwards the element returns to its normal
+   style with no leftover transform (which would trap fixed-position children). */
+.beu-enter { animation: beu-enter 0.3s ease-out backwards; }
+
+/* Reveal mode="inView": after hydration, a section that starts below the fold is marked "hidden"
+   and then "shown" as it nears the screen. Hiding is instant; only the way back in is animated.
+   A staggered Reveal (data-stagger) keeps its container still and moves its items instead, each
+   waiting its turn by position (1st..6th; later ones share the 6th turn). */
+[data-reveal='hidden']:not([data-stagger]),
+[data-reveal='hidden'] .beu-item {
+  opacity: 0;
+  transform: translateY(16px);
+}
+
+[data-reveal='shown']:not([data-stagger]),
+[data-reveal='shown'] .beu-item {
+  transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+  transition-delay: var(--reveal-delay, 0s);
+}
+
+[data-reveal='shown'] .beu-item {
+  transition-delay: calc(var(--reveal-delay, 0s) + min(var(--i, 0), 5) * var(--reveal-step, 0.06s));
+}
+
+.beu-item:nth-child(2) { --i: 1; }
+.beu-item:nth-child(3) { --i: 2; }
+.beu-item:nth-child(4) { --i: 3; }
+.beu-item:nth-child(5) { --i: 4; }
+.beu-item:nth-child(n + 6) { --i: 5; }
+
+/* Reduced motion, and "lite" mode (below): fade only, no slide. */
+@media (prefers-reduced-motion: reduce) {
+  .beu-enter { animation-name: beu-enter-fade; }
+
+  [data-reveal='hidden']:not([data-stagger]),
+  [data-reveal='hidden'] .beu-item { transform: none; }
+}
+
+html[data-lite] .beu-enter { animation-name: beu-enter-fade; }
+
+html[data-lite] [data-reveal='hidden']:not([data-stagger]),
+html[data-lite] [data-reveal='hidden'] .beu-item { transform: none; }
 
 /* "Lite" mode (ConnectionMode sets data-lite for Save-Data and 2G/3G): drop what costs the most to
    run on a weak phone or a slow link. Content, layout and colours stay the same. */
@@ -170,3 +214,28 @@ html[data-lite] [class*="backdrop-blur"] {
 html[data-lite] .beu-theme :is(.beu-chip, .beu-bar, .beu-header-pill):not([data-active="true"]) {
   background: rgba(255, 255, 255, 0.94);
 }
+
+/* ---------- Phones and touch screens ----------
+   The same two savings as lite mode, for every touch device regardless of connection speed. Safari and
+   Firefox never report a slow connection, and a fast phone on Wi-Fi is still a small GPU: a blur over
+   a scrolling page is re-computed every frame, and the home page's drifting layers are repainted
+   every frame too. */
+@media (hover: none), (max-width: 767px) {
+  .beu-theme :is(.beu-glass, .beu-chip, .beu-bar, .beu-header-pill),
+  [class*="backdrop-blur"] {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+
+  .beu-theme :is(.beu-chip, .beu-bar, .beu-header-pill):not([data-active="true"]) {
+    background: rgba(255, 255, 255, 0.94);
+  }
+
+  /* Framer writes the drift as an inline transform; this holds the layers still. */
+  .beu-parallax { transform: none !important; }
+}
+
+/* Scroll-linked layers get their own compositor layer, so moving one is a transform change on a
+   cached bitmap instead of a repaint of its shadows and masks. (Not the <img> variant: it carries a
+   blend mode that has to stay blended with the section behind it.) */
+.beu-parallax:not(img) { will-change: transform; }

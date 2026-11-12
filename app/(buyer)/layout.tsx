@@ -3,7 +3,6 @@ import Header from '@/component/Header';
 import Footer from '@/component/Footer';
 import ScrollToTop from '@/component/ScrollToTop';
 import ConnectionMode from '@/component/ConnectionMode';
-import { MotionProvider } from '@/component/Reveal';
 import GlyphSprite from '@/component/beu/GlyphSprite';
 import { storefrontFontVariables } from './fonts';
 import './beu-theme.css';
@@ -18,14 +17,7 @@ export default function BuyerLayout({ children }: { children: ReactNode }) {
       <ScrollToTop />
       <ConnectionMode />
       <Header />
-      {/* The scroll reveals start from opacity 0 in the server HTML. With JavaScript off nothing
-          would ever fade them in, so show everything in that case. */}
-      <noscript>
-        <style>{`.beu-theme [style*="opacity:0"],.beu-theme [style*="opacity: 0"]{opacity:1!important;transform:none!important}`}</style>
-      </noscript>
-      <MotionProvider>
-        <main className="flex-1">{children}</main>
-      </MotionProvider>
+      <main className="flex-1">{children}</main>
       <Footer />
     </div>
   );

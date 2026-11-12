@@ -1,149 +1,89 @@
 'use client';
 
-import { useRef, type ComponentType, type ReactNode, type Ref } from 'react';
-import Image, { type ImageProps } from 'next/image';
-import {
-  LazyMotion,
-  MotionConfig,
-  m,
-  useReducedMotion,
-  useScroll,
-  useTransform,
-  type MotionStyle,
-  type UseScrollOptions,
-  type Variants,
-} from 'framer-motion';
+import { useEffect, useRef, type CSSProperties, type ReactNode } from 'react';
 
-// One motion language for the storefront: transform + opacity only, 300ms, ease-out, no bounce.
-const DURATION = 0.3;
-const EASE = 'easeOut' as const;
-const STAGGER_STEP = 0.06;
-
-const itemVariants: Variants = {
-  hidden: { opacity: 0, y: 16 },
-  show: { opacity: 1, y: 0, transition: { duration: DURATION, ease: EASE } },
-};
-
-// Wrap the storefront once. With "user", the OS reduced-motion setting turns every transform
-// animation (the slide-up in Reveal) into an instant jump while the opacity fade still plays.
+// One motion language for the storefront: opacity + a small slide, 300ms, ease-out, no bounce.
 //
-// The animation engine itself is loaded lazily (LazyMotion + the `m` components below), so it comes
-// in its own chunk after the first paint instead of blocking it on a slow connection.
-const loadMotionFeatures = () => import('./motion-features').then((module) => module.default);
-
-export function MotionProvider({ children }: { children: ReactNode }) {
-  return (
-    <LazyMotion features={loadMotionFeatures}>
-      <MotionConfig reducedMotion="user">{children}</MotionConfig>
-    </LazyMotion>
-  );
-}
+// The rule that matters: nothing is hidden in the server HTML. A reveal that starts at opacity 0
+// makes the page blank until JavaScript has loaded and hydrated, which is what made the site feel
+// slow, and the main product photo can't count as "loaded" while its container is invisible.
+// So content always arrives visible, and the animation is added on top:
+//
+//  - mode="mount" is a pure CSS animation (.beu-enter in globals.css). It plays as the page paints,
+//    needs no JavaScript, and cannot leave anything hidden.
+//  - mode="inView" (the default, for sections further down the page) is visible in the HTML too.
+//    After hydration, a section that starts below the fold is hidden and then faded in as it nears
+//    the screen. A section that is already on screen is left alone. The styles are
+//    [data-reveal] in globals.css.
+//
+// No animation library is needed for either, so most pages don't ship one.
 
 export interface RevealProps {
   children: ReactNode;
   className?: string;
   mode?: 'mount' | 'inView';
+  // Seconds to wait before the entrance starts.
   delay?: number;
-  // Hand the entrance to <RevealItem> children, one after another. true = 60ms between items,
-  // or pass seconds. The container itself then stays put instead of fading as a block.
+  // inView only. Hand the entrance to <RevealItem> children, one after another, instead of fading
+  // the container as a block. true = 60ms between items, or pass seconds.
   stagger?: boolean | number;
 }
 
+// How far below the screen a section can be and still start fading in (px), so a quick scroll
+// doesn't catch it half-hidden.
+const LEAD_PX = 120;
+
 export default function Reveal({ children, className = '', mode = 'inView', delay = 0, stagger }: RevealProps) {
-  const trigger =
-    mode === 'mount'
-      ? { animate: stagger ? 'show' : { opacity: 1, y: 0 } }
-      : {
-          whileInView: stagger ? 'show' : { opacity: 1, y: 0 },
-          viewport: { once: true, amount: stagger ? 0.1 : 0.15 },
-        };
+  const ref = useRef<HTMLDivElement>(null);
+  const inView = mode === 'inView';
 
-  if (stagger) {
-    const step = typeof stagger === 'number' ? stagger : STAGGER_STEP;
-    const container: Variants = {
-      hidden: {},
-      show: { transition: { staggerChildren: step, delayChildren: delay } },
+  useEffect(() => {
+    const element = ref.current;
+    if (!inView || !element || typeof IntersectionObserver === 'undefined') return;
+
+    // Already on screen, or scrolled past: leave it showing.
+    if (element.getBoundingClientRect().top < window.innerHeight) return;
+
+    element.setAttribute('data-reveal', 'hidden');
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (!entries.some((entry) => entry.isIntersecting)) return;
+        element.setAttribute('data-reveal', 'shown');
+        observer.disconnect();
+      },
+      { rootMargin: `0px 0px ${LEAD_PX}px 0px` },
+    );
+    observer.observe(element);
+
+    return () => {
+      observer.disconnect();
+      // Never leave a section hidden behind an observer that is gone.
+      element.removeAttribute('data-reveal');
     };
+  }, [inView]);
+
+  const style: CSSProperties & Record<`--${string}`, string> = {};
+  if (delay) style['--reveal-delay'] = `${delay}s`;
+  if (typeof stagger === 'number') style['--reveal-step'] = `${stagger}s`;
+
+  if (!inView) {
     return (
-      <m.div className={className} variants={container} initial="hidden" {...trigger}>
+      <div className={`beu-enter ${className}`} style={delay ? { animationDelay: `${delay}s` } : undefined}>
         {children}
-      </m.div>
+      </div>
     );
   }
 
   return (
-    <m.div
-      className={className}
-      initial={{ opacity: 0, y: mode === 'mount' ? 12 : 16 }}
-      transition={{ duration: DURATION, ease: EASE, delay }}
-      {...trigger}
-    >
+    <div ref={ref} className={className} data-stagger={stagger ? '' : undefined} style={style}>
       {children}
-    </m.div>
+    </div>
   );
 }
 
-// A piece of a staggered <Reveal>. Outside one it renders as a plain, visible div, so shared
-// components (ProductCard...) never get stuck hidden on pages that don't stagger.
+// A piece of a staggered <Reveal>. Outside one it is a plain, visible div, so shared components
+// (ProductCard...) never get stuck hidden on pages that don't stagger. Its place among its siblings
+// sets its turn (see .beu-item in globals.css).
 export function RevealItem({ children, className = '' }: { children: ReactNode; className?: string }) {
-  return (
-    <m.div className={className} variants={itemVariants}>
-      {children}
-    </m.div>
-  );
-}
-
-interface ParallaxOptions {
-  // Pixels of travel at scroll progress 0 and 1, e.g. [-20, 20]. Keep it small.
-  range?: [number, number];
-  offset?: UseScrollOptions['offset'];
-  // Direction of travel: vertical (default) or horizontal.
-  axis?: 'x' | 'y';
-}
-
-function useParallax<T extends HTMLElement>({ range = [-20, 20], offset = ['start end', 'end start'], axis = 'y' }: ParallaxOptions) {
-  const ref = useRef<T>(null);
-  const reduce = useReducedMotion();
-  const { scrollYProgress } = useScroll({ target: ref, offset });
-  const travel = useTransform(scrollYProgress, [0, 1], range);
-  // Scroll-linked motion isn't covered by MotionConfig, so reduced motion is handled here.
-  return { ref, style: reduce ? undefined : axis === 'x' ? { x: travel } : { y: travel } };
-}
-
-export function Parallax({
-  children,
-  className = '',
-  as = 'div',
-  ...options
-}: ParallaxOptions & {
-  children: ReactNode;
-  className?: string;
-  // 'span' keeps the markup valid when the wrapper sits inside a heading or paragraph.
-  as?: 'div' | 'span';
-}) {
-  const { ref, style } = useParallax<HTMLDivElement>(options);
-  if (as === 'span') {
-    return (
-      <m.span ref={ref as unknown as Ref<HTMLSpanElement>} className={className} style={style}>
-        {children}
-      </m.span>
-    );
-  }
-  return (
-    <m.div ref={ref} className={className} style={style}>
-      {children}
-    </m.div>
-  );
-}
-
-// motion's typings for event handlers clash with next/image's DOM ones, so narrow to what we pass.
-const MotionImage = m.create(Image) as unknown as ComponentType<
-  Omit<ImageProps, 'style'> & { ref?: Ref<HTMLImageElement>; style?: MotionStyle }
->;
-
-// The transform sits on the <img> itself, not a wrapper: an ancestor with a transform would
-// isolate the image's mix-blend-mode from the section behind it.
-export function ParallaxImage({ range, offset, ...props }: ParallaxOptions & Omit<ImageProps, 'style'>) {
-  const { ref, style } = useParallax<HTMLImageElement>({ range, offset });
-  return <MotionImage ref={ref} style={style} {...props} />;
+  return <div className={`beu-item ${className}`}>{children}</div>;
 }

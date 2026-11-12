@@ -85,7 +85,7 @@ The storefront and the admin panel run as two separate servers from this one cod
 | `npm run dev:store` | the storefront alone | http://localhost:3000 |
 | `npm run dev:admin` | the admin panel alone | http://localhost:3001/admin |
 
-`dev:store` and `dev:admin` each start only one server, so use them when you only need one side. `APP_MODE` (set by these scripts) decides which routes a server answers; `proxy.ts` returns 404 for the rest.
+`dev:store` and `dev:admin` each start only one server, so use them when you only need one side. `APP_MODE` (set by these scripts) decides which routes a server answers; the redirects and rewrites in `next.config.ts` return 404 for the rest.
 
 Admin signs in at `/admin/login` and uses its own session cookie (`beu_admin_session`), so it doesn't replace a customer session on :3000.
 

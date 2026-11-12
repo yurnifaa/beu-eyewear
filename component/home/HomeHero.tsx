@@ -3,7 +3,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import PixelGlyph from "@/component/beu/PixelGlyph";
 import HomeWordmark from "@/component/home/HomeWordmark";
-import { Parallax } from "@/component/Reveal";
+import { Parallax } from "@/component/Parallax";
 
 // Progress 0 is the top of the page, so the layers start in place and drift apart as you scroll.
 const HERO_OFFSET: ["start start", "end start"] = ["start start", "end start"];

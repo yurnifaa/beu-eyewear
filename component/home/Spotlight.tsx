@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import PixelGlyph from "@/component/beu/PixelGlyph";
-import Reveal, { Parallax, ParallaxImage } from "@/component/Reveal";
+import { Parallax, ParallaxImage } from "@/component/Parallax";
+import Reveal from "@/component/Reveal";
 import type { CatalogProduct } from "@/lib/catalog/types";
 import { formatPrice } from "@/lib/format";
 

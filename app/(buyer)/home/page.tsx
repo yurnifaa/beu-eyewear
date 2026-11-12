@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import BenefitsBar from '@/component/BenefitsBar';
+import MotionProvider from '@/component/MotionProvider';
 import ProductCard from '@/component/ProductCard';
 import ProductRow from '@/component/ProductRow';
 import Reveal, { RevealItem } from '@/component/Reveal';
@@ -76,7 +77,9 @@ export default async function Page() {
   }));
 
   return (
-    <>
+    // The hero and the spotlight drift on scroll (framer-motion); nothing else on the storefront
+    // outside the cart needs it, so the provider lives here and not in the layout.
+    <MotionProvider>
       <HomeScrollSnap />
       <HomeHero />
       <PunkBand />
@@ -170,6 +173,6 @@ export default async function Page() {
           <ReviewsSection reviews={reviews} />
         </Reveal>
       )}
-    </>
+    </MotionProvider>
   );
 }

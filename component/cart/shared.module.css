@@ -10,7 +10,14 @@
 
 .glyph {
   position: absolute;
-  animation: cart-drift var(--dur, 9s) ease-in-out var(--delay, 0s) infinite alternate;
+}
+
+/* Only for a mouse or trackpad. On a phone the glyphs sit still: an endless animation behind the
+   cart's frosted panels means re-drawing them every frame for the whole visit. */
+@media (hover: hover) and (pointer: fine) {
+  .glyph {
+    animation: cart-drift var(--dur, 9s) ease-in-out var(--delay, 0s) infinite alternate;
+  }
 }
 
 /* ---------- selection bead (a real checkbox, dressed as a gel bead) ---------- */

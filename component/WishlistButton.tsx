@@ -41,7 +41,9 @@ export default function WishlistButton({ slug, name, variant = 'icon', className
       onClick={handleClick}
       aria-pressed={isWishlisted}
       aria-label={isWishlisted ? `Remove ${name} from wishlist` : `Add ${name} to wishlist`}
-      className={`flex h-10 w-10 items-center justify-center rounded-full bg-background/80 backdrop-blur ${className}`}
+      // Not backdrop-blur: this button is on every product card, and a blur per card over a scrolling
+      // page is re-computed every frame. A firmer fill looks the same over a product photo.
+      className={`flex h-10 w-10 items-center justify-center rounded-full bg-background/90 ${className}`}
     >
       <Heart size={18}className={isWishlisted ? 'fill-current text-foreground' : ''} />
     </button>

@@ -11,7 +11,7 @@ import ShippingInfoCard from '@/component/order/ShippingInfoCard';
 import { requireUser } from '@/lib/auth/session';
 import { PAYMENT_METHOD_LABELS, isGatewayMethod } from '@/lib/checkout/payment';
 import { formatOrderNumber } from '@/lib/format';
-import { getOrderForUser } from '@/lib/orders/queries';
+import { getOrderForUser, getOrderForUserOnce } from '@/lib/orders/queries';
 import { cancelBlockedReason, canCancel } from '@/lib/orders/rules';
 import { orderBucket } from '@/lib/orders/tabs';
 import { syncOrderPayment } from '@/lib/payments/sync';
@@ -20,7 +20,7 @@ import { cancelMyOrder, payMyOrder } from '../actions';
 export async function generateMetadata(props: PageProps<'/account/orders/[id]'>): Promise<Metadata> {
   const { id } = await props.params;
   const user = await requireUser(`/account/orders/${id}`);
-  const order = await getOrderForUser(user.id, id);
+  const order = await getOrderForUserOnce(user.id, id);
   return { title: order ? `Order #${formatOrderNumber(order.number)}` : 'Order' };
 }
 
@@ -30,7 +30,7 @@ export default async function OrderDetailPage(props: PageProps<'/account/orders/
   const user = await requireUser(`/account/orders/${id}`);
 
   // Scoped to the signed-in user, so someone else's order id is just a 404.
-  let order = await getOrderForUser(user.id, id);
+  let order = await getOrderForUserOnce(user.id, id);
   if (!order) notFound();
 
   // The buyer may be back from a payment page the webhook hasn't reported yet.

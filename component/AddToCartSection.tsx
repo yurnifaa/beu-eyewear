@@ -7,7 +7,9 @@ import { useProductColor } from '@/component/product/ProductColorProvider';
 import QuantityStepper from '@/component/QuantityStepper';
 import WishlistButton from '@/component/WishlistButton';
 import { addToCart } from '@/lib/cart';
-import { flyToCart, shouldReduceMotion } from '@/lib/cart-fly';
+import { rememberCartProduct } from '@/lib/cart-items';
+import { flyToCart } from '@/lib/cart-fly';
+import type { ProductDTO } from '@/lib/catalog/dto';
 import { LOW_STOCK_THRESHOLD } from '@/lib/catalog/types';
 import { STANDARD_COLOR } from '@/lib/catalog/variants';
 
@@ -22,20 +24,19 @@ export interface AddToCartSectionProps {
   name: string;
   // One entry per sellable color, with its own live stock. "Standard" means a single option.
   variants: AddToCartVariant[];
+  // The product as the cart shows it. Saved on add so /cart can paint the row without a lookup.
+  cartProduct: ProductDTO;
   lowStockThreshold?: number;
 }
 
 const MAX_QUANTITY = 99;
-// How long the landed badge is shown before moving on to /cart.
-const LAND_PAUSE_MS = 250;
 
-export default function AddToCartSection({ slug, name, variants, lowStockThreshold = LOW_STOCK_THRESHOLD }: AddToCartSectionProps) {
+export default function AddToCartSection({ slug, name, variants, cartProduct, lowStockThreshold = LOW_STOCK_THRESHOLD }: AddToCartSectionProps) {
   const colored = variants.filter((variant) => variant.color !== STANDARD_COLOR);
   // The selected color lives in the page's color provider so the photo gallery can follow it.
   const { selectedColor, selectColor } = useProductColor();
   const [quantity, setQuantity] = useState(1);
   const [justAdded, setJustAdded] = useState(false);
-  const [adding, setAdding] = useState(false);
   const addingRef = useRef(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const router = useRouter();
@@ -49,23 +50,20 @@ export default function AddToCartSection({ slug, name, variants, lowStockThresho
     router.prefetch('/cart');
   }, [router]);
 
-  // Sequence: chip flies to the header cart -> item is added as it lands (badge ticks + icon bumps)
-  // -> a beat to see it -> go to the cart. The button stays locked throughout so a double-click
-  // can't add twice. With reduced motion / lite mode flyToCart returns at once and the pause is skipped.
-  const handleAddToCart = async () => {
+  // The item is added and the cart opens straight away; nothing waits for the animation. The "+N"
+  // chip is a free-floating element on the page body, so it keeps flying to the header cart while
+  // /cart loads, and bumps the icon when it lands (a no-op with reduced motion / lite mode). The
+  // button stays locked afterwards so a double-click can't add twice.
+  const handleAddToCart = () => {
     if (soldOut || addingRef.current) return;
     addingRef.current = true;
-    setAdding(true);
 
     const added = Math.min(quantity, available);
-    const animate = !shouldReduceMotion();
-    if (buttonRef.current) await flyToCart({ from: buttonRef.current, label: `+${added}` });
-
+    rememberCartProduct(cartProduct);
     addToCart(slug, added, selectedColor, available);
-    setAdding(false);
     setJustAdded(true);
 
-    if (animate) await new Promise((resolve) => window.setTimeout(resolve, LAND_PAUSE_MS));
+    if (buttonRef.current) void flyToCart({ from: buttonRef.current, label: `+${added}` });
     router.push('/cart');
   };
 
@@ -148,11 +146,11 @@ export default function AddToCartSection({ slug, name, variants, lowStockThresho
           ref={buttonRef}
           type="button"
           onClick={handleAddToCart}
-          disabled={soldOut || adding}
+          disabled={soldOut || justAdded}
           className="inline-flex h-14 min-w-48 flex-1 items-center justify-center gap-2.5 rounded-full bg-ink px-8 text-xs uppercase tracking-[0.14em] text-white shadow-[0_14px_28px_rgba(10,26,47,0.28)] transition duration-150 hover:-translate-y-0.5 disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none sm:flex-none"
         >
           {justAdded ? <Check size={16} /> : <ShoppingBag size={16} />}
-          {soldOut ? 'Out of stock' : adding ? 'Adding…' : justAdded ? 'Added' : 'Add to Cart'}
+          {soldOut ? 'Out of stock' : justAdded ? 'Added' : 'Add to Cart'}
         </button>
         <WishlistButton slug={slug} name={name} variant="labeled" />
       </div>

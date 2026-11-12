@@ -1,4 +1,4 @@
-import { getShippingMethods, getStoreSettings } from '@/lib/catalog/queries';
+import { getShippingMethodsForDisplay, getStoreSettings } from '@/lib/catalog/queries';
 import { SHIPPING_METHODS } from '@/lib/checkout/shipping';
 
 const DEFAULT_PHONES = ['(02) 8676-9420', '0912-345-6789'];
@@ -14,7 +14,8 @@ export interface SupportInfo {
 // Support pages must never 500 because the sheet is down, so every value has a fallback
 // (the same numbers the footer prints).
 export async function getSupportInfo(): Promise<SupportInfo> {
-  const [settings, shipping] = await Promise.allSettled([getStoreSettings(), getShippingMethods()]);
+  // These pages only describe the rates, so a minute-old copy is fine (checkout reads them live).
+  const [settings, shipping] = await Promise.allSettled([getStoreSettings(), getShippingMethodsForDisplay()]);
   const s = settings.status === 'fulfilled' ? settings.value : undefined;
 
   return {
