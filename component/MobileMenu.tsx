@@ -4,6 +4,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
+import { useScrollLock } from "@/lib/use-scroll-lock";
 
 export default function MobileMenu({ links }: {
   links: { href: string; label: string }[];
@@ -27,12 +28,7 @@ export default function MobileMenu({ links }: {
     return () => desktop.removeEventListener("change", closeOnDesktop);
   }, []);
 
-  useEffect(() => {
-    if (!open) return;
-    const previous = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => { document.body.style.overflow = previous; };
-  }, [open]);
+  useScrollLock(open);
 
   return (
     <>

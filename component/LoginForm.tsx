@@ -8,6 +8,8 @@ import { authPrimaryClass, authSecondaryClass } from '@/component/auth/auth-clas
 import IconField from '@/component/IconField';
 import { login } from '@/lib/auth/actions';
 import type { FormState } from '@/lib/auth/types';
+import { useFormValidation } from '@/lib/use-form-validation';
+import { loginSchema } from '@/lib/validation/auth';
 
 const initialState: FormState = {};
 
@@ -27,6 +29,8 @@ type LoginFormProps = {
 
 export default function LoginForm({ next, onNavigate, onGuest, headingAs: Heading = 'h2', notice }: LoginFormProps) {
   const [state, formAction, pending] = useActionState(login, initialState);
+  const { errors, formProps } = useFormValidation(loginSchema);
+  const errorFor = (name: string) => errors[name] ?? firstError(state.fieldErrors?.[name]);
 
   return (
     <div>
@@ -44,7 +48,7 @@ export default function LoginForm({ next, onNavigate, onGuest, headingAs: Headin
         </p>
       )}
 
-      <form action={formAction} className="mt-6 flex flex-col">
+      <form action={formAction} {...formProps} className="mt-6 flex flex-col">
         {next && <input type="hidden" name="next" value={next} />}
 
         <div className="flex flex-col gap-3">
@@ -54,7 +58,7 @@ export default function LoginForm({ next, onNavigate, onGuest, headingAs: Headin
             placeholder="Email Address"
             autoComplete="email"
             icon={<Mail size={16} aria-hidden="true" />}
-            error={firstError(state.fieldErrors?.email)}
+            error={errorFor('email')}
           />
           <IconField
             id="password"
@@ -62,7 +66,7 @@ export default function LoginForm({ next, onNavigate, onGuest, headingAs: Headin
             placeholder="Password"
             autoComplete="current-password"
             icon={<Lock size={16} aria-hidden="true" />}
-            error={firstError(state.fieldErrors?.password)}
+            error={errorFor('password')}
           />
         </div>
 

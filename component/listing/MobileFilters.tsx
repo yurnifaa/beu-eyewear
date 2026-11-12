@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { ArrowUpDown, Check, SlidersHorizontal, X } from 'lucide-react';
 import type { FilterDropdownOption } from '@/component/FilterDropdown';
 import type { FilterOption } from '@/lib/catalog/types';
+import { useScrollLock } from '@/lib/use-scroll-lock';
 
 export type FacetKey = 'lens' | 'material' | 'shape' | 'color';
 
@@ -57,14 +58,7 @@ export default function MobileFilters({ groups, baseParams, sortOptions, sortLab
   }, [sheet]);
 
   // Lock page scroll while a sheet is open.
-  useEffect(() => {
-    if (!sheet) return;
-    const previous = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = previous;
-    };
-  }, [sheet]);
+  useScrollLock(sheet !== null);
 
   const openFilters = () => {
     setDraft(Object.fromEntries(groups.map((group) => [group.key, group.active])));

@@ -8,11 +8,14 @@ import { authPrimaryClass } from '@/component/auth/auth-classes';
 import IconField from '@/component/IconField';
 import { requestPasswordReset } from '@/lib/auth/account-actions';
 import type { FormState } from '@/lib/auth/types';
+import { useFormValidation } from '@/lib/use-form-validation';
+import { forgotPasswordSchema } from '@/lib/validation/auth';
 
 const initialState: FormState = {};
 
 export default function ForgotPasswordForm() {
   const [state, formAction, pending] = useActionState(requestPasswordReset, initialState);
+  const { errors, formProps } = useFormValidation(forgotPasswordSchema);
 
   return (
     <div>
@@ -23,14 +26,14 @@ export default function ForgotPasswordForm() {
         description="Enter your email and we'll send you a link to choose a new one."
       />
 
-      <form action={formAction} className="mt-6 flex flex-col">
+      <form action={formAction} {...formProps} className="mt-6 flex flex-col">
         <IconField
           id="email"
           type="email"
           placeholder="Email Address"
           autoComplete="email"
           icon={<Mail size={16} aria-hidden="true" />}
-          error={state.fieldErrors?.email}
+          error={errors.email ?? state.fieldErrors?.email}
         />
 
         <p

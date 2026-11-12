@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
 import LoginForm from '@/component/LoginForm';
+import { useScrollLock } from '@/lib/use-scroll-lock';
 
 type LoginModalProps = {
   open: boolean;
@@ -24,14 +25,7 @@ export default function LoginModal({ open, onClose, next }: LoginModalProps) {
   }, [open]);
 
   // Lock page scroll while open.
-  useEffect(() => {
-    if (!open) return;
-    const previous = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = previous;
-    };
-  }, [open]);
+  useScrollLock(open);
 
   return (
     <dialog
@@ -42,7 +36,7 @@ export default function LoginModal({ open, onClose, next }: LoginModalProps) {
         if (event.target === event.currentTarget) onClose();
       }}
       aria-labelledby="login-title"
-      className="m-auto w-[calc(100%-2rem)] max-w-md rounded-[2rem] border border-white bg-background p-0 text-foreground shadow-[0_24px_50px_rgba(40,100,180,0.25)] backdrop:bg-ink/60 backdrop:backdrop-blur-sm"
+      className="m-auto overscroll-contain w-[calc(100%-2rem)] max-w-md rounded-[2rem] border border-white bg-background p-0 text-foreground shadow-[0_24px_50px_rgba(40,100,180,0.25)] backdrop:bg-ink/60 backdrop:backdrop-blur-sm"
     >
       <button
         type="button"
