@@ -87,9 +87,11 @@ export default async function AccountPage() {
         >
           {initialsOf(user.name)}
         </span>
-        <div className="min-w-0 flex-1">
-          <p className="truncate font-display text-xl font-black uppercase tracking-[-0.02em]">{user.name}</p>
-          <p className="mt-1 break-all text-sm text-muted-foreground">{user.email}</p>
+        {/* basis-40: when the avatar, this and the badge don't fit on one line the badge drops below,
+            instead of this being squeezed (and the name cut to "JA…"). Long names wrap. */}
+        <div className="min-w-0 flex-[1_1_10rem]">
+          <p className="font-display text-xl font-black uppercase tracking-[-0.02em] [overflow-wrap:anywhere]">{user.name}</p>
+          <p className="mt-1 text-sm text-muted-foreground [overflow-wrap:anywhere]">{user.email}</p>
         </div>
         <span className="beu-chip inline-flex h-9 items-center gap-2 px-4 text-[11px] uppercase tracking-[0.14em]">
           {verified ? <BadgeCheck size={14} aria-hidden="true" /> : <MailWarning size={14} aria-hidden="true" />}

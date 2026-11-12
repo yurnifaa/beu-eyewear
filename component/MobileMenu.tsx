@@ -1,13 +1,19 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, X } from "lucide-react";
+import { Glasses, House, Info, Menu, X, type LucideIcon } from "lucide-react";
+import { menuRowClass } from "@/component/menu-row";
+import type { NavIcon } from "@/component/nav-links";
 import { useScrollLock } from "@/lib/use-scroll-lock";
 
-export default function MobileMenu({ links }: {
-  links: { href: string; label: string }[];
+const ICONS: Record<NavIcon, LucideIcon> = { home: House, shop: Glasses, about: Info };
+
+export default function MobileMenu({ links, accountSlot }: {
+  links: { href: string; label: string; icon: NavIcon }[];
+  // The Account link (signed in) or Log in button (signed out), shown under the links.
+  accountSlot?: ReactNode;
 }) {
   const pathname = usePathname();
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -69,21 +75,24 @@ export default function MobileMenu({ links }: {
             </button>
           </div>
           <nav aria-label="Mobile navigation" className="mt-4 flex flex-col gap-2">
-            {links.map(({ href, label }) => {
+            {links.map(({ href, label, icon }) => {
               const plain = !href.includes("?") && !href.includes("#");
               const active = plain && (pathname === href || pathname.startsWith(`${href}/`));
+              const Icon = ICONS[icon];
               return (
                 <Link
                   key={label}
                   href={href}
                   aria-current={active ? "page" : undefined}
                   onClick={() => dialogRef.current?.close()}
-                  className={`rounded-full px-4 py-3.5 text-xs font-medium uppercase tracking-[0.18em] transition-colors duration-150 focus-visible:outline-2 ${active ? "bg-ice shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]" : "hover:bg-accent/15"}`}
+                  className={menuRowClass(active)}
                 >
+                  <Icon size={18} strokeWidth={1.75} aria-hidden="true" className="shrink-0" />
                   {label}
                 </Link>
               );
             })}
+            {accountSlot && <div className="mt-2 border-t border-border pt-4">{accountSlot}</div>}
           </nav>
         </div>
       </dialog>
