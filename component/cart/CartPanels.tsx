@@ -122,7 +122,7 @@ function Row({
 // `onChange`, when given, is called after any edit to the list.
 export function ItemsPanel({ model, onChange }: { model: CartModel; onChange?: () => void }) {
   return (
-    <section aria-label="Cart items" className={s.panel}>
+    <section aria-label="Cart items" className={`${s.panel} ${s.items}`}>
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-border px-3 py-2.5 text-sm">
         <label className="flex cursor-pointer items-center gap-1">
           <Bead

@@ -96,7 +96,6 @@ export default async function Page(props: PageProps<'/listing/[slug]'>) {
           <div className="beu-band-grid absolute inset-0" />
           <div className="beu-band-dots absolute inset-0" />
         </div>
-        <PixelGlyph name="cross" size={34} className="absolute right-[6%] top-[calc(var(--beu-header-h)+3rem)] z-[1] hidden text-foreground lg:block" />
 
         <div className="relative z-[2] mx-auto max-w-[1328px] px-6 pb-16 pt-[calc(var(--beu-header-h)+1.25rem)] md:px-14 md:pb-24">
           <Reveal mode="mount">

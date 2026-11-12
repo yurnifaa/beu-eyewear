@@ -394,6 +394,9 @@ export async function searchProducts(query: string): Promise<CatalogProduct[]> {
   const scored: ScoredRow[] = [];
 
   for (const row of rows) {
+    // Every frame's long description says "Includes a protective case and microfiber cloth", so
+    // searching it would put all frames under "case". Only accessories and bundles search it.
+    const isEyewear = row.productType === 'FRAME' || row.productType === 'SMART_FRAME';
     const fields: [string, number][] = [
       [row.name, 10],
       [row.category.name, 6],
@@ -404,7 +407,7 @@ export async function searchProducts(query: string): Promise<CatalogProduct[]> {
       [row.tags.join(' '), 4],
       [row.variants.map((v) => v.color).join(' '), 4],
       [row.shortDescription, 2],
-      [row.description, 1],
+      [isEyewear ? '' : row.description, 1],
     ];
 
     let allMatch = true;
