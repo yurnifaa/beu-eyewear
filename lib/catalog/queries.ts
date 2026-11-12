@@ -394,9 +394,8 @@ export async function searchProducts(query: string): Promise<CatalogProduct[]> {
   const scored: ScoredRow[] = [];
 
   for (const row of rows) {
-    // Every frame's long description says "Includes a protective case and microfiber cloth", so
-    // searching it would put all frames under "case". Only accessories and bundles search it.
-    const isEyewear = row.productType === 'FRAME' || row.productType === 'SMART_FRAME';
+    // Descriptions are deliberately not searched: prose words ("jacket", "jewelry", "case") made
+    // short queries match unrelated products. Only structured fields count.
     const fields: [string, number][] = [
       [row.name, 10],
       [row.category.name, 6],
@@ -406,8 +405,6 @@ export async function searchProducts(query: string): Promise<CatalogProduct[]> {
       [row.frameShape ?? '', 4],
       [row.tags.join(' '), 4],
       [row.variants.map((v) => v.color).join(' '), 4],
-      [row.shortDescription, 2],
-      [isEyewear ? '' : row.description, 1],
     ];
 
     let allMatch = true;
