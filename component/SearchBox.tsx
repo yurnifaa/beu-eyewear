@@ -7,9 +7,9 @@ import { Search } from 'lucide-react';
 import ProductImage from '@/component/ProductImage';
 import type { SearchSuggestionDTO } from '@/lib/catalog/dto';
 import { formatPrice } from '@/lib/format';
+import { SEARCH_QUERY_MAX } from '@/lib/validation/clean-text'; // not text.ts: that one loads Zod
 
 const DEBOUNCE_MS = 200;
-const MAX_QUERY_LENGTH = 80;
 
 export interface SearchBoxProps {
   // 'header' is the compact pill in the site header (desktop); 'page' is the large field on /search.
@@ -61,7 +61,7 @@ export default function SearchBox({ variant, defaultValue = '' }: SearchBoxProps
     window.clearTimeout(timerRef.current);
     controllerRef.current?.abort();
 
-    const query = text.trim().slice(0, MAX_QUERY_LENGTH);
+    const query = text.trim().slice(0, SEARCH_QUERY_MAX);
     if (query === '') {
       setSuggestions(null);
       setOpen(false);
@@ -146,6 +146,7 @@ export default function SearchBox({ variant, defaultValue = '' }: SearchBoxProps
       }}
       onKeyDown={onKeyDown}
       autoComplete="off"
+      maxLength={SEARCH_QUERY_MAX}
       role="combobox"
       aria-expanded={panelVisible}
       aria-controls={panelVisible && items.length > 0 ? listId : undefined}

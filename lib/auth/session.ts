@@ -105,10 +105,5 @@ export async function requireAdmin(): Promise<CurrentUser> {
   return user;
 }
 
-// Only same-origin paths: "//evil.com" and "/\evil.com" would be treated as
-// protocol-relative URLs by the browser.
-export function safeNextPath(value: unknown, fallback = '/account'): string {
-  if (typeof value !== 'string') return fallback;
-  if (!value.startsWith('/') || value.startsWith('//') || value.startsWith('/\\')) return fallback;
-  return value;
-}
+// Only same-origin paths; the rules and the reasons live in next-path.ts.
+export { safeNextPath } from './next-path';

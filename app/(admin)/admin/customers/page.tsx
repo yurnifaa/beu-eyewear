@@ -15,7 +15,7 @@ function formatDate(date: Date) {
 
 export default async function AdminCustomersPage(props: PageProps<'/admin/customers'>) {
   const searchParams = await props.searchParams;
-  const q = typeof searchParams.q === 'string' ? searchParams.q.trim() : '';
+  const q = typeof searchParams.q === 'string' ? searchParams.q.trim().slice(0, 120) : '';
   const requestedPage = Number(typeof searchParams.page === 'string' ? searchParams.page : 1);
 
   const { customers, filteredCount, totalCount, page, totalPages } = await getCustomers({

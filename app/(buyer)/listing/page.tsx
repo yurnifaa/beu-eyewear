@@ -71,8 +71,11 @@ export default async function Page(props: PageProps<'/listing'>) {
   const material = first(sp.material);
   const shape = first(sp.shape);
   const color = first(sp.color);
-  const sort = first(sp.sort) as 'price-asc' | 'price-desc' | undefined;
-  const page = Number(first(sp.page)) || 1;
+  // Both come from the address bar, so check them instead of trusting a cast: an unknown sort is
+  // ignored, and page must be a whole number (a fractional one would break the database skip).
+  const rawSort = first(sp.sort);
+  const sort = rawSort === 'price-asc' || rawSort === 'price-desc' ? rawSort : undefined;
+  const page = Math.min(Math.max(Math.floor(Number(first(sp.page))) || 1, 1), 1000);
 
   const current: Params = {
     category: categorySlug,

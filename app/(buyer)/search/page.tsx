@@ -9,21 +9,27 @@ import Reveal from '@/component/Reveal';
 import SearchBox from '@/component/SearchBox';
 import { getCategories, searchProducts } from '@/lib/catalog/queries';
 import { formatPrice } from '@/lib/format';
+import { SEARCH_QUERY_MAX, cleanText } from '@/lib/validation/clean-text';
 
 // Reads live, admin-editable catalog data — don't bake it into a static
 // build-time snapshot.
 export const dynamic = 'force-dynamic';
 
+// The ?q= value comes straight from the address bar: clean it and cap it before it is shown,
+// put in the page title or used to search.
+function readQuery(raw: string | string[] | undefined): string {
+  return cleanText(Array.isArray(raw) ? (raw[0] ?? '') : (raw ?? '')).slice(0, SEARCH_QUERY_MAX);
+}
+
 export async function generateMetadata(props: PageProps<'/search'>): Promise<Metadata> {
   const sp = await props.searchParams;
-  const q = (Array.isArray(sp.q) ? sp.q[0] : sp.q ?? '').trim();
+  const q = readQuery(sp.q);
   return { title: q ? `Search: ${q}` : 'Search' };
 }
 
 export default async function SearchPage(props: PageProps<'/search'>) {
   const sp = await props.searchParams;
-  const raw = sp.q;
-  const query = (Array.isArray(raw) ? raw[0] : raw ?? '').trim();
+  const query = readQuery(sp.q);
   const [results, categories] = await Promise.all([
     query ? searchProducts(query) : Promise.resolve([]),
     getCategories(),

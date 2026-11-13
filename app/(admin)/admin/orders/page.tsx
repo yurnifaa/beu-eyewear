@@ -23,7 +23,7 @@ function formatDate(date: Date) {
 
 export default async function AdminOrdersPage(props: PageProps<'/admin/orders'>) {
   const searchParams = await props.searchParams;
-  const q = typeof searchParams.q === 'string' ? searchParams.q.trim() : '';
+  const q = typeof searchParams.q === 'string' ? searchParams.q.trim().slice(0, 120) : '';
   const status = parseOrderStatus(searchParams.status);
   const payment = parsePaymentStatus(searchParams.payment);
   const requestedPage = Number(typeof searchParams.page === 'string' ? searchParams.page : 1);

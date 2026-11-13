@@ -19,7 +19,43 @@ const NOT_FOUND = '/_not-found-in-this-app';
 // /products.
 const NOT_ADMIN = '/:path((?!admin(?:/|$)|_next/|__nextjs|[^/]+\\.[A-Za-z0-9]+$|products/[^/]+\\.[A-Za-z0-9]+$).*)';
 
+// Security headers for every response. The Content-Security-Policy has no per-request nonce on
+// purpose: a nonce needs a function in front of every request and makes every page dynamic, which is
+// what the performance pass removed. So scripts allow 'unsafe-inline' (Next's own bootstrap scripts
+// are inline), and this policy does NOT stop an injected inline script. What it does do: block
+// scripts, objects and frames from other origins, <base> and form hijacking, framing of the site,
+// and data being sent to other origins. Dev needs 'unsafe-eval' (React's debugging) and websockets
+// (hot reload). Everything the pages load comes from this origin, except product photos that sit in
+// Vercel Blob.
+const isDev = process.env.NODE_ENV !== 'production';
+
+const contentSecurityPolicy = [
+  "default-src 'self'",
+  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''}`,
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: blob: https://*.public.blob.vercel-storage.com",
+  "font-src 'self' data:",
+  `connect-src 'self'${isDev ? ' ws: wss:' : ''}`,
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "frame-ancestors 'none'",
+].join('; ');
+
+const securityHeaders = [
+  { key: 'Content-Security-Policy', value: contentSecurityPolicy },
+  { key: 'X-Content-Type-Options', value: 'nosniff' },
+  { key: 'X-Frame-Options', value: 'DENY' },
+  // Keeps ?token= links (email verification, password reset) out of the Referer sent to other sites.
+  { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+  { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+  // One year, this exact host only (no includeSubDomains), so it can't affect other subdomains.
+  { key: 'Strict-Transport-Security', value: 'max-age=31536000' },
+];
+
 const nextConfig: NextConfig = {
+  // Don't announce the framework in an X-Powered-By header.
+  poweredByHeader: false,
   // The admin app runs next to the storefront from this same folder.
   // `next dev` locks its output folder, so it needs its own.
   distDir: mode === 'admin' ? '.next-admin' : '.next',
@@ -55,6 +91,7 @@ const nextConfig: NextConfig = {
   async headers() {
     const cache = [{ key: 'Cache-Control', value: 'public, max-age=604800, stale-while-revalidate=86400' }];
     return [
+      { source: '/:path*', headers: securityHeaders },
       { source: '/:file(.+\\.(?:svg|png|webp|avif|ico))', headers: cache },
       { source: '/products/:file(.+\\.(?:png|jpg|jpeg|webp|avif))', headers: cache },
     ];

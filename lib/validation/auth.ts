@@ -5,7 +5,7 @@ const email = z
   .string()
   .trim()
   .toLowerCase()
-  .pipe(z.email('Enter a valid email address'));
+  .pipe(z.email('Enter a valid email address').max(254, 'Email address is too long'));
 
 export const registerSchema = z.object({
   name: z.string().trim().min(1, 'Enter your name').max(100).regex(NAME_PATTERN, NAME_RULE_MESSAGE),
@@ -15,7 +15,8 @@ export const registerSchema = z.object({
 
 export const loginSchema = z.object({
   email,
-  password: z.string().min(1, 'Enter your password'),
+  // The cap only stops absurdly long input from being hashed; real passwords are at most 128.
+  password: z.string().min(1, 'Enter your password').max(128, 'Password is too long'),
 });
 
 const password = registerSchema.shape.password;
@@ -27,7 +28,7 @@ export const profileSchema = z.object({
 
 export const changePasswordSchema = z
   .object({
-    currentPassword: z.string().min(1, 'Enter your current password'),
+    currentPassword: z.string().min(1, 'Enter your current password').max(128, 'Password is too long'),
     newPassword: password,
     confirmPassword: z.string(),
   })
@@ -44,7 +45,7 @@ export const forgotPasswordSchema = z.object({ email });
 
 export const resetPasswordSchema = z
   .object({
-    token: z.string().min(1),
+    token: z.string().min(1).max(200),
     newPassword: password,
     confirmPassword: z.string(),
   })

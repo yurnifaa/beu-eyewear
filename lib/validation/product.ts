@@ -2,6 +2,11 @@ import { z } from 'zod';
 import { MAX_STOCK } from '@/lib/admin/config';
 import { MAX_VARIANT_IMAGES } from '@/lib/admin/product-form';
 import { isAllowedImageUrl } from '@/lib/storage/image-rules';
+import { NO_MARKUP_MESSAGE, noMarkup } from './clean-text';
+
+// Note for the text fields below: they never need < or >, so each rejects them with
+// NO_MARKUP_MESSAGE. Descriptions and feature lists are multi-line, so only that rule applies
+// (cleanText would flatten their line breaks).
 
 export const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 // SKUs are typed by people on stock sheets and barcodes: letters, digits and . _ -
@@ -45,6 +50,7 @@ const optionalText = (label: string, max: number) =>
     .string()
     .trim()
     .max(max, `${label} must be ${max} characters or fewer`)
+    .refine(noMarkup, NO_MARKUP_MESSAGE)
     .transform((value) => value || null);
 
 // One entry per line or comma, blanks and repeats dropped.
@@ -52,20 +58,24 @@ function listOf(label: string, { max, itemMax, separator }: { max: number; itemM
   return z
     .string()
     .transform((value) => [...new Set(value.split(separator).map((part) => part.trim()).filter(Boolean))])
-    .pipe(z.array(z.string().max(itemMax, `Each ${label} must be ${itemMax} characters or fewer`)).max(max, `Add at most ${max} ${label}s`));
+    .pipe(
+      z
+        .array(z.string().max(itemMax, `Each ${label} must be ${itemMax} characters or fewer`).refine(noMarkup, NO_MARKUP_MESSAGE))
+        .max(max, `Add at most ${max} ${label}s`),
+    );
 }
 
 export const variantSchema = z.object({
   sku: z.string().trim().min(1, 'Enter a SKU for every color').max(40, 'A SKU must be 40 characters or fewer').regex(SKU_PATTERN, 'SKUs use letters, numbers and . _ - only'),
   // "Standard" for items sold in a single option (care kits, sets).
-  color: z.string().trim().min(1, 'Enter a color name for every row').max(40, 'A color name must be 40 characters or fewer'),
-  colorFamily: z.string().trim().max(30).transform((value) => value || null),
+  color: z.string().trim().min(1, 'Enter a color name for every row').max(40, 'A color name must be 40 characters or fewer').refine(noMarkup, NO_MARKUP_MESSAGE),
+  colorFamily: z.string().trim().max(30).refine(noMarkup, NO_MARKUP_MESSAGE).transform((value) => value || null),
   hex: z
     .string()
     .trim()
     .refine((value) => value === '' || /^#[0-9a-fA-F]{6}$/.test(value), 'Swatch colors look like #C0C6CF')
     .transform((value) => (value ? value.toUpperCase() : null)),
-  lensTint: z.string().trim().max(40).transform((value) => value || null),
+  lensTint: z.string().trim().max(40).refine(noMarkup, NO_MARKUP_MESSAGE).transform((value) => value || null),
   isDefault: z.boolean(),
   // Opening stock. Only used when the SKU is new; existing SKUs change through Inventory.
   stock: z.number().int('Stock must be a whole number').min(0, 'Stock can’t be negative').max(MAX_STOCK, `Stock must be ${MAX_STOCK.toLocaleString('en-US')} or less`),
@@ -79,7 +89,7 @@ export const variantSchema = z.object({
 export type VariantInput = z.infer<typeof variantSchema>;
 
 export const bundleItemSchema = z.object({
-  name: z.string().trim().min(1, 'Every bundle item needs a name').max(120, 'A bundle item name must be 120 characters or fewer'),
+  name: z.string().trim().min(1, 'Every bundle item needs a name').max(120, 'A bundle item name must be 120 characters or fewer').refine(noMarkup, NO_MARKUP_MESSAGE),
   quantity: z.number().int().min(1, 'Bundle quantities start at 1').max(99),
   componentSlug: z
     .string()
@@ -91,9 +101,9 @@ export type BundleItemInput = z.infer<typeof bundleItemSchema>;
 
 export const productFieldsSchema = z
   .object({
-    name: z.string().trim().min(1, 'Enter a product name').max(120, 'Name must be 120 characters or fewer'),
-    shortDescription: z.string().trim().max(300, 'Short description must be 300 characters or fewer'),
-    description: z.string().trim().max(4000, 'Description must be 4,000 characters or fewer'),
+    name: z.string().trim().min(1, 'Enter a product name').max(120, 'Name must be 120 characters or fewer').refine(noMarkup, NO_MARKUP_MESSAGE),
+    shortDescription: z.string().trim().max(300, 'Short description must be 300 characters or fewer').refine(noMarkup, NO_MARKUP_MESSAGE),
+    description: z.string().trim().max(4000, 'Description must be 4,000 characters or fewer').refine(noMarkup, NO_MARKUP_MESSAGE),
     productType: z.enum(PRODUCT_TYPES),
     categorySlug: z.string().trim().min(1, 'Choose a category'),
     subcategorySlug: z.string().trim().min(1, 'Choose a subcategory'),

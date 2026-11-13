@@ -2,10 +2,13 @@ import { z } from 'zod';
 import { ADDRESS_LABEL_MAX, ADDRESS_LIMITS, NAME_PATTERN, NAME_RULE_MESSAGE, normalizePhone } from '@/lib/checkout/address';
 import { PAYMENT_METHOD_IDS } from '@/lib/checkout/payment';
 import { SHIPPING_METHOD_IDS } from '@/lib/checkout/shipping';
+import { optionalSafeText, safeText } from './text';
 
 export const MAX_LINE_QUANTITY = 99;
 
-const requiredText = (requiredMessage: string, label: string, max: number) =>
+// Full name only: it is also held to NAME_PATTERN, which already rules out markup. The free-text
+// fields below use safeText, which also cleans the text and rejects < and >.
+const requiredText =(requiredMessage: string, label: string, max: number) =>
   z.string().trim().min(1, requiredMessage).max(max, `${label} must be ${max} characters or fewer`);
 
 // Philippine mobile: 11 digits starting with 09. Spaces, dashes and
@@ -19,20 +22,16 @@ const phone = z
 // The shipping address fields. Shared by checkout and the saved address.
 export const addressSchema = z.object({
   fullName: requiredText('Enter your full name', 'Full name', ADDRESS_LIMITS.fullName).regex(NAME_PATTERN, NAME_RULE_MESSAGE),
-  address: requiredText('Enter your street address', 'Address', ADDRESS_LIMITS.address),
-  city: requiredText('Enter your city', 'City', ADDRESS_LIMITS.city),
-  province: requiredText('Enter your province', 'Province', ADDRESS_LIMITS.province),
+  address: safeText({ required: 'Enter your street address', label: 'Address', max: ADDRESS_LIMITS.address }),
+  city: safeText({ required: 'Enter your city', label: 'City', max: ADDRESS_LIMITS.city }),
+  province: safeText({ required: 'Enter your province', label: 'Province', max: ADDRESS_LIMITS.province }),
   zip: z.string().trim().regex(/^\d{4}$/, 'Enter a 4-digit postal code'),
   phone,
 });
 
 // An address-book entry: the shipping fields plus a nickname and default flag.
 export const savedAddressSchema = addressSchema.extend({
-  label: z
-    .string()
-    .trim()
-    .max(ADDRESS_LABEL_MAX, `Label must be ${ADDRESS_LABEL_MAX} characters or fewer`)
-    .transform((value) => value || null),
+  label: optionalSafeText({ label: 'Label', max: ADDRESS_LABEL_MAX }).transform((value) => value || null),
   isDefault: z.boolean(),
 });
 
@@ -52,5 +51,5 @@ export const checkoutSchema = addressSchema.extend({
   shippingMethod: z.enum(SHIPPING_METHOD_IDS, 'Choose a shipping method'),
   paymentMethod: z.enum(PAYMENT_METHOD_IDS, 'Choose a payment method'),
   lines: z.array(cartLineSchema).min(1, 'Your cart is empty').max(50),
-  promoCode: z.string().trim().max(50).optional(),
+  promoCode: optionalSafeText({ label: 'Promo code', max: 50 }).optional(),
 });

@@ -6,12 +6,28 @@ import { formValues, type ConfigFormState } from '@/lib/admin/config-form';
 import { requireAdmin } from '@/lib/auth/session';
 import { refreshCatalog } from '@/lib/catalog/cache';
 import { prisma } from '@/lib/prisma';
+import { NO_MARKUP_MESSAGE, noMarkup } from '@/lib/validation/clean-text';
+
+// A blank or non-numeric entry means "no limit" (null), as before. A number above `max` is an error
+// here, instead of overflowing the database integer and failing the save with a generic message.
+const optionalWholeNumber = (label: string, max: number) =>
+  z
+    .string()
+    .trim()
+    .refine((value) => !/^\d+$/.test(value) || Number(value) <= max, `${label} must be ${max.toLocaleString('en-US')} or less.`)
+    .transform((value) => (value && /^\d+$/.test(value) ? Number(value) : null))
+    .nullable();
 
 const offerSchema = z
   .object({
-    name: z.string().trim().min(1, 'Enter a name for the offer.').max(80, 'The name must be 80 characters or fewer.'),
-    description: z.string().trim().max(300, 'The description must be 300 characters or fewer.'),
-    badge: z.string().trim().min(1, 'Enter a badge label, such as “5% Off”.').max(30, 'The badge label must be 30 characters or fewer.'),
+    name: z.string().trim().min(1, 'Enter a name for the offer.').max(80, 'The name must be 80 characters or fewer.').refine(noMarkup, NO_MARKUP_MESSAGE),
+    description: z.string().trim().max(300, 'The description must be 300 characters or fewer.').refine(noMarkup, NO_MARKUP_MESSAGE),
+    badge: z
+      .string()
+      .trim()
+      .min(1, 'Enter a badge label, such as “5% Off”.')
+      .max(30, 'The badge label must be 30 characters or fewer.')
+      .refine(noMarkup, NO_MARKUP_MESSAGE),
     kind: z.enum(['PERCENT', 'FIXED_AMOUNT']),
     value: z.string().trim().regex(/^\d{1,7}$/, 'The value must be a whole number.').transform(Number),
     eligibility: z.enum(['NONE', 'FIRST_ORDER']),
@@ -22,10 +38,10 @@ const offerSchema = z
       .trim()
       .refine((value) => value === '' || /^\d{4}-\d{2}-\d{2}$/.test(value), 'Use a date for the end of the offer.')
       .transform((value) => (value ? new Date(`${value}T23:59:59+08:00`) : null)),
-    code: z.string().trim().toUpperCase().max(50).transform((v) => v || null).nullable(),
-    maxRedemptions: z.string().trim().transform((v) => (v && /^\d+$/.test(v) ? Number(v) : null)).nullable(),
-    termsAndConditions: z.string().trim().max(2000),
-    minOrderAmount: z.string().trim().transform((v) => (v && /^\d+$/.test(v) ? Number(v) : null)).nullable(),
+    code: z.string().trim().toUpperCase().max(50).refine(noMarkup, NO_MARKUP_MESSAGE).transform((v) => v || null).nullable(),
+    maxRedemptions: optionalWholeNumber('The redemption limit', 1_000_000),
+    termsAndConditions: z.string().trim().max(2000).refine(noMarkup, NO_MARKUP_MESSAGE),
+    minOrderAmount: optionalWholeNumber('The minimum order amount', 10_000_000),
   })
   .refine((data) => data.kind !== 'PERCENT' || data.value <= 100, { message: 'A percentage can’t be more than 100.', path: ['value'] });
 

@@ -6,6 +6,10 @@ import { formValues, type ConfigFormState } from '@/lib/admin/config-form';
 import { requireAdmin } from '@/lib/auth/session';
 import { refreshCatalog } from '@/lib/catalog/cache';
 import { prisma } from '@/lib/prisma';
+import { NO_MARKUP_MESSAGE, noMarkup } from '@/lib/validation/clean-text';
+
+// Every text field on this page is plain text that never needs < or >.
+const plain = (schema: z.ZodString) => schema.refine(noMarkup, NO_MARKUP_MESSAGE);
 
 const FILTER_KINDS = ['FRAME_MATERIAL', 'LENS_OPTION', 'FRAME_SHAPE', 'COLOR_FAMILY'] as const;
 
@@ -25,7 +29,7 @@ const optionalNumber = (label: string, max: number) =>
 // ---- Filter lists (the choices in the shop filters and the product form) ----------------
 
 const filterSchema = z.object({
-  label: z.string().trim().min(1, 'Enter a label.').max(40, 'The label must be 40 characters or fewer.'),
+  label: plain(z.string().trim().min(1, 'Enter a label.').max(40, 'The label must be 40 characters or fewer.')),
   hex: z
     .string()
     .trim()
@@ -37,7 +41,7 @@ const filterSchema = z.object({
 
 const filterKeyFields = z.object({
   kind: z.enum(FILTER_KINDS),
-  value: z.string().trim().min(1, 'Enter a value.').max(40, 'The value must be 40 characters or fewer.'),
+  value: plain(z.string().trim().min(1, 'Enter a value.').max(40, 'The value must be 40 characters or fewer.')),
 });
 
 export async function createFilterOption(_previous: ConfigFormState, formData: FormData): Promise<ConfigFormState> {
@@ -90,17 +94,17 @@ export async function deleteFilterOption(kind: string, value: string) {
 // ---- Frame material details ---------------------------------------------------------------
 
 const materialSchema = z.object({
-  dimensions: z.string().trim().max(120, 'Dimensions must be 120 characters or fewer.'),
-  weight: z.string().trim().max(60, 'Weight must be 60 characters or fewer.'),
-  composition: z.string().trim().max(200, 'Composition must be 200 characters or fewer.'),
-  performance: z.string().trim().max(500, 'Performance notes must be 500 characters or fewer.'),
-  nosePad: z.string().trim().max(60, 'Nose pad must be 60 characters or fewer.'),
+  dimensions: plain(z.string().trim().max(120, 'Dimensions must be 120 characters or fewer.')),
+  weight: plain(z.string().trim().max(60, 'Weight must be 60 characters or fewer.')),
+  composition: plain(z.string().trim().max(200, 'Composition must be 200 characters or fewer.')),
+  performance: plain(z.string().trim().max(500, 'Performance notes must be 500 characters or fewer.')),
+  nosePad: plain(z.string().trim().max(60, 'Nose pad must be 60 characters or fewer.')),
   isHypoallergenic: z.boolean(),
   isActive: z.boolean(),
 });
 const MATERIAL_TEXT = ['dimensions', 'weight', 'composition', 'performance', 'nosePad'] as const;
 const MATERIAL_CHECKS = ['isHypoallergenic', 'isActive'] as const;
-const nameField = z.string().trim().min(1, 'Enter a name.').max(40, 'The name must be 40 characters or fewer.');
+const nameField = plain(z.string().trim().min(1, 'Enter a name.').max(40, 'The name must be 40 characters or fewer.'));
 
 export async function createFrameMaterial(_previous: ConfigFormState, formData: FormData): Promise<ConfigFormState> {
   await requireAdmin();
@@ -146,8 +150,8 @@ export async function deleteFrameMaterial(material: string) {
 
 const lensSchema = z
   .object({
-    description: z.string().trim().max(800, 'The description must be 800 characters or fewer.'),
-    metric: z.string().trim().max(120, 'The performance metric must be 120 characters or fewer.').transform((value) => value || null),
+    description: plain(z.string().trim().max(800, 'The description must be 800 characters or fewer.')),
+    metric: plain(z.string().trim().max(120, 'The performance metric must be 120 characters or fewer.')).transform((value) => value || null),
     upgradeMinPrice: optionalNumber('The upgrade price', 1_000_000),
     upgradeMaxPrice: optionalNumber('The upgrade price', 1_000_000),
     isActive: z.boolean(),
