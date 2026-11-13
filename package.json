@@ -9,7 +9,7 @@
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "tsx --conditions=react-server --test lib/email/order-confirmation.test.ts lib/validation/text.test.ts lib/auth/next-path.test.ts",
+    "test": "tsx --conditions=react-server --test lib/email/order-confirmation.test.ts lib/validation/text.test.ts lib/auth/next-path.test.ts lib/payments/payrex.test.ts",
     "postinstall": "prisma generate",
     "admin:create": "tsx --conditions=react-server prisma/create-admin.ts",
     "seed:sample-orders": "tsx --conditions=react-server prisma/seed-sample-orders.ts",

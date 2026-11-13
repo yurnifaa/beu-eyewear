@@ -68,11 +68,18 @@ async function request(method: 'GET' | 'POST', path: string, body?: Record<strin
     signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
   });
 
-  const json: unknown = await response.json().catch(() => null);
+  const raw = await response.text().catch(() => '');
+  let json: unknown = null;
+  try {
+    json = raw ? JSON.parse(raw) : null;
+  } catch {
+    json = null;
+  }
   if (!response.ok) {
     // Keep PayRex's own explanation: it names the bad field, which is the fastest way to
-    // fix a rejected request. Nothing secret is in it.
-    const detail = json ? JSON.stringify(json).slice(0, 400) : '';
+    // fix a rejected request. Nothing secret is in it. A reply that isn't JSON (an empty 403, a
+    // gateway error page) is kept as plain text, so the log never says just "failed (403)".
+    const detail = (json ? JSON.stringify(json) : raw.replace(/\s+/g, ' ').trim()).slice(0, 400);
     throw new PayRexError(`PayRex ${method} ${path} failed (${response.status})${detail ? `: ${detail}` : ''}`, response.status);
   }
   return json;
@@ -89,6 +96,19 @@ export interface GatewayOrder {
   shippingFee: number;
   paymentMethod: PaymentMethodId;
   items: { name: string; color: string | null; unitPrice: number; quantity: number }[];
+}
+
+// PayRex's gateway answers a bare "403 Forbidden" web page, before it even looks at the API key, when
+// a return link points at localhost or 127.0.0.1 (checked Nov 2026; other hosts, including
+// beu.localhost, a LAN address, plain http and tunnel addresses, get through). That 403 looks like an
+// outage, so say what is wrong instead of sending a request that cannot work.
+function assertReachableReturnUrl(base: string) {
+  const host = new URL(base).hostname;
+  if (host === 'localhost' || host === '127.0.0.1') {
+    throw new Error(
+      `APP_URL is ${base}, and PayRex rejects return links to localhost. For local testing set APP_URL=http://beu.localhost:3000 and open the site at that address (or use an https tunnel).`,
+    );
+  }
 }
 
 // Creates the hosted payment page for an order and returns where to send the buyer.
@@ -111,6 +131,7 @@ export async function createCheckoutSession(order: GatewayOrder): Promise<{ id: 
   }
 
   const base = appUrl();
+  assertReachableReturnUrl(base);
   const json = await request('POST', '/checkout_sessions', {
     currency: 'PHP',
     line_items: lineItems,
