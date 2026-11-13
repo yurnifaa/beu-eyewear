@@ -1,10 +1,12 @@
 import AccordionSection from '@/component/AccordionSection';
-import PlaceholderImage from '@/component/PlaceholderImage';
+import ProductImage from '@/component/ProductImage';
 import { PAYMENT_METHOD_LABELS } from '@/lib/checkout/payment';
 import { formatOrderNumber, formatPrice } from '@/lib/format';
-import type { OrderDetail } from '@/lib/orders/queries';
+import { getOrderItemImages, type OrderDetail } from '@/lib/orders/queries';
 
-export default function OrderSummaryCard({ order }: { order: OrderDetail }) {
+// Used by the order page and the order-confirmation page, so it fetches its own item photos.
+export default async function OrderSummaryCard({ order }: { order: OrderDetail }) {
+  const images = await getOrderItemImages(order.items);
   const orderDate = order.createdAt.toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
@@ -18,7 +20,14 @@ export default function OrderSummaryCard({ order }: { order: OrderDetail }) {
         <div className="flex flex-col gap-4">
           {order.items.map((item) => (
             <div key={item.id} className="flex gap-3 border-b border-border pb-4 last:border-b-0 last:pb-0">
-              <PlaceholderImage variant="plain" className="size-16 shrink-0 rounded-2xl" />
+              {/* Plain white tile (not the blue stage): the photos are shot on white. */}
+              <ProductImage
+                imageUrl={images[item.id]}
+                alt={item.name}
+                sizes="64px"
+                objectFit="contain"
+                className="size-16 shrink-0 rounded-2xl bg-white!"
+              />
               <div className="flex flex-1 items-start justify-between gap-2">
                 <div className="min-w-0">
                   <p className="text-sm font-bold text-foreground">{item.name}</p>

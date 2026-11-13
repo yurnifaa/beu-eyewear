@@ -167,7 +167,8 @@ export default function CheckoutForm({ defaultName, savedAddresses, selectedKeys
           <ul className="flex list-none flex-col divide-y divide-border">
             {items.map((item) => (
               <li key={lineKey(item.slug, item.color)} className="flex items-center gap-4 py-4 first:pt-0">
-                <ProductImage imageUrl={item.imageUrl} alt={item.name} sizes="80px" objectFit="contain" className="beu-stage size-20 shrink-0 rounded-2xl" />
+                {/* Plain white tile: beu-stage is a blue gradient made for the big product-page image, and shows as blue bands around a wide photo. */}
+                <ProductImage imageUrl={item.imageUrl} alt={item.name} sizes="80px" objectFit="contain" className="size-20 shrink-0 rounded-2xl bg-white!" />
                 <div className="flex flex-1 items-start justify-between gap-2">
                   <div>
                     <p className="font-display text-sm font-black uppercase leading-tight tracking-[-0.01em]">{item.name}</p>
