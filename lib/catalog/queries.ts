@@ -6,6 +6,7 @@ import type { Prisma, Review } from '@prisma/client';
 import { SHIPPING_METHODS, type ShippingMethodId } from '@/lib/checkout/shipping';
 import { prisma } from '@/lib/prisma';
 import { CATALOG_CACHE_TAG, CATALOG_REVALIDATE_SECONDS } from './cache';
+import type { SearchSuggestionDTO } from './dto';
 import { FRAME_MATERIALS, FRAME_SHAPES, LENS_OPTIONS } from './enums';
 import { buildStoreSettings } from './settings';
 import type {
@@ -412,33 +413,41 @@ function escapeRegex(s: string) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-export async function searchProducts(query: string): Promise<CatalogProduct[]> {
+// The structured fields a search looks at. Descriptions are deliberately not searched: prose words
+// ("jacket", "jewelry", "case") made short queries match unrelated products.
+interface SearchText {
+  name: string;
+  category: string;
+  subcategory: string;
+  frameMaterial: string | null;
+  lensOption: string | null;
+  frameShape: string | null;
+  tags: string[];
+  colors: string[];
+}
+
+// The one definition of "does this product match the search words", shared by the results page
+// (searchProducts) and the header suggestions (getSearchSuggestions) so they can never disagree.
+// Every word must match the start of a word in some field; heavier fields rank higher. Ties keep
+// the order the items came in (the sort is stable).
+function rankSearchRows<T>(items: T[], query: string, textOf: (item: T) => SearchText): T[] {
   const tokens = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
   if (tokens.length === 0) return [];
 
   const patterns = tokens.map((t) => new RegExp(`\\b${escapeRegex(t)}`, 'i'));
+  const scored: { item: T; score: number }[] = [];
 
-  const rows = await prisma.product.findMany({
-    where: VISIBLE,
-    include: { ...include, category: { select: { name: true } }, subcategory: { select: { name: true } } },
-    orderBy: SHOP_ORDER,
-  });
-
-  type ScoredRow = { row: (typeof rows)[number]; score: number };
-  const scored: ScoredRow[] = [];
-
-  for (const row of rows) {
-    // Descriptions are deliberately not searched: prose words ("jacket", "jewelry", "case") made
-    // short queries match unrelated products. Only structured fields count.
+  for (const item of items) {
+    const text = textOf(item);
     const fields: [string, number][] = [
-      [row.name, 10],
-      [row.category.name, 6],
-      [row.subcategory.name, 6],
-      [row.frameMaterial ?? '', 4],
-      [row.lensOption ?? '', 4],
-      [row.frameShape ?? '', 4],
-      [row.tags.join(' '), 4],
-      [row.variants.map((v) => v.color).join(' '), 4],
+      [text.name, 10],
+      [text.category, 6],
+      [text.subcategory, 6],
+      [text.frameMaterial ?? '', 4],
+      [text.lensOption ?? '', 4],
+      [text.frameShape ?? '', 4],
+      [text.tags.join(' '), 4],
+      [text.colors.join(' '), 4],
     ];
 
     let allMatch = true;
@@ -446,8 +455,8 @@ export async function searchProducts(query: string): Promise<CatalogProduct[]> {
 
     for (const pattern of patterns) {
       let tokenMatched = false;
-      for (const [text, weight] of fields) {
-        if (text && pattern.test(text)) {
+      for (const [field, weight] of fields) {
+        if (field && pattern.test(field)) {
           score += weight;
           tokenMatched = true;
         }
@@ -458,11 +467,97 @@ export async function searchProducts(query: string): Promise<CatalogProduct[]> {
       }
     }
 
-    if (allMatch) scored.push({ row, score });
+    if (allMatch) scored.push({ item, score });
   }
 
   scored.sort((a, b) => b.score - a.score);
-  return present(scored.map((s) => s.row));
+  return scored.map((entry) => entry.item);
+}
+
+export async function searchProducts(query: string): Promise<CatalogProduct[]> {
+  if (query.trim() === '') return [];
+
+  const rows = await prisma.product.findMany({
+    where: VISIBLE,
+    include: { ...include, category: { select: { name: true } }, subcategory: { select: { name: true } } },
+    orderBy: SHOP_ORDER,
+  });
+
+  const ranked = rankSearchRows(rows, query, (row) => ({
+    name: row.name,
+    category: row.category.name,
+    subcategory: row.subcategory.name,
+    frameMaterial: row.frameMaterial,
+    lensOption: row.lensOption,
+    frameShape: row.frameShape,
+    tags: row.tags,
+    colors: row.variants.map((variant) => variant.color),
+  }));
+  return present(ranked);
+}
+
+// A lean copy of every visible product, just enough to match and to draw a suggestion row. Cached
+// like the other shared reads, so typing in the search box costs one DB read a minute at most
+// instead of one per keystroke. Plain JSON, so it survives the cache.
+type SearchIndexEntry = SearchText & { slug: string; price: number; imageUrl: string | null; stockQuantity: number };
+
+const getSearchIndex = cachedRead('search-index', async (): Promise<SearchIndexEntry[]> => {
+  const rows = await prisma.product.findMany({
+    where: VISIBLE,
+    select: {
+      slug: true,
+      name: true,
+      listPrice: true,
+      salePrice: true,
+      frameMaterial: true,
+      lensOption: true,
+      frameShape: true,
+      tags: true,
+      category: { select: { name: true } },
+      subcategory: { select: { name: true } },
+      variants: {
+        where: { isActive: true },
+        orderBy: [{ sortOrder: 'asc' }, { sku: 'asc' }],
+        select: { color: true, isDefault: true, imageUrls: true, stockQuantity: true },
+      },
+    },
+    orderBy: SHOP_ORDER,
+  });
+
+  return rows.map((row) => ({
+    slug: row.slug,
+    name: row.name,
+    // Same rules as toCatalogProduct: the default color's first photo, else any color's; a sale price
+    // only counts when it is a real reduction.
+    imageUrl:
+      row.variants.find((variant) => variant.isDefault && variant.imageUrls.length > 0)?.imageUrls[0] ??
+      row.variants.find((variant) => variant.imageUrls.length > 0)?.imageUrls[0] ??
+      null,
+    price: row.salePrice !== null && row.salePrice > 0 && row.salePrice < row.listPrice ? row.salePrice : row.listPrice,
+    stockQuantity: row.variants.reduce((sum, variant) => sum + Math.max(0, variant.stockQuantity), 0),
+    category: row.category.name,
+    subcategory: row.subcategory.name,
+    frameMaterial: row.frameMaterial,
+    lensOption: row.lensOption,
+    frameShape: row.frameShape,
+    tags: row.tags,
+    colors: row.variants.map((variant) => variant.color),
+  }));
+});
+
+// The few best matches for the header search dropdown.
+export async function getSearchSuggestions(query: string, limit = 6): Promise<SearchSuggestionDTO[]> {
+  if (query.trim() === '') return [];
+  const index = await getSearchIndex();
+  return rankSearchRows(index, query, (entry) => entry)
+    .slice(0, limit)
+    .map((entry) => ({
+      slug: entry.slug,
+      name: entry.name,
+      price: entry.price,
+      imageUrl: entry.imageUrl ?? undefined,
+      outOfStock: entry.stockQuantity <= 0,
+    }));
 }
 
 // ---- Reviews ---------------------------------------------------------------------------

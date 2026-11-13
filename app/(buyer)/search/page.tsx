@@ -1,12 +1,12 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { Search } from 'lucide-react';
 import PixelGlyph from '@/component/beu/PixelGlyph';
 import CategoryChips from '@/component/listing/CategoryChips';
 import ListingHero from '@/component/listing/ListingHero';
 import ProductCard from '@/component/ProductCard';
 import ProductRow from '@/component/ProductRow';
 import Reveal from '@/component/Reveal';
+import SearchBox from '@/component/SearchBox';
 import { getCategories, searchProducts } from '@/lib/catalog/queries';
 import { formatPrice } from '@/lib/format';
 
@@ -43,30 +43,7 @@ export default async function SearchPage(props: PageProps<'/search'>) {
         }
         meta={meta}
       >
-        <form
-          role="search"
-          action="/search"
-          className="beu-bar mx-auto flex h-14 max-w-xl items-center gap-3 rounded-full pl-5 pr-2 focus-within:ring-2 focus-within:ring-accent/40"
-        >
-          <Search size={18} className="shrink-0 text-muted-foreground" aria-hidden="true" />
-          <label htmlFor="search-input" className="sr-only">
-            Search products
-          </label>
-          <input
-            id="search-input"
-            type="search"
-            name="q"
-            defaultValue={query}
-            placeholder="Search frames, lenses, accessories..."
-            className="h-full w-full bg-transparent text-base md:text-sm outline-none placeholder:text-muted-foreground"
-          />
-          <button
-            type="submit"
-            className="h-10 shrink-0 rounded-full bg-ink px-5 text-xs uppercase tracking-[0.14em] text-white transition hover:-translate-y-0.5"
-          >
-            Search
-          </button>
-        </form>
+        <SearchBox variant="page" defaultValue={query} />
         {(!query || results.length === 0) && (
           <div className="mt-6">
             <CategoryChips categories={categories} />

@@ -10,6 +10,15 @@ export interface ProductDTO extends Product {
   variants: { sku: string; color: string; hex?: string; imageUrl?: string; available: number }[];
 }
 
+// One row of the header search dropdown: just enough to draw a link to the product.
+export interface SearchSuggestionDTO {
+  slug: string;
+  name: string;
+  price: number;
+  imageUrl?: string;
+  outOfStock: boolean;
+}
+
 export function toProductDTO(product: CatalogProduct): ProductDTO {
   return {
     slug: product.slug,

@@ -11,7 +11,7 @@ import CategoryTile from '@/component/listing/CategoryTile';
 import ListingHero from '@/component/listing/ListingHero';
 import Pagination from '@/component/listing/Pagination';
 import SubcategoryHeading from '@/component/listing/SubcategoryHeading';
-import PixelGlyph from '@/component/beu/PixelGlyph';
+import { Ghost } from 'lucide-react';
 import { getCategories, getCategoryBySlug, getCategoryPreviewImages, getFilterOptions, getProducts, getSubcategories } from '@/lib/catalog/queries';
 import type { FilterOption } from '@/lib/catalog/types';
 import { formatPrice } from '@/lib/format';
@@ -274,7 +274,7 @@ export default async function Page(props: PageProps<'/listing'>) {
           <div className="mx-auto max-w-[1328px]">
             {results.items.length === 0 ? (
               <div className="flex flex-col items-center gap-4 py-16 text-center">
-                <PixelGlyph name="skull" size={56} className="text-foreground" />
+                <Ghost size={56} strokeWidth={1.5} aria-hidden="true" className="text-foreground" />
                 <p className="font-display text-xl font-black uppercase tracking-[-0.03em] md:text-2xl">Nothing here. Yet.</p>
                 <p className="max-w-sm text-sm text-muted-foreground">No products match these filters. Loosen one up and try again.</p>
                 <Link href={clearHref} className="beu-chip inline-flex h-10 items-center px-5 text-xs uppercase tracking-[0.12em]">
