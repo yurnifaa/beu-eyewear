@@ -11,13 +11,11 @@ import HomeScrollSnap from '@/component/home/HomeScrollSnap';
 import OfferTicket from '@/component/home/OfferTicket';
 import PunkBand from '@/component/home/PunkBand';
 import ReviewsSection from '@/component/home/ReviewsSection';
-import ShapePicker, { type ShapeOption } from '@/component/home/ShapePicker';
 import Spotlight from '@/component/home/Spotlight';
 import {
   getCategories,
   getCategoryPreviewImages,
   getFeaturedProducts,
-  getFilterOptions,
   getFeaturedReviews,
   getOffers,
   getProducts,
@@ -37,31 +35,18 @@ const categoryRank = (slug: string) => {
   return i === -1 ? CATEGORY_ORDER.length : i;
 };
 
-// Eyewear-shape drawings in the glyph sprite (component/beu/GlyphSprite.tsx), keyed by the
-// frame_shape values in the sheet. Shapes the sheet adds later fall back to the spare drawings.
-const SHAPE_GLYPHS: Record<string, string> = {
-  round: 'g-round',
-  rectangle: 'g-rect',
-  square: 'g-shield',
-  'cat-eye': 'g-butterfly',
-  aviator: 'g-wrap',
-};
-const SPARE_GLYPHS = ['g-wrap', 'g-shield', 'g-round', 'g-butterfly', 'g-rect'];
-
 export default async function Page() {
   // Everything below is read from the catalog sheet (featured flags, ratings, live offers,
-  // featured reviews, category order, frame shapes, benefits-bar text).
-  const [allCategories, featuredProducts, bundleResults, offers, reviews, settings, filterOptions, previewImages] =
-    await Promise.all([
-      getCategories(),
-      getFeaturedProducts(5),
-      getProducts({ category: 'collections', sub: 'bundles' }),
-      getOffers(),
-      getFeaturedReviews(3),
-      getStoreSettings(),
-      getFilterOptions(),
-      getCategoryPreviewImages(),
-    ]);
+  // featured reviews, category order, benefits-bar text).
+  const [allCategories, featuredProducts, bundleResults, offers, reviews, settings, previewImages] = await Promise.all([
+    getCategories(),
+    getFeaturedProducts(5),
+    getProducts({ category: 'collections', sub: 'bundles' }),
+    getOffers(),
+    getFeaturedReviews(3),
+    getStoreSettings(),
+    getCategoryPreviewImages(),
+  ]);
   const categories = [...allCategories].sort((a, b) => categoryRank(a.slug) - categoryRank(b.slug));
   const bundles = bundleResults.items;
   // Other automatic promotions running right now (no code, no eligibility check).
@@ -70,11 +55,6 @@ export default async function Page() {
     offer.kind === 'PERCENT' ? `${offer.value}% Off` : offer.badge;
 
   const [spotlight, ...dropProducts] = featuredProducts;
-  const shapes: ShapeOption[] = filterOptions.shape.map((option, index) => ({
-    value: option.value,
-    label: option.label,
-    glyph: SHAPE_GLYPHS[option.value.toLowerCase()] ?? SPARE_GLYPHS[index % SPARE_GLYPHS.length],
-  }));
 
   return (
     // The hero and the spotlight drift on scroll (framer-motion); nothing else on the storefront
@@ -83,7 +63,6 @@ export default async function Page() {
       <HomeScrollSnap />
       <HomeHero />
       <PunkBand />
-      <ShapePicker shapes={shapes} />
       {spotlight && <Spotlight product={spotlight} />}
 
       {/* The drop: featured products */}

@@ -223,8 +223,7 @@ enum FilterKind {
   COLOR_FAMILY
 }
 
-// The choices offered by the listing filters, the product form selects and the home page
-// shape picker.
+// The choices offered by the listing filters and the product form selects.
 model FilterOption {
   kind         FilterKind
   value        String

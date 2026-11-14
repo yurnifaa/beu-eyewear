@@ -30,11 +30,9 @@ To retheme the whole storefront, change the token block at the top of `beu-theme
 ## Home page
 
 `app/(buyer)/home/page.tsx` is still driven by the catalog sheet (featured products, categories, offers,
-bundles, student offer, reviews, benefits, frame shapes). Sections live in `component/home/`:
+bundles, student offer, reviews, benefits). Sections live in `component/home/`:
 
 - `HomeHero`, `PunkBand`: static brand sections (hero uses `/public/hero-glasses.png`).
-- `ShapePicker`: client component. Shapes come from the sheet's `frame_shape` filter options; the drawings are
-  in the glyph sprite (see `SHAPE_GLYPHS` in the page).
 - `Spotlight`: the first featured product, shown large. Needs `is_featured` products; hidden if there are none.
 - Drop grid, `CategoryRow`, `OfferTicket`, `ReviewsSection`: the existing data, restyled.
 - The storefront is light only; there is no dark mode or theme toggle, so do not add `dark:` classes.
