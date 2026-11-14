@@ -118,6 +118,32 @@ body {
   .beu-cart-bump { animation: none; }
 }
 
+/* "Added to Cart" popup (component/AddedToCartPopup.tsx): its whole life is one animation, fading in
+   with a small grow, holding, then fading out. AddToCartSection passes one duration that both sets the
+   animation length (inline) and says when to remove the popup, so the two can't drift apart. Reduced
+   motion and "lite" mode (below) keep the fades and drop the grow. */
+@keyframes beu-pop {
+  0% { opacity: 0; transform: scale(0.9); }
+  12% { opacity: 1; transform: scale(1); }
+  80% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1); }
+}
+
+@keyframes beu-pop-fade {
+  0% { opacity: 0; }
+  12% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.beu-pop { animation: beu-pop 1.6s ease-out both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .beu-pop { animation-name: beu-pop-fade; }
+}
+
+html[data-lite] .beu-pop { animation-name: beu-pop-fade; }
+
 /* ---------- Slow connections ---------- */
 
 /* Placeholder blocks on loading screens (component/skeleton/Skeleton.tsx). */

@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowUpDown, Check, SlidersHorizontal, X } from 'lucide-react';
-import type { FilterDropdownOption } from '@/component/FilterDropdown';
+import type { SortMenuData } from '@/lib/catalog/sort';
 import type { FilterOption } from '@/lib/catalog/types';
 import { useScrollLock } from '@/lib/use-scroll-lock';
 
@@ -27,8 +27,7 @@ interface MobileFiltersProps {
   groups: MobileFilterGroup[];
   // Params that must survive applying filters: category, sub, sort.
   baseParams: Record<string, string>;
-  sortOptions: FilterDropdownOption[];
-  sortLabel: string;
+  sort: SortMenuData;
   chips: MobileFilterChip[];
   clearHref: string;
 }
@@ -41,7 +40,7 @@ const focusRing = 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-
 // Phone-only filter bar: one 48px row (Filters + Sort) instead of five wrapping chips. Filters opens
 // a bottom sheet where choices are drafted and applied together; Sort is instant. The chips and the
 // sort rows are real links with server-built hrefs, so only "Show results" builds a URL here.
-export default function MobileFilters({ groups, baseParams, sortOptions, sortLabel, chips, clearHref }: MobileFiltersProps) {
+export default function MobileFilters({ groups, baseParams, sort, chips, clearHref }: MobileFiltersProps) {
   const router = useRouter();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [sheet, setSheet] = useState<Sheet>(null);
@@ -105,7 +104,7 @@ export default function MobileFilters({ groups, baseParams, sortOptions, sortLab
           className={`beu-chip flex h-12 shrink-0 items-center justify-center gap-2 px-[18px] text-xs font-medium uppercase tracking-[0.12em] ${focusRing}`}
         >
           <ArrowUpDown size={18} aria-hidden="true" />
-          {sortLabel}
+          {sort.shortButtonLabel}
         </button>
       </div>
 
@@ -209,23 +208,41 @@ export default function MobileFilters({ groups, baseParams, sortOptions, sortLab
             )}
 
             {sheet === 'sort' && (
-              <ul className="px-3 pb-[calc(1rem+env(safe-area-inset-bottom))]">
-                {sortOptions.map((option) => (
-                  <li key={option.href}>
-                    <Link
-                      href={option.href}
-                      onClick={close}
-                      aria-current={option.active ? 'true' : undefined}
-                      className={`flex min-h-14 items-center justify-between rounded-2xl px-3 text-[13px] uppercase tracking-[0.06em] ${focusRing} ${
-                        option.active ? 'bg-ice-mist' : 'active:bg-ice-soft'
-                      }`}
-                    >
-                      {option.label}
-                      {option.active && <Check size={18} strokeWidth={2.5} aria-hidden="true" />}
-                    </Link>
-                  </li>
+              // No hover on a phone, so each field shows its Ascending / Descending pair up front.
+              <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+                <Link
+                  href={sort.reset.href}
+                  onClick={close}
+                  aria-current={sort.reset.active ? 'true' : undefined}
+                  className={`flex min-h-14 items-center justify-between rounded-2xl px-3 text-[13px] uppercase tracking-[0.06em] ${focusRing} ${
+                    sort.reset.active ? 'bg-ice-mist' : 'active:bg-ice-soft'
+                  }`}
+                >
+                  {sort.reset.label}
+                  {sort.reset.active && <Check size={18} strokeWidth={2.5} aria-hidden="true" />}
+                </Link>
+                {sort.groups.map((group) => (
+                  <section key={group.field} className="border-t border-border/60 pb-3.5 pt-3.5">
+                    <h3 className="mb-3 text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">{group.label}</h3>
+                    <div className="grid grid-cols-2 gap-2">
+                      {group.options.map((option) => (
+                        <Link
+                          key={option.href}
+                          href={option.href}
+                          onClick={close}
+                          aria-current={option.active ? 'true' : undefined}
+                          className={`flex h-11 items-center justify-center gap-1.5 rounded-full border px-4 text-[13px] ${focusRing} ${
+                            option.active ? 'border-ink bg-ink text-white' : 'border-border bg-background text-foreground active:bg-ice-soft'
+                          }`}
+                        >
+                          {option.label}
+                          {option.active && <Check size={14} strokeWidth={2.5} aria-hidden="true" />}
+                        </Link>
+                      ))}
+                    </div>
+                  </section>
                 ))}
-              </ul>
+              </div>
             )}
           </>
         )}

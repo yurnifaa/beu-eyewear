@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { Check, ShoppingBag } from 'lucide-react';
+import AddedToCartPopup from '@/component/AddedToCartPopup';
 import { useProductColor } from '@/component/product/ProductColorProvider';
 import QuantityStepper from '@/component/QuantityStepper';
 import WishlistButton from '@/component/WishlistButton';
@@ -30,30 +30,30 @@ export interface AddToCartSectionProps {
 }
 
 const MAX_QUANTITY = 99;
+// How long the "Added to Cart" popup stays up. The button is locked for the same time.
+const POPUP_MS = 1600;
 
 export default function AddToCartSection({ slug, name, variants, cartProduct, lowStockThreshold = LOW_STOCK_THRESHOLD }: AddToCartSectionProps) {
   const colored = variants.filter((variant) => variant.color !== STANDARD_COLOR);
   // The selected color lives in the page's color provider so the photo gallery can follow it.
   const { selectedColor, selectColor } = useProductColor();
   const [quantity, setQuantity] = useState(1);
-  const [justAdded, setJustAdded] = useState(false);
+  const [popupOpen, setPopupOpen] = useState(false);
   const addingRef = useRef(false);
+  const popupTimerRef = useRef<number | undefined>(undefined);
   const buttonRef = useRef<HTMLButtonElement>(null);
-  const router = useRouter();
 
   const selected = variants.find((variant) => variant.color === selectedColor) ?? variants[0];
   const available = selected?.available ?? 0;
   const soldOut = available <= 0;
 
-  // Warm the cart page so the redirect after the animation is quick.
-  useEffect(() => {
-    router.prefetch('/cart');
-  }, [router]);
+  useEffect(() => () => window.clearTimeout(popupTimerRef.current), []);
 
-  // The item is added and the cart opens straight away; nothing waits for the animation. The "+N"
-  // chip is a free-floating element on the page body, so it keeps flying to the header cart while
-  // /cart loads, and bumps the icon when it lands (a no-op with reduced motion / lite mode). The
-  // button stays locked afterwards so a double-click can't add twice.
+  // The item is added at once and the shopper stays on the page: a centered "Added to Cart" popup
+  // confirms it, and nothing waits for it. The "+N" chip is a free-floating element on the page body
+  // that flies to the header cart and bumps the icon when it lands (a no-op with reduced motion / lite
+  // mode). The button stays locked while the popup shows so a double-click can't add twice, then it is
+  // ready for another add.
   const handleAddToCart = () => {
     if (soldOut || addingRef.current) return;
     addingRef.current = true;
@@ -61,10 +61,14 @@ export default function AddToCartSection({ slug, name, variants, cartProduct, lo
     const added = Math.min(quantity, available);
     rememberCartProduct(cartProduct);
     addToCart(slug, added, selectedColor, available);
-    setJustAdded(true);
+    setPopupOpen(true);
 
     if (buttonRef.current) void flyToCart({ from: buttonRef.current, label: `+${added}` });
-    router.push('/cart');
+
+    popupTimerRef.current = window.setTimeout(() => {
+      setPopupOpen(false);
+      addingRef.current = false;
+    }, POPUP_MS);
   };
 
   return (
@@ -146,14 +150,20 @@ export default function AddToCartSection({ slug, name, variants, cartProduct, lo
           ref={buttonRef}
           type="button"
           onClick={handleAddToCart}
-          disabled={soldOut || justAdded}
+          disabled={soldOut || popupOpen}
           className="inline-flex h-14 min-w-48 flex-1 items-center justify-center gap-2.5 rounded-full bg-ink px-8 text-xs uppercase tracking-[0.14em] text-white shadow-[0_14px_28px_rgba(10,26,47,0.28)] transition duration-150 hover:-translate-y-0.5 disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none sm:flex-none"
         >
-          {justAdded ? <Check size={16} /> : <ShoppingBag size={16} />}
-          {soldOut ? 'Out of stock' : justAdded ? 'Added' : 'Add to Cart'}
+          {popupOpen ? <Check size={16} /> : <ShoppingBag size={16} />}
+          {soldOut ? 'Out of stock' : popupOpen ? 'Added' : 'Add to Cart'}
         </button>
         <WishlistButton slug={slug} name={name} variant="labeled" />
       </div>
+
+      {/* The popup is only decoration, so screen readers get the confirmation from this instead. */}
+      <p role="status" className="sr-only">
+        {popupOpen ? 'Added to cart' : ''}
+      </p>
+      {popupOpen && <AddedToCartPopup durationMs={POPUP_MS} />}
     </>
   );
 }

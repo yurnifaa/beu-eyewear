@@ -9,6 +9,7 @@ import { CATALOG_CACHE_TAG, CATALOG_REVALIDATE_SECONDS } from './cache';
 import type { SearchSuggestionDTO } from './dto';
 import { FRAME_MATERIALS, FRAME_SHAPES, LENS_OPTIONS } from './enums';
 import { buildStoreSettings } from './settings';
+import { splitSort, type ProductSort } from './sort';
 import type {
   BundleComponent,
   CatalogProduct,
@@ -257,7 +258,7 @@ export interface ProductFilters {
   material?: string;
   shape?: string;
   color?: string;
-  sort?: 'price-asc' | 'price-desc';
+  sort?: ProductSort;
   page?: number;
 }
 
@@ -267,6 +268,25 @@ export interface ProductResults {
   page: number;
   pageSize: number;
   totalPages: number;
+}
+
+// "Item 2" before "Item 10", and "a" next to "A".
+const NAME_COLLATOR = new Intl.Collator('en', { numeric: true, sensitivity: 'base' });
+
+// Ties always fall back to name A–Z then slug, whichever direction was picked, so the order is
+// stable and never reshuffles between page loads.
+function sortProducts(items: CatalogProduct[], sort: ProductSort, addedAt: Map<string, number>): CatalogProduct[] {
+  const { field, direction } = splitSort(sort);
+  const sign = direction === 'asc' ? 1 : -1;
+  return [...items].sort((a, b) => {
+    const primary =
+      field === 'name'
+        ? NAME_COLLATOR.compare(a.name, b.name)
+        : field === 'date'
+          ? (addedAt.get(a.slug) ?? 0) - (addedAt.get(b.slug) ?? 0)
+          : a.price - b.price;
+    return sign * primary || NAME_COLLATOR.compare(a.name, b.name) || (a.slug < b.slug ? -1 : a.slug > b.slug ? 1 : 0);
+  });
 }
 
 async function readProducts(filters: ProductFilters): Promise<ProductResults> {
@@ -285,12 +305,15 @@ async function readProducts(filters: ProductFilters): Promise<ProductResults> {
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const page = Math.min(Math.max(1, filters.page ?? 1), totalPages);
 
-  // The price a shopper pays is computed (sale price or list price), so a price sort
-  // happens after the matching rows are loaded; otherwise the database pages for us.
+  // The price a shopper pays is computed (sale price or list price), and names should sort the way
+  // people read them rather than the way the database collates them, so any chosen sort happens
+  // after the matching rows are loaded; otherwise the database pages for us.
   if (filters.sort) {
-    const items = await present(await prisma.product.findMany({ where, include, orderBy: SHOP_ORDER }));
-    const direction = filters.sort === 'price-asc' ? 1 : -1;
-    items.sort((a, b) => direction * (a.price - b.price) || a.name.localeCompare(b.name));
+    const rows = await prisma.product.findMany({ where, include, orderBy: SHOP_ORDER });
+    // "Date" is when the product was added. It is not part of the product the pages receive (and a
+    // Date would not survive the cache), so it is looked up from the rows by slug while sorting.
+    const addedAt = new Map(rows.map((row) => [row.slug, row.createdAt.getTime()]));
+    const items = sortProducts(await present(rows), filters.sort, addedAt);
     return { items: items.slice((page - 1) * pageSize, page * pageSize), total, page, pageSize, totalPages };
   }
 

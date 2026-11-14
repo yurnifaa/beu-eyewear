@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { Check, ChevronDown } from 'lucide-react';
+import { useDismissableDetails } from '@/lib/use-dismissable-details';
 
 export interface FilterDropdownOption {
   label: string;
@@ -20,34 +20,10 @@ export interface FilterDropdownProps {
 }
 
 // Native <details>/<summary> so it is keyboard- and screen-reader-accessible and works before
-// hydration; the option links are real navigations (query-param updates). The small effect below
-// only adds what <details> lacks: closing on outside tap, Escape, and after picking an option.
-// Because tapping another chip counts as "outside", only one panel is ever open at a time.
+// hydration; the option links are real navigations (query-param updates). The shared hook adds
+// what <details> lacks: closing on outside tap, Escape, and after picking an option.
 export default function FilterDropdown({ label, activeLabel, options, align = 'left' }: FilterDropdownProps) {
-  const detailsRef = useRef<HTMLDetailsElement>(null);
-
-  useEffect(() => {
-    const close = () => {
-      if (detailsRef.current) detailsRef.current.open = false;
-    };
-    const onPointerDown = (event: PointerEvent) => {
-      const details = detailsRef.current;
-      if (details?.open && !details.contains(event.target as Node)) close();
-    };
-    const onKeyDown = (event: KeyboardEvent) => {
-      const details = detailsRef.current;
-      if (event.key === 'Escape' && details?.open) {
-        close();
-        details.querySelector('summary')?.focus();
-      }
-    };
-    document.addEventListener('pointerdown', onPointerDown);
-    document.addEventListener('keydown', onKeyDown);
-    return () => {
-      document.removeEventListener('pointerdown', onPointerDown);
-      document.removeEventListener('keydown', onKeyDown);
-    };
-  }, []);
+  const { ref: detailsRef, close } = useDismissableDetails();
 
   return (
     // Phones: the details is static, so the panel anchors to the (relative) filter bar and opens
@@ -70,9 +46,7 @@ export default function FilterDropdown({ label, activeLabel, options, align = 'l
             <li key={option.href}>
               <Link
                 href={option.href}
-                onClick={() => {
-                  if (detailsRef.current) detailsRef.current.open = false;
-                }}
+                onClick={close}
                 aria-current={option.active ? 'true' : undefined}
                 className={`flex min-h-12 items-center justify-between gap-4 rounded-xl px-4 text-[13px] uppercase tracking-[0.08em] transition-colors md:min-h-10 md:text-xs ${
                   option.active ? 'bg-accent/15 font-medium text-foreground' : 'text-muted-foreground hover:bg-accent/10 hover:text-foreground active:bg-accent/15'

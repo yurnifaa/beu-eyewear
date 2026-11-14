@@ -10,9 +10,11 @@ import CategoryChips from '@/component/listing/CategoryChips';
 import CategoryTile from '@/component/listing/CategoryTile';
 import ListingHero from '@/component/listing/ListingHero';
 import Pagination from '@/component/listing/Pagination';
+import SortDropdown from '@/component/listing/SortDropdown';
 import SubcategoryHeading from '@/component/listing/SubcategoryHeading';
 import { Ghost } from 'lucide-react';
 import { getCategories, getCategoryBySlug, getCategoryPreviewImages, getFilterOptions, getProducts, getSubcategories } from '@/lib/catalog/queries';
+import { buildSortMenu, parseSort } from '@/lib/catalog/sort';
 import type { FilterOption } from '@/lib/catalog/types';
 import { formatPrice } from '@/lib/format';
 
@@ -73,8 +75,7 @@ export default async function Page(props: PageProps<'/listing'>) {
   const color = first(sp.color);
   // Both come from the address bar, so check them instead of trusting a cast: an unknown sort is
   // ignored, and page must be a whole number (a fractional one would break the database skip).
-  const rawSort = first(sp.sort);
-  const sort = rawSort === 'price-asc' || rawSort === 'price-desc' ? rawSort : undefined;
+  const sort = parseSort(first(sp.sort));
   const page = Math.min(Math.max(Math.floor(Number(first(sp.page))) || 1, 1), 1000);
 
   const current: Params = {
@@ -158,11 +159,8 @@ export default async function Page(props: PageProps<'/listing'>) {
   const materialOptions = facetOptions('Frame Materials', filterOptions.material, material, 'material', current);
   const shapeOptions = facetOptions('Frame Shapes', filterOptions.shape, shape, 'shape', current);
   const colorOptions = facetOptions('Colors', filterOptions.color, color, 'color', current);
-  const sortOptions: FilterDropdownOption[] = [
-    { label: 'Featured', href: withParams(current, { sort: undefined, page: undefined }), active: !sort },
-    { label: 'Price: Low to High', href: withParams(current, { sort: 'price-asc', page: undefined }), active: sort === 'price-asc' },
-    { label: 'Price: High to Low', href: withParams(current, { sort: 'price-desc', page: undefined }), active: sort === 'price-desc' },
-  ];
+  // Name / Date / Price, each with Ascending and Descending. Changing the sort goes back to page 1.
+  const sortMenu = buildSortMenu(sort, (value) => withParams(current, { sort: value, page: undefined }));
 
   const subcategoryRowResults = await Promise.all(
     subcategories.map(async (subcat) => ({
@@ -214,7 +212,6 @@ export default async function Page(props: PageProps<'/listing'>) {
   const mobileBaseParams: Record<string, string> = { category: activeCategory.slug };
   if (sub) mobileBaseParams.sub = sub;
   if (sort) mobileBaseParams.sort = sort;
-  const mobileSortLabel = sort === 'price-asc' ? 'Low–High' : sort === 'price-desc' ? 'High–Low' : 'Sort';
 
   return (
     <>
@@ -234,8 +231,7 @@ export default async function Page(props: PageProps<'/listing'>) {
             <MobileFilters
               groups={facetGroups}
               baseParams={mobileBaseParams}
-              sortOptions={sortOptions}
-              sortLabel={mobileSortLabel}
+              sort={sortMenu}
               chips={filterChips}
               clearHref={clearHref}
             />
@@ -262,12 +258,7 @@ export default async function Page(props: PageProps<'/listing'>) {
               </Link>
             )}
           </div>
-          <FilterDropdown
-            label="Sort"
-            align="right"
-            activeLabel={sort ? sortOptions.find((option) => option.active)?.label : undefined}
-            options={sortOptions}
-          />
+          <SortDropdown menu={sortMenu} />
           </div>
         </Reveal>
       </div>
