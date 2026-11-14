@@ -1,5 +1,6 @@
 // Hidden SVG sprite: chrome/lens gradients, eyewear shapes (g-*) and pixel glyphs (px-*).
-// Rendered once by app/(buyer)/layout.tsx; every <PixelGlyph> and the shape picker point at it.
+// Rendered once by app/(buyer)/layout.tsx; every <PixelGlyph>, the Spotlight and the cart's
+// no-photo frame drawings point at it.
 export default function GlyphSprite() {
   return (
     <svg width="0" height="0" style={{ position: "absolute" }} aria-hidden="true" focusable="false">

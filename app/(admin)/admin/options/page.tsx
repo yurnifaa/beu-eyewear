@@ -20,7 +20,7 @@ export const dynamic = 'force-dynamic';
 const KINDS = [
   { kind: 'FRAME_MATERIAL', title: 'Frame materials', note: 'The choices in the shop’s material filter and the product form.' },
   { kind: 'LENS_OPTION', title: 'Lens options', note: 'The choices in the shop’s lens filter and the product form.' },
-  { kind: 'FRAME_SHAPE', title: 'Frame shapes', note: 'Shown in the shop’s shape filter and the home page shape picker.' },
+  { kind: 'FRAME_SHAPE', title: 'Frame shapes', note: 'Shown in the shop’s shape filter and the product form.' },
   { kind: 'COLOR_FAMILY', title: 'Color families', note: 'Groups colors for the shop’s color filter. The swatch is the dot shown next to the name.' },
 ] as const;
 

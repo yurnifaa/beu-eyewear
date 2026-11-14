@@ -138,13 +138,6 @@
     mask-image: linear-gradient(180deg, #000 0%, transparent 35%, transparent 65%, #000 100%);
   }
 
-  .beu-theme .beu-orb {
-    background: radial-gradient(circle at 34% 28%, #ffffff 0%, #d6ecff 52%, #a9d6ff 100%);
-    box-shadow:
-      inset 0 -14px 34px rgba(60, 130, 210, 0.25),
-      0 34px 64px rgba(60, 130, 210, 0.22);
-  }
-
   .beu-theme .beu-footer-bg {
     background: linear-gradient(180deg, #eaf5ff 0%, #c9dff5 55%, #b5c4d6 100%);
   }
