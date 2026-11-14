@@ -32,7 +32,13 @@ export default function Spotlight({ product }: { product: CatalogProduct }) {
   ].filter(Boolean);
 
   return (
-    <section aria-labelledby="spotlight-title" className="beu-snap-section beu-spot-bg relative overflow-hidden px-6 py-20 md:px-14 md:py-24">
+    // The product photo is an opaque white-background image: it only looks cut out because
+    // mix-blend-multiply turns its white into the grey behind it. `isolate` makes this section its own
+    // blend group, and the grey is a child layer inside that group (not the section's own background),
+    // so the blend always has a backdrop to work against. Without this, iOS Safari (iPhone and iPad)
+    // skipped the blend and showed the white tile; Chrome and Android blended either way.
+    <section aria-labelledby="spotlight-title" className="beu-snap-section relative isolate overflow-hidden px-6 py-20 md:px-14 md:py-24">
+      <div aria-hidden="true" className="beu-spot-bg absolute inset-0" />
       <div aria-hidden="true" className="beu-spot-dots absolute inset-0" />
       {[
         { words: LEFT_WORDS, side: "left-4 rotate-180" },
