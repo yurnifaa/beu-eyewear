@@ -11,7 +11,6 @@ import HomeScrollSnap from '@/component/home/HomeScrollSnap';
 import OfferTicket from '@/component/home/OfferTicket';
 import PunkBand from '@/component/home/PunkBand';
 import ReviewsSection from '@/component/home/ReviewsSection';
-import Spotlight from '@/component/home/Spotlight';
 import {
   getCategories,
   getCategoryPreviewImages,
@@ -54,7 +53,7 @@ export default async function Page() {
   const offerStub = (offer: { kind: 'PERCENT' | 'FIXED_AMOUNT'; value: number; badge: string }) =>
     offer.kind === 'PERCENT' ? `${offer.value}% Off` : offer.badge;
 
-  const [spotlight, ...dropProducts] = featuredProducts;
+  const [, ...dropProducts] = featuredProducts;
 
   return (
     // The hero and the spotlight drift on scroll (framer-motion); nothing else on the storefront
@@ -63,7 +62,6 @@ export default async function Page() {
       <HomeScrollSnap />
       <HomeHero />
       <PunkBand />
-      {spotlight && <Spotlight product={spotlight} />}
 
       {/* The drop: featured products */}
       <Reveal stagger className="beu-snap-section px-6 py-16 md:px-14">
